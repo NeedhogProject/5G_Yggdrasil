@@ -1,0 +1,54 @@
+개발 환경: Unity 2022 예정
+
+정건희 ( 프로그래밍 총괄 )
+ - PlayerStats 체력 / 정신력 / 방어력 
+ - PlayerController 이동 / 달리기 / 마우스 시점
+ - ItemData 아이템 베이스
+ - WeaponData 무기 데이터 ( 단검 / 장검 / 창, 강화 )
+ - ConsumableData 소모품 ( 체력 물약 / 정신력 물약 / 초기화 주문서 )
+ - ResourceData 자원 ( 불 / 물 / 바람 / 땅 / 어둠 )
+ - SetEffectData 강화 효과 ( 원소별 세트 효과 )
+ - ItemInstance 런타임 아이템 베이스
+ - WeaponInstance 무기 런타임 ( 강화 단계 )
+ - ArmorInstance 방어구 런타임 ( 각인, 착용 상태 )
+ - ConsumableInstance_ResourceInstance 소모품/자원 런타임 
+ - ArmorSetManager 원소별 세트 집계 / 발동
+ - StemConnector 개별 줄기 오브젝트 ( 통로 ) 
+ - StemManager 줄기 열쇠 분배 및 층 전환 
+ - FloorManager 장면 전환 및 층 관리  
+ - RelicData 유물
+ - PlayerCombat 무기별 공격 판정, 원소 데미지
+ - HitboxSystem 리치/너비 기반 공격 판정
+ - EnemyBase 적 베이스 (체력, 피격)
+ - EnemyAI 순찰/추적/공격 상태머신
+ - LootTable 사망 시 드롭 테이블
+ - EnemySpawner 층별 생성 관리
+ - BossNidhogg 최종 보스
+ - ResourceNode 자원 채집 노드
+ - DungeonDifficultyScaler 던전 깊이 차이별 난이도 상승
+ - OpeningCustsomscene 오프닝 ( 스킵가능 )
+ - PlayerDeath 사망 처리 (인벤 전체 드롭)
+ - PlayerEquipment 장착/해제 + ArmorSetManager 연동
+ - FloorKeyData 줄기 열쇠
+
+김보민 
+ - InventorySystem 격자 슬롯 관리 (디아블로식)
+ - InventorySlot 개별 슬롯
+ - EnhancementSystem 코인 강화 시스템
+ - RuneInscriptionSystem 각인 조합
+ - ShopSystem 상인
+ - ScholarSystem 학자 (유물 감정)
+ - BlacksmithSystem 대장장이
+ - InscriptionMasterSystem 각인술사
+ - NPCDialogue.csNPC 대화 시스템
+ - GameManager 씬 전환/게임 상태 관리
+ - SaveSystem 인벤/장비/스탯 저장
+ - AudioManager BGM/SFX
+ - HUDManager 체력/방어력/정신력 바
+ - InventoryUI 인벤토리 화면
+ - EquipmentSlotUI 장비 슬롯
+ - UIItemTooltipUI 아이템 툴팁
+ - CoinFlipUI 강화 코인 연출
+ - MinimapUI 미니맵
+ - EndingUI 엔딩
+ - TownMapUI 마을 맵
