@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
+  m_Name: Weapon
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  _itemName: "\uC544\uC774\uD15C"
+  _description: 
+  _itemType: 0
+  _rarity: 0
+  _icon: {fileID: 0}
+  _prefab3D: {fileID: 0}
+  _inventoryWidth: 1
+  _inventoryHeight: 1
+  _buyPrice: 0
+  _sellPrice: 0
+  _isDroppable: 1
+  _isStackable: 0
+  _maxStack: 1
+  weaponType: 1
+  _weaponRarity: 0
+  baseDamage: 10
+  attackSpeed: 1
+  reach: 2
+  attackWidth: 0.5
+  enhancementLevel: 0
