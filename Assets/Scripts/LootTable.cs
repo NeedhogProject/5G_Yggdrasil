@@ -58,7 +58,9 @@ public class LootTable : MonoBehaviour
     [Tooltip("드롭 자체를 건너뛸 확률 (%). 0이면 항상 드롭 시도")]
     [SerializeField] [Range(0, 100)] private float skipChance = 0f;
 
-    [Header("드롭 위치 오프셋")]
+    [Header("드롭 아이템 프리팹")]
+    [Tooltip("DroppedItem 컴포넌트가 붙은 프리팹 — 없으면 ItemData.Prefab3D 사용")]
+    [SerializeField] private GameObject droppedItemPrefab;
     [Tooltip("아이템이 스폰될 위치의 랜덤 반경")]
     [SerializeField] private float dropSpreadRadius = 0.5f;
 
@@ -153,22 +155,32 @@ public class LootTable : MonoBehaviour
 
     private void SpawnItemInWorld(ItemData item, Vector3 position, int count)
     {
-        if (item.Prefab3D == null)
+        // DroppedItem 전용 프리팹 우선, 없으면 ItemData.Prefab3D 사용
+        GameObject prefab = droppedItemPrefab != null ? droppedItemPrefab : item.Prefab3D;
+
+        if (prefab == null)
         {
-            // 프리팹 없으면 로그만
             Debug.Log($"[LootTable] 드롭: {item.ItemName} x{count} (프리팹 미설정)");
             return;
         }
 
-        // 살짝 랜덤한 위치에 스폰
-        Vector2 spread   = Random.insideUnitCircle * dropSpreadRadius;
-        Vector3 spawnPos = position + new Vector3(spread.x, 0.1f, spread.y);
+        for (int i = 0; i < count; i++)
+        {
+            Vector2 spread   = Random.insideUnitCircle * dropSpreadRadius;
+            Vector3 spawnPos = position + new Vector3(spread.x, 0.3f, spread.y);
 
-        GameObject dropped = Instantiate(item.Prefab3D, spawnPos, Quaternion.identity);
+            GameObject dropped = Instantiate(prefab, spawnPos, Quaternion.identity);
 
-        // 드롭 아이템 컴포넌트에 데이터 주입 (DroppedItem 완성 후 연동)
-        // dropped.GetComponent<DroppedItem>()?.Initialize(item, count);
-        Debug.Log($"[LootTable] {item.ItemName} x{count} 스폰 at {spawnPos}");
+            // DroppedItem에 아이템 데이터 주입
+            var droppedComp = dropped.GetComponent<DroppedItem>();
+            if (droppedComp != null)
+            {
+                ItemInstance instance = new ItemInstance(item);
+                droppedComp.Initialize(instance);
+            }
+        }
+
+        Debug.Log($"[LootTable] {item.ItemName} x{count} 드롭");
     }
 
     // ─────────────────────── 유틸 ───────────────────────

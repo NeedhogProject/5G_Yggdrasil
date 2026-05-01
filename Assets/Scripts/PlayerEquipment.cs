@@ -24,6 +24,7 @@ public class PlayerEquipment : MonoBehaviour
     [SerializeField] private PlayerStats      playerStats;
     [SerializeField] private PlayerCombat     playerCombat;
     [SerializeField] private ArmorSetManager  armorSetManager;
+    [SerializeField] private InventorySystem  inventorySystem;
 
     // ─────────────────────── 장비 슬롯 ───────────────────────
 
@@ -49,31 +50,45 @@ public class PlayerEquipment : MonoBehaviour
 
     private void Awake()
     {
-        if (playerStats     == null) playerStats     = GetComponent<PlayerStats>();
-        if (playerCombat    == null) playerCombat    = GetComponent<PlayerCombat>();
-        if (armorSetManager == null) armorSetManager = GetComponent<ArmorSetManager>();
+        if (playerStats      == null) playerStats      = GetComponent<PlayerStats>();
+        if (playerCombat     == null) playerCombat     = GetComponent<PlayerCombat>();
+        if (armorSetManager  == null) armorSetManager  = GetComponent<ArmorSetManager>();
+        if (inventorySystem  == null) inventorySystem  = InventorySystem.Instance;
     }
 
     // ─────────────────────── 장착 ───────────────────────
 
     /// <summary>
     /// 아이템 장착 시도 — 인벤토리 UI 드래그앤드롭에서 호출
-    /// 반환값: 교체로 인해 인벤토리로 돌아갈 기존 장비 (없으면 null)
+    /// 교체된 기존 장비는 자동으로 인벤토리로 반환
     /// </summary>
     public ItemInstance EquipItem(ItemInstance item)
     {
         if (item == null) return null;
 
+        ItemInstance replaced = null;
+
         switch (item)
         {
             case WeaponInstance weapon:
-                return EquipWeapon(weapon);
+                replaced = EquipWeapon(weapon);
+                break;
             case ArmorInstance armor:
-                return EquipArmor(armor);
+                replaced = EquipArmor(armor);
+                break;
             default:
                 Debug.LogWarning($"[PlayerEquipment] 장착 불가 아이템: {item.Data?.ItemName}");
                 return null;
         }
+
+        // 교체된 기존 장비 → 인벤토리로 자동 반환
+        if (replaced != null)
+        {
+            if (inventorySystem == null) inventorySystem = InventorySystem.Instance;
+            inventorySystem?.AddItem(replaced.Data);
+        }
+
+        return replaced;
     }
 
     // ─────────────────────── 무기 장착 ───────────────────────

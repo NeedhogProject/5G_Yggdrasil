@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
@@ -56,7 +57,7 @@ public class MinimapUI : MonoBehaviour
     
     private void SetupMinimap()
     {
-        // ¹Ì´Ï¸Ê Ä«¸Ş¶ó ¼³Á¤
+        // ë¯¸ë‹ˆë§µ ì¹´ë©”ë¼ ì„¤ì •
         if (minimapCamera == null)
         {
             GameObject minimapCamObj = new GameObject("MinimapCamera");
@@ -69,9 +70,9 @@ public class MinimapUI : MonoBehaviour
         minimapCamera.cullingMask = LayerMask.GetMask("Default", "Player", "Enemy", "NPC");
         minimapCamera.clearFlags = CameraClearFlags.SolidColor;
         minimapCamera.backgroundColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-        minimapCamera.depth = 10; // ¸ŞÀÎ Ä«¸Ş¶óº¸´Ù ³ôÀº depth
+        minimapCamera.depth = 10; // ë©”ì¸ ì¹´ë©”ë¼ë³´ë‹¤ ë†’ì€ depth
         
-        // ·»´õ ÅØ½ºÃ³ »ı¼º
+        // ë Œë” í…ìŠ¤ì²˜ ìƒì„±
         minimapTexture = new RenderTexture(512, 512, 16);
         minimapCamera.targetTexture = minimapTexture;
         
@@ -109,8 +110,8 @@ public class MinimapUI : MonoBehaviour
     
     private void HandleZoom()
     {
-        // ¸¶¿ì½º ÈÙ·Î ÁÜ Á¶Àı
-        float scrollInput = Input.GetAxis("Mouse ScrollWheel");
+        // ë§ˆìš°ìŠ¤ íœ ë¡œ ì¤Œ ì¡°ì ˆ
+        float scrollInput = Mouse.current.scroll.ReadValue().y * 0.1f;
         
         if (scrollInput != 0f)
         {
@@ -190,7 +191,7 @@ public class MinimapUI : MonoBehaviour
     }
 }
 
-// ¹Ì´Ï¸Ê ¾ÆÀÌÄÜ ÃßÀû ½ºÅ©¸³Æ®
+// ë¯¸ë‹ˆë§µ ì•„ì´ì½˜ ì¶”ì  ìŠ¤í¬ë¦½íŠ¸
 public class MinimapIcon : MonoBehaviour
 {
     public GameObject target;

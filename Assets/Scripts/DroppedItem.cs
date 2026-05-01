@@ -3,16 +3,9 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// 바닥에 떨어진 아이템 오브젝트
-///
-/// [기획 반영]
-/// - 자원 노드 채집 시 바닥에 스폰
-/// - 플레이어가 범위 안에서 E키로 획득
-/// - 획득 시 인벤토리에 추가 (InventorySystem 연동 후 활성화)
 /// </summary>
 public class DroppedItem : MonoBehaviour
 {
-    // ─────────────────────── 설정 ───────────────────────
-
     [Header("획득 범위")]
     [SerializeField] private float pickupRange = 1.5f;
 
@@ -21,13 +14,28 @@ public class DroppedItem : MonoBehaviour
     [SerializeField] private float bobSpeed    = 2f;
     [SerializeField] private float bobHeight   = 0.15f;
 
-    // ─────────────────────── 런타임 ───────────────────────
+    [Header("테스트용 — 씬에 직접 배치 시 연결")]
+    [SerializeField] private ItemData testItemData;
 
     private ItemInstance _itemInstance;
     private bool _playerInRange = false;
     private Vector3 _startPos;
 
-    // ─────────────────────── 초기화 ───────────────────────
+    private void Start()
+    {
+        _startPos = transform.position;
+
+        // 씬에 직접 배치한 경우 testItemData로 자동 초기화
+        if (_itemInstance == null && testItemData != null)
+        {
+            Initialize(new ItemInstance(testItemData));
+            Debug.Log($"[DroppedItem] testItemData로 자동 초기화: {testItemData.ItemName}");
+        }
+        else if (_itemInstance == null)
+        {
+            Debug.LogWarning("[DroppedItem] ItemData 없음 — testItemData 슬롯에 에셋 연결 필요");
+        }
+    }
 
     /// <summary>ResourceNode / LootTable 에서 스폰 후 호출</summary>
     public void Initialize(ItemInstance item)
@@ -39,50 +47,57 @@ public class DroppedItem : MonoBehaviour
 
     private void Update()
     {
-        // 회전 + 둥실둥실 연출
-        transform.Rotate(Vector3.up, rotateSpeed * Time.deltaTime);
-        float newY = _startPos.y + Mathf.Sin(Time.time * bobSpeed) * bobHeight;
+        // 회전 + 둥실둥실 연출 (unscaled time 사용)
+        transform.Rotate(Vector3.up, rotateSpeed * Time.unscaledDeltaTime);
+        float newY = _startPos.y + Mathf.Sin(Time.unscaledTime * bobSpeed) * bobHeight;
         transform.position = new Vector3(transform.position.x, newY, transform.position.z);
 
-        // E키 획득
+        // E키 획득 — unscaledTime 기반으로 체크
         if (_playerInRange && Keyboard.current.eKey.wasPressedThisFrame)
             TryPickup();
     }
 
-    // ─────────────────────── 트리거 감지 ───────────────────────
-
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player") && other.GetComponent<PlayerStats>() == null) return;
         _playerInRange = true;
-        Debug.Log($"[DroppedItem] {_itemInstance?.Data?.ItemName} — E키로 획득");
-        // TODO: HUD 힌트 표시
+        Debug.Log($"[DroppedItem] 범위 진입 — E키로 {_itemInstance?.Data?.ItemName ?? "아이템"} 획득");
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player") && other.GetComponent<PlayerStats>() == null) return;
         _playerInRange = false;
     }
 
-    // ─────────────────────── 획득 ───────────────────────
-
     private void TryPickup()
     {
-        if (_itemInstance == null) return;
+        if (_itemInstance == null)
+        {
+            Debug.LogWarning("[DroppedItem] _itemInstance null — testItemData 슬롯 확인 필요");
+            return;
+        }
 
-        // InventorySystem 완성 후 주석 해제
-        // var inventory = FindFirstObjectByType<InventorySystem>();
-        // if (inventory != null && inventory.AddItem(_itemInstance))
-        // {
-        //     Debug.Log($"[DroppedItem] {_itemInstance.Data.ItemName} 획득");
-        //     Destroy(gameObject);
-        // }
-        // else Debug.Log("[DroppedItem] 인벤토리 가득 참");
+        var inventory = InventorySystem.Instance;
+        if (inventory == null)
+        {
+            Debug.LogWarning("[DroppedItem] InventorySystem.Instance 없음");
+            Destroy(gameObject);
+            return;
+        }
 
-        // 임시: 바로 획득 처리
-        Debug.Log($"[DroppedItem] {_itemInstance?.Data?.ItemName} 획득 (InventorySystem 연동 전)");
-        Destroy(gameObject);
+        Debug.Log($"[DroppedItem] 획득 시도: {_itemInstance.Data?.ItemName} / 슬롯 수: {inventory.slots.Count}");
+
+        if (inventory.AddItem(_itemInstance.Data))
+        {
+            AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+            Debug.Log($"[DroppedItem] {_itemInstance.Data.ItemName} 획득 성공");
+            Destroy(gameObject);
+        }
+        else
+        {
+            Debug.LogWarning("[DroppedItem] 인벤토리 가득 참");
+        }
     }
 
 #if UNITY_EDITOR

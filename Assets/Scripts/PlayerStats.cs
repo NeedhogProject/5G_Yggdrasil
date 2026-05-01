@@ -98,6 +98,17 @@ public class PlayerStats : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    private void Start()
+    {
+        // HUDManager 자동 연결 — 씬 로드 후 HUD가 준비된 시점에 구독
+        OnHealthChanged += hp  => HUDManager.Instance?.UpdateHP(hp, MAX_STAT);
+        OnMentalChanged += men => HUDManager.Instance?.UpdateSanity(men, MAX_STAT);
+
+        // 초기값으로 HUD 갱신
+        HUDManager.Instance?.UpdateHP(health, MAX_STAT);
+        HUDManager.Instance?.UpdateSanity(mental, MAX_STAT);
+    }
+
     /// <summary>
     /// 체력 변경
     /// </summary>

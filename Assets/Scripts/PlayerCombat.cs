@@ -98,13 +98,19 @@ public class PlayerCombat : MonoBehaviour
 
     // ─────────────────────── 업데이트 ───────────────────────
 
+    // UI 위 여부를 매 프레임 캐싱 (Input System 콜백에서 직접 호출 불가)
+    private bool _isPointerOverUI = false;
+
     private void Update()
     {
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer -= Time.deltaTime;
 
+        _isPointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
+                           UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+
 #if UNITY_EDITOR
-        _currentAttackInterval = AttackInterval;  // Inspector 확인용
+        _currentAttackInterval = AttackInterval;
 #endif
     }
 
@@ -114,6 +120,9 @@ public class PlayerCombat : MonoBehaviour
     public void OnAttack(InputValue value)
     {
         if (!value.isPressed) return;
+
+        // UI 위에서 클릭 시 공격 차단
+        if (_isPointerOverUI) return;
 
         if (!CanAttack)
         {

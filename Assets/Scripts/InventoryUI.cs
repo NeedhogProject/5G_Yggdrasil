@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class InventoryUI : MonoBehaviour
@@ -8,12 +9,16 @@ public class InventoryUI : MonoBehaviour
     public GameObject inventoryPanel;
     public GameObject itemInventoryPanel;
     public GameObject resourceInventoryPanel;
-    
+
     [Header("Tab Buttons")]
     public Button itemTabButton;
     public Button resourceTabButton;
     public Button closeButton;
-    
+
+    [Header("바깥 클릭 닫기")]
+    [Tooltip("InventoryPanel 뒤에 배치할 전체화면 투명 버튼")]
+    public Button outsideCloseButton;
+
     [Header("Info Display")]
     public TMP_Text inventoryInfoText;
     public TMP_Text weightText;
@@ -30,23 +35,25 @@ public class InventoryUI : MonoBehaviour
     void Start()
     {
         inventoryPanel.SetActive(false);
-        
+
         itemTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
         resourceTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Resource));
         closeButton.onClick.AddListener(CloseInventory);
+
+        if (outsideCloseButton != null)
+        {
+            outsideCloseButton.onClick.AddListener(CloseInventory);
+            outsideCloseButton.gameObject.SetActive(false);
+        }
     }
     
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.I))
-        {
+        if (Keyboard.current.iKey.wasPressedThisFrame)
             ToggleInventory();
-        }
-        
-        if (Input.GetKeyDown(KeyCode.Escape) && isOpen)
-        {
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame && isOpen)
             CloseInventory();
-        }
     }
     
     public void ToggleInventory()
@@ -65,22 +72,22 @@ public class InventoryUI : MonoBehaviour
     {
         inventoryPanel.SetActive(true);
         isOpen = true;
-        
+        if (outsideCloseButton != null) outsideCloseButton.gameObject.SetActive(true);
+
         SwitchTab(InventoryTab.Item);
         UpdateInventoryInfo();
-        
-        Time.timeScale = 0f; // 게임 일시정지
-        
+
+        Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
     }
-    
+
     public void CloseInventory()
     {
         inventoryPanel.SetActive(false);
         isOpen = false;
-        
-        Time.timeScale = 1f; // 게임 재개
-        
+        if (outsideCloseButton != null) outsideCloseButton.gameObject.SetActive(false);
+
+        Time.timeScale = 1f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
     

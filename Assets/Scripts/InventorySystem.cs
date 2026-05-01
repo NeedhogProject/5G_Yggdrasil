@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 public class InventorySystem : MonoBehaviour
 {
@@ -36,10 +37,11 @@ public class InventorySystem : MonoBehaviour
         if (playerEquipment == null)
             playerEquipment = FindFirstObjectByType<PlayerEquipment>();
     }
-    
+
     void Start()
     {
         InitializeInventory();
+        Debug.Log($"[InventorySystem] 슬롯 {slots.Count}개 생성 완료");
     }
     
     void Update()
@@ -47,13 +49,7 @@ public class InventorySystem : MonoBehaviour
         if (isDragging && selectedItem != null)
         {
             // 드래그 중 아이템 이동
-            Vector3 mousePos = Input.mousePosition;
             // 마우스 따라다니는 로직
-        }
-        
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            inventoryUI?.ToggleInventory();
         }
     }
     

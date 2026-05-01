@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Resource_Fire
   m_EditorClassIdentifier: Assembly-CSharp::ResourceData
   _itemName: "\uBD88 \uC6D0\uC18C \uAD11\uC11D"
-  _description: 
+  _description: "\uBD88 \uC6D0\uC18C \uAD11\uC11D\uC785\uB2C8\uB2E4"
   _itemType: 3
   _rarity: 0
   _icon: {fileID: 0}

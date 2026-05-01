@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections.Generic;
 
@@ -47,13 +48,13 @@ public class TownMapUI : MonoBehaviour
     void Update()
     {
         // M 키로 맵 토글
-        if (Input.GetKeyDown(KeyCode.M))
+        if (Keyboard.current.mKey.wasPressedThisFrame)
         {
             ToggleMap();
         }
         
         // ESC로 맵 닫기
-        if (Input.GetKeyDown(KeyCode.Escape) && isMapOpen)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame && isMapOpen)
         {
             CloseMap();
         }

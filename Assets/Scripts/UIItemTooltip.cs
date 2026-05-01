@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class UIItemTooltip : MonoBehaviour
 {
     public static UIItemTooltip Instance { get; private set; }
-    
+
     [Header("UI References")]
     public GameObject tooltipPanel;
     public TMP_Text itemNameText;
@@ -15,207 +16,118 @@ public class UIItemTooltip : MonoBehaviour
     public TMP_Text itemPriceText;
     public Image itemIconImage;
     public Image rarityBorder;
-    
+
     [Header("Tooltip Settings")]
-    public Vector2 offset = new Vector2(10, -10);
-    public float followSpeed = 10f;
-    
+    public Vector2 offset = new Vector2(15, -15);
+
     private RectTransform tooltipRect;
-    private Canvas canvas;
-    
+    private ItemData _currentItem;
+
     void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-        
+        if (Instance == null) Instance = this;
+        else { Destroy(gameObject); return; }
+
         tooltipRect = tooltipPanel.GetComponent<RectTransform>();
-        canvas = GetComponentInParent<Canvas>();
-        
-        HideTooltip();
+        tooltipPanel.SetActive(false);
     }
-    
+
     void Update()
     {
-        if (tooltipPanel.activeSelf)
-        {
-            // ¸¶¿ì½º µû¶ó´Ù´Ï±â
-            Vector2 mousePosition = Input.mousePosition;
-            Vector2 targetPosition = mousePosition + offset;
-            
-            // È­¸é ¹ÛÀ¸·Î ³ª°¡Áö ¾Êµµ·Ï Á¶Á¤
-            targetPosition = ClampToScreen(targetPosition);
-            
-            tooltipRect.position = Vector2.Lerp(tooltipRect.position, targetPosition, followSpeed * Time.deltaTime);
-        }
+        if (!tooltipPanel.activeSelf) return;
+
+        // ë§ˆìš°ìŠ¤ ìœ„ì¹˜ ì¦‰ì‹œ ë”°ë¼ê°€ê¸° (Lerp ì—†ì´ â€” ê¹œë¹¡ìž„ ì›ì¸ ì œê±°)
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        tooltipRect.position = ClampToScreen(mousePos + offset);
     }
-    
+
     public void ShowTooltip(ItemData item, Vector3 position)
     {
         if (item == null) return;
-        
-        tooltipPanel.SetActive(true);
-        
-        // ¾ÆÀÌÅÛ Á¤º¸ Ç¥½Ã
-        itemNameText.text = item.itemName;
-        itemTypeText.text = GetItemTypeName(item.itemType);
-        itemDescriptionText.text = item.itemDescription;
-        itemPriceText.text = $"°¡°Ý: {item.basePrice} °ñµå";
-        
-        if (itemIconImage != null)
-        {
-            itemIconImage.sprite = item.itemIcon;
-        }
-        
-        // Èñ±Íµµ¿¡ µû¸¥ Å×µÎ¸® »ö»ó
+
+        // ì´ë¯¸ ê°™ì€ ì•„ì´í…œ í‘œì‹œ ì¤‘ì´ë©´ ìœ„ì¹˜ë§Œ ê°±ì‹ 
+        _currentItem = item;
+
+        // í…ìŠ¤íŠ¸ ì„¤ì •
+        if (itemNameText        != null) itemNameText.text        = item.itemName;
+        if (itemTypeText        != null) itemTypeText.text        = GetItemTypeName(item.itemType);
+        if (itemDescriptionText != null) itemDescriptionText.text = string.IsNullOrEmpty(item.itemDescription)
+                                                                    ? "" : item.itemDescription;
+        if (itemPriceText       != null) itemPriceText.text       = $"{item.basePrice} G";
+        if (itemIconImage       != null) itemIconImage.sprite     = item.itemIcon;
+
         if (rarityBorder != null)
-        {
             rarityBorder.color = GetRarityColor(item.rarity);
-        }
-        
-        // ÀåºñÀÏ °æ¿ì ´É·ÂÄ¡ Ç¥½Ã
-        if (item is EquipmentData equipment)
+
+        if (itemStatsText != null)
         {
-            ShowEquipmentStats(equipment);
+            if      (item is EquipmentData eq) itemStatsText.text = GetEquipmentStats(eq);
+            else if (item is RelicData rel)    itemStatsText.text = GetRelicStats(rel);
+            else                               itemStatsText.text = "";
         }
-        else if (item is RelicData relic)
-        {
-            ShowRelicStats(relic);
-        }
-        else
-        {
-            itemStatsText.text = "";
-        }
-        
-        // À§Ä¡ ¼³Á¤
-        tooltipRect.position = position + (Vector3)offset;
+
+        // ìœ„ì¹˜ ë¨¼ì € ì„¤ì • í›„ í™œì„±í™” (ê¹œë¹¡ìž„ ë°©ì§€)
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        tooltipRect.position = ClampToScreen(mousePos + offset);
+        tooltipPanel.SetActive(true);
     }
-    
+
     public void HideTooltip()
     {
+        _currentItem = null;
         tooltipPanel.SetActive(false);
     }
-    
-    private void ShowEquipmentStats(EquipmentData equipment)
+
+    private string GetEquipmentStats(EquipmentData e)
     {
-        string stats = "";
-        
-        if (equipment.attack > 0)
-        {
-            stats += $"°ø°Ý·Â: {equipment.attack}\n";
-        }
-        
-        if (equipment.defense > 0)
-        {
-            stats += $"¹æ¾î·Â: {equipment.defense}\n";
-        }
-        
-        if (equipment.upgradeLevel > 0)
-        {
-            stats += $"°­È­: +{equipment.upgradeLevel}\n";
-        }
-        
-        if (equipment.isInscribed)
-        {
-            stats += $"°¢ÀÎ: {GetInscriptionName(equipment.inscriptionType)}\n";
-        }
-        
-        stats += $"³»±¸µµ: {equipment.durability:F0}/{equipment.maxDurability:F0}";
-        
-        itemStatsText.text = stats;
+        string s = "";
+        if (e.attack       > 0) s += $"ê³µê²©ë ¥: {e.attack}\n";
+        if (e.defense      > 0) s += $"ë°©ì–´ë ¥: {e.defense}\n";
+        if (e.upgradeLevel > 0) s += $"ê°•í™”: +{e.upgradeLevel}\n";
+        if (e.isInscribed)      s += $"ê°ì¸: {GetInscriptionName(e.inscriptionType)}\n";
+        s += $"ë‚´êµ¬ë„: {e.durability:F0}/{e.maxDurability:F0}";
+        return s;
     }
-    
-    private void ShowRelicStats(RelicData relic)
+
+    private string GetRelicStats(RelicData r) =>
+        r.isIdentified ? r.relicEffect : "ë¯¸í™•ì¸ ìœ ë¬¼\nê°ì •ì´ í•„ìš”í•©ë‹ˆë‹¤.";
+
+    private string GetItemTypeName(ItemType type) => type switch
     {
-        if (relic.isIdentified)
-        {
-            itemStatsText.text = relic.relicEffect;
-        }
-        else
-        {
-            itemStatsText.text = "¹ÌÈ®ÀÎ À¯¹°\n°¨Á¤ÀÌ ÇÊ¿äÇÕ´Ï´Ù.";
-        }
-    }
-    
-    private string GetItemTypeName(ItemType type)
+        ItemType.Equipment  => "ìž¥ë¹„",
+        ItemType.Consumable => "ì†Œë¹„ ì•„ì´í…œ",
+        ItemType.Relic      => "ìœ ë¬¼",
+        ItemType.Resource   => "ìžì›",
+        ItemType.QuestItem  => "í€˜ìŠ¤íŠ¸ ì•„ì´í…œ",
+        _                   => "ê¸°íƒ€"
+    };
+
+    private string GetInscriptionName(InscriptionType type) => type switch
     {
-        switch (type)
-        {
-            case ItemType.Equipment: return "Àåºñ";
-            case ItemType.Consumable: return "¼Òºñ ¾ÆÀÌÅÛ";
-            case ItemType.Relic: return "À¯¹°";
-            case ItemType.Resource: return "ÀÚ¿ø";
-            case ItemType.QuestItem: return "Äù½ºÆ® ¾ÆÀÌÅÛ";
-            default: return "±âÅ¸";
-        }
-    }
-    
-    private string GetInscriptionName(InscriptionType type)
+        InscriptionType.Fire     => "ë¶ˆ",
+        InscriptionType.Water    => "ë¬¼",
+        InscriptionType.Wind     => "ë°”ëžŒ",
+        InscriptionType.Earth    => "ë•…",
+        InscriptionType.Darkness => "ì–´ë‘ ",
+        _                        => "ì—†ìŒ"
+    };
+
+    private Color GetRarityColor(ItemRarity rarity) => rarity switch
     {
-        switch (type)
-        {
-            case InscriptionType.Fire: return "ºÒ";
-            case InscriptionType.Water: return "¹°";
-            case InscriptionType.Wind: return "¹Ù¶÷";
-            case InscriptionType.Earth: return "¶¥";
-            case InscriptionType.Darkness: return "¾îµÒ";
-            default: return "¾øÀ½";
-        }
-    }
-    
-    private Color GetRarityColor(ItemRarity rarity)
+        ItemRarity.Common    => new Color(0.8f, 0.8f, 0.8f),
+        ItemRarity.Uncommon  => new Color(0.3f, 1f,   0.3f),
+        ItemRarity.Rare      => new Color(0.3f, 0.5f, 1f),
+        ItemRarity.Epic      => new Color(0.8f, 0.3f, 1f),
+        ItemRarity.Legendary => new Color(1f,   0.6f, 0f),
+        _                    => Color.white
+    };
+
+    private Vector2 ClampToScreen(Vector2 pos)
     {
-        switch (rarity)
-        {
-            case ItemRarity.Common:
-                return new Color(0.8f, 0.8f, 0.8f); // È¸»ö
-            case ItemRarity.Uncommon:
-                return new Color(0.3f, 1f, 0.3f); // ÃÊ·Ï»ö
-            case ItemRarity.Rare:
-                return new Color(0.3f, 0.5f, 1f); // ÆÄ¶õ»ö
-            case ItemRarity.Epic:
-                return new Color(0.8f, 0.3f, 1f); // º¸¶ó»ö
-            case ItemRarity.Legendary:
-                return new Color(1f, 0.6f, 0f); // ÁÖÈ²»ö
-            default:
-                return Color.white;
-        }
-    }
-    
-    private Vector2 ClampToScreen(Vector2 position)
-    {
-        Vector2 screenSize = new Vector2(Screen.width, Screen.height);
-        Vector2 tooltipSize = tooltipRect.sizeDelta;
-        
-        // ¿À¸¥ÂÊ °æ°è
-        if (position.x + tooltipSize.x > screenSize.x)
-        {
-            position.x = screenSize.x - tooltipSize.x;
-        }
-        
-        // ¿ÞÂÊ °æ°è
-        if (position.x < 0)
-        {
-            position.x = 0;
-        }
-        
-        // À§ÂÊ °æ°è
-        if (position.y > screenSize.y)
-        {
-            position.y = screenSize.y;
-        }
-        
-        // ¾Æ·¡ÂÊ °æ°è
-        if (position.y - tooltipSize.y < 0)
-        {
-            position.y = tooltipSize.y;
-        }
-        
-        return position;
+        Vector2 screen  = new Vector2(Screen.width, Screen.height);
+        Vector2 tipSize = tooltipRect.sizeDelta;
+        pos.x = Mathf.Clamp(pos.x, 0, screen.x - tipSize.x);
+        pos.y = Mathf.Clamp(pos.y, tipSize.y, screen.y);
+        return pos;
     }
 }

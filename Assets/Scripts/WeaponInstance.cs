@@ -27,6 +27,24 @@ public class WeaponInstance : ItemInstance
         EnhancementLevel = 0;
     }
 
+    /// <summary>
+    /// 테스트 전용 생성자 — WeaponType 강제 지정
+    /// HitboxSystem ContextMenu 테스트에서 사용
+    /// </summary>
+    public WeaponInstance(WeaponData data, WeaponType overrideType) : base(data)
+    {
+        EnhancementLevel = 0;
+        _overrideWeaponType = overrideType;
+        _hasOverride        = true;
+    }
+
+    private WeaponType _overrideWeaponType;
+    private bool       _hasOverride;
+
+    /// <summary>WeaponData 타입 (오버라이드 있으면 우선 사용)</summary>
+    public WeaponType ResolvedWeaponType =>
+        _hasOverride ? _overrideWeaponType : (WeaponData?.WeaponType ?? WeaponType.Sword);
+
     // ─────────────────────── 강화 메서드 ───────────────────────
 
     /// <summary>

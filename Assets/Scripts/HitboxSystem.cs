@@ -100,10 +100,10 @@ public class HitboxSystem : MonoBehaviour
             return;
         }
 
-        _lastWeaponType = weapon.WeaponData.WeaponType;
+        _lastWeaponType = weapon.ResolvedWeaponType;
         _lastAttackTime = Time.time;
 
-        switch (weapon.WeaponData.WeaponType)
+        switch (weapon.ResolvedWeaponType)
         {
             case WeaponType.Dagger:
                 StartCoroutine(AttackDagger(onHit));
@@ -406,8 +406,7 @@ public class HitboxSystem : MonoBehaviour
         }
 
         var testWeapon = ScriptableObject.CreateInstance<WeaponData>();
-        testWeapon.WeaponType = WeaponType.Dagger;
-        var weaponInstance = new WeaponInstance(testWeapon);
+        var weaponInstance = new WeaponInstance(testWeapon, WeaponType.Dagger);
 
         PerformAttack(weaponInstance, (target, hitIndex) =>
         {
@@ -425,8 +424,7 @@ public class HitboxSystem : MonoBehaviour
         }
 
         var testWeapon = ScriptableObject.CreateInstance<WeaponData>();
-        testWeapon.WeaponType = WeaponType.Sword;
-        var weaponInstance = new WeaponInstance(testWeapon);
+        var weaponInstance = new WeaponInstance(testWeapon, WeaponType.Sword);
 
         PerformAttack(weaponInstance, (target, hitIndex) =>
         {
@@ -444,8 +442,7 @@ public class HitboxSystem : MonoBehaviour
         }
 
         var testWeapon = ScriptableObject.CreateInstance<WeaponData>();
-        testWeapon.WeaponType = WeaponType.Spear;
-        var weaponInstance = new WeaponInstance(testWeapon);
+        var weaponInstance = new WeaponInstance(testWeapon, WeaponType.Spear);
 
         PerformAttack(weaponInstance, (target, hitIndex) =>
         {

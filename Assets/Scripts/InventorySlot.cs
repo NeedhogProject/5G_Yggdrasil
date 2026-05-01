@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
@@ -65,27 +65,20 @@ public class InventorySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHa
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (highlightImage != null)
-        {
             highlightImage.gameObject.SetActive(true);
-        }
-        
-        if (isOccupied && currentItem != null && UIItemTooltip.Instance != null)
-        {
-            UIItemTooltip.Instance.ShowTooltip(currentItem, transform.position);
-        }
+
+        if (isOccupied && currentItem != null)
+            UIItemTooltip.Instance?.ShowTooltip(currentItem, transform.position);
     }
-    
+
     public void OnPointerExit(PointerEventData eventData)
     {
         if (highlightImage != null)
-        {
             highlightImage.gameObject.SetActive(false);
-        }
-        
-        if (UIItemTooltip.Instance != null)
-        {
-            UIItemTooltip.Instance.HideTooltip();
-        }
+
+        // 다른 슬롯으로 이동하면 거기서 ShowTooltip이 호출되므로 Hide 생략
+        // 슬롯 밖 완전히 벗어날 때만 Hide
+        UIItemTooltip.Instance?.HideTooltip();
     }
     
     public void OnPointerClick(PointerEventData eventData)
