@@ -64,7 +64,6 @@ public class InventorySystem : MonoBehaviour
                 InventorySlot slot = slotObj.GetComponent<InventorySlot>();
                 
                 slot.slotIndex = y * gridWidth + x;
-                slot.slotSize = new Vector2Int(1, 1);
                 
                 slots.Add(slot);
             }
