@@ -181,7 +181,7 @@ public class PlayerEquipment : MonoBehaviour
     /// <summary>슬롯 지정 해제</summary>
     public ArmorInstance UnequipArmorSlot(ArmorSlot slot)
     {
-        var armor = _armorSlots[slot];
+        ArmorInstance armor = _armorSlots[slot];
         if (armor == null) return null;
         DetachArmor(armor);
         OnEquipmentChanged?.Invoke();
@@ -191,7 +191,7 @@ public class PlayerEquipment : MonoBehaviour
     /// <summary>무기 해제</summary>
     public WeaponInstance UnequipWeapon()
     {
-        var weapon = EquippedWeapon;
+        WeaponInstance weapon = EquippedWeapon;
         if (weapon == null) return null;
         DetachWeapon(weapon);
         OnEquipmentChanged?.Invoke();
@@ -206,7 +206,7 @@ public class PlayerEquipment : MonoBehaviour
     /// </summary>
     public List<ItemInstance> UnequipAll()
     {
-        var dropped = new List<ItemInstance>();
+        List<ItemInstance> dropped = new List<ItemInstance>();
 
         if (EquippedWeapon != null)
         {
@@ -214,10 +214,10 @@ public class PlayerEquipment : MonoBehaviour
             DetachWeapon(EquippedWeapon);
         }
 
-        foreach (var slot in System.Enum.GetValues(typeof(ArmorSlot)))
+        foreach (object slot in System.Enum.GetValues(typeof(ArmorSlot)))
         {
-            var armorSlot = (ArmorSlot)slot;
-            var armor     = _armorSlots[armorSlot];
+            ArmorSlot armorSlot = (ArmorSlot)slot;
+            ArmorInstance armor = _armorSlots[armorSlot];
             if (armor == null) continue;
             dropped.Add(armor);
             DetachArmor(armor);
@@ -241,7 +241,7 @@ public class PlayerEquipment : MonoBehaviour
     /// <summary>현재 장착 중인 모든 방어구 목록</summary>
     public IEnumerable<ArmorInstance> GetAllArmors()
     {
-        foreach (var armor in _armorSlots.Values)
+        foreach (ArmorInstance armor in _armorSlots.Values)
             if (armor != null) yield return armor;
     }
 
@@ -251,7 +251,7 @@ public class PlayerEquipment : MonoBehaviour
         get
         {
             float total = 0f;
-            foreach (var armor in GetAllArmors())
+            foreach (ArmorInstance armor in GetAllArmors())
                 total += armor.DefenseBonus;
             return total;
         }

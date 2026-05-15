@@ -120,7 +120,7 @@ public class ItemData : ScriptableObject
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        if (!_isStackable) _maxStack = 1;
+        if (_isStackable == false) _maxStack = 1;
         if (_buyPrice  < 0) _buyPrice  = 0;
         if (_sellPrice < 0) _sellPrice = 0;
         if (_sellPrice > _buyPrice && _buyPrice > 0)

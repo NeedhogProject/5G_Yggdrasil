@@ -37,14 +37,14 @@ public class ResourceInventory : MonoBehaviour
     /// <summary>자원 추가</summary>
     public void AddResource(InscriptionType type, int amount)
     {
-        if (!_resources.ContainsKey(type) || type == InscriptionType.None) return;
+        if (_resources.ContainsKey(type) == false || type == InscriptionType.None) return;
         _resources[type] = Mathf.Clamp(_resources[type] + amount, 0, MAX_STACK);
     }
 
     /// <summary>자원 소모 — InscriptionMasterSystem 에서 각인 시 호출</summary>
     public void RemoveResource(InscriptionType type, int amount)
     {
-        if (!_resources.ContainsKey(type)) return;
+        if (_resources.ContainsKey(type) == false) return;
         _resources[type] = Mathf.Max(0, _resources[type] - amount);
     }
 }

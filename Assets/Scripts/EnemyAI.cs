@@ -126,7 +126,7 @@ public class EnemyAI : MonoBehaviour
         }
 
         // 목적지 도착 시 대기 후 새 목적지
-        if (!_agent.pathPending && _agent.remainingDistance <= _agent.stoppingDistance)
+        if (_agent.pathPending == false && _agent.remainingDistance <= _agent.stoppingDistance)
         {
             _stateTimer = patrolWaitTime;
             TransitionTo(AIState.Idle);
@@ -148,7 +148,7 @@ public class EnemyAI : MonoBehaviour
         }
 
         // 감지 범위 밖 → 순찰 복귀
-        if (!IsPlayerInRange(loseTargetRange))
+        if (IsPlayerInRange(loseTargetRange) == false)
             TransitionTo(AIState.Patrol);
     }
 
@@ -160,14 +160,14 @@ public class EnemyAI : MonoBehaviour
         LookAtPlayer();
 
         // 공격 범위 밖 → 추적
-        if (!IsPlayerInRange(_base.AttackRange))
+        if (IsPlayerInRange(_base.AttackRange) == false)
         {
             TransitionTo(AIState.Chase);
             return;
         }
 
         // 감지 범위 밖 → 순찰
-        if (!IsPlayerInRange(loseTargetRange))
+        if (IsPlayerInRange(loseTargetRange) == false)
         {
             TransitionTo(AIState.Patrol);
             return;
@@ -232,7 +232,7 @@ public class EnemyAI : MonoBehaviour
         // 플레이어에게 데미지 전달
         if (_player == null) return;
 
-        var playerStats = _player.GetComponent<PlayerStats>();
+        PlayerStats playerStats = _player.GetComponent<PlayerStats>();
         if (playerStats == null) return;
 
         float actualDamage = playerStats.TakeDamage(_base.AttackPower);

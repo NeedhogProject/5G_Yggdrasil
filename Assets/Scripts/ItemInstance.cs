@@ -54,7 +54,7 @@ public class ItemInstance
     /// </summary>
     public int AddStack(int amount)
     {
-        if (!Data.IsStackable) return 0;
+        if (Data.IsStackable == false) return 0;
         int before = StackCount;
         StackCount = Mathf.Clamp(StackCount + amount, 1, Data.MaxStack);
         return StackCount - before;

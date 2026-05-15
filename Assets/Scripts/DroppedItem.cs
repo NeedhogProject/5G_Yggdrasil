@@ -59,14 +59,14 @@ public class DroppedItem : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player") && other.GetComponent<PlayerStats>() == null) return;
+        if (other.CompareTag("Player") == false && other.GetComponent<PlayerStats>() == null) return;
         _playerInRange = true;
         Debug.Log($"[DroppedItem] 범위 진입 — E키로 {_itemInstance?.Data?.ItemName ?? "아이템"} 획득");
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player") && other.GetComponent<PlayerStats>() == null) return;
+        if (other.CompareTag("Player") == false && other.GetComponent<PlayerStats>() == null) return;
         _playerInRange = false;
     }
 
@@ -78,7 +78,7 @@ public class DroppedItem : MonoBehaviour
             return;
         }
 
-        var inventory = InventorySystem.Instance;
+        InventorySystem inventory = InventorySystem.Instance;
         if (inventory == null)
         {
             Debug.LogWarning("[DroppedItem] InventorySystem.Instance 없음");

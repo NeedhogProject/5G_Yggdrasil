@@ -171,7 +171,7 @@ public class SaveSystem : MonoBehaviour
 
         // 창고
         if (houseSystem != null)
-            foreach (var item in houseSystem.GetStorageItems())
+            foreach (ItemInstance item in houseSystem.GetStorageItems())
                 data.storageItems.Add(SerializeItem(item));
 
         // 인벤토리 (InventorySystem 완성 후 연동)
@@ -201,7 +201,7 @@ public class SaveSystem : MonoBehaviour
     /// </summary>
     public bool Load(int slotIndex)
     {
-        if (!HasSave(slotIndex))
+        if (HasSave(slotIndex) == false)
         {
             Debug.LogWarning($"[SaveSystem] 슬롯 {slotIndex} 에 저장 데이터 없음");
             return false;
@@ -274,7 +274,7 @@ public class SaveSystem : MonoBehaviour
     {
         if (item == null) return null;
 
-        var saved = new SavedItemInstance
+        SavedItemInstance saved = new SavedItemInstance
         {
             instanceId    = item.InstanceId,
             itemDataName  = item.Data?.name ?? "",
@@ -304,7 +304,7 @@ public class SaveSystem : MonoBehaviour
     /// <summary>슬롯 메타 정보 반환 (타이틀 UI 표시용)</summary>
     public SaveData GetSaveMeta(int slotIndex)
     {
-        if (!HasSave(slotIndex)) return null;
+        if (HasSave(slotIndex) == false) return null;
         try
         {
             string json = File.ReadAllText(GetSavePath(slotIndex));
@@ -317,7 +317,7 @@ public class SaveSystem : MonoBehaviour
     public bool DeleteSave(int slotIndex)
     {
         string path = GetSavePath(slotIndex);
-        if (!File.Exists(path)) return false;
+        if (File.Exists(path) == false) return false;
         File.Delete(path);
         Debug.Log($"[SaveSystem] 슬롯 {slotIndex} 삭제");
         return true;
@@ -326,10 +326,10 @@ public class SaveSystem : MonoBehaviour
     /// <summary>전체 슬롯 상태 반환 (타이틀 UI 용)</summary>
     public (bool exists, string dateTime, int floor)[] GetAllSlotInfo()
     {
-        var result = new (bool, string, int)[SLOT_COUNT];
+        (bool, string, int)[] result = new (bool, string, int)[SLOT_COUNT];
         for (int i = 0; i < SLOT_COUNT; i++)
         {
-            var meta = GetSaveMeta(i);
+            SaveData meta = GetSaveMeta(i);
             result[i] = meta != null
                 ? (true, meta.saveDateTime, meta.currentFloor)
                 : (false, "", 0);

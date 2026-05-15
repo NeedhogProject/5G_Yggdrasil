@@ -191,7 +191,7 @@ public class InscriptionMasterSystem : MonoBehaviour
             return;
         }
         
-        if (!selectedEquipment.isInscribed)
+        if (selectedEquipment.isInscribed == false)
         {
             dialogueText.text = "각인되지 않은 장비일세.";
             return;

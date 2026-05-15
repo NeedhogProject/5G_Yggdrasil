@@ -34,7 +34,7 @@ public class StemAscender : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (other.CompareTag("Player") == false) return;
         _playerInRange = true;
         _playerObj     = other.gameObject;
 
@@ -44,7 +44,7 @@ public class StemAscender : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (other.CompareTag("Player") == false) return;
         _playerInRange = false;
         _playerObj     = null;
 
@@ -55,8 +55,8 @@ public class StemAscender : MonoBehaviour
 
     private void Update()
     {
-        if (!_playerInRange) return;
-        if (!Keyboard.current.eKey.wasPressedThisFrame) return;
+        if (_playerInRange == false) return;
+        if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
 
         GoUp();
     }

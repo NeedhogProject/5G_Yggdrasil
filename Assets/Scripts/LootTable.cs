@@ -81,7 +81,7 @@ public class LootTable : MonoBehaviour
     /// </summary>
     public List<(ItemData item, int count)> RollDrop(Vector3 dropPosition)
     {
-        var results = new List<(ItemData, int)>();
+        List<(ItemData, int)> results = new List<(ItemData, int)>();
 
         if (lootEntries == null || lootEntries.Count == 0) return results;
 
@@ -118,7 +118,7 @@ public class LootTable : MonoBehaviour
 
         // 전체 가중치 합산
         float totalWeight = 0f;
-        foreach (var entry in lootEntries)
+        foreach (LootEntry entry in lootEntries)
         {
             if (entry.item == null) continue;
             totalWeight += GetAdjustedWeight(entry);
@@ -129,7 +129,7 @@ public class LootTable : MonoBehaviour
         float roll = Random.Range(0f, totalWeight);
         float cumulative = 0f;
 
-        foreach (var entry in lootEntries)
+        foreach (LootEntry entry in lootEntries)
         {
             if (entry.item == null) continue;
             cumulative += GetAdjustedWeight(entry);
@@ -172,7 +172,7 @@ public class LootTable : MonoBehaviour
             GameObject dropped = Instantiate(prefab, spawnPos, Quaternion.identity);
 
             // DroppedItem에 아이템 데이터 주입
-            var droppedComp = dropped.GetComponent<DroppedItem>();
+            DroppedItem droppedComp = dropped.GetComponent<DroppedItem>();
             if (droppedComp != null)
             {
                 ItemInstance instance = new ItemInstance(item);
@@ -198,8 +198,8 @@ public class LootTable : MonoBehaviour
     [ContextMenu("드롭 테스트 (에디터)")]
     private void TestRoll()
     {
-        var results = RollDrop(transform.position);
-        foreach (var (item, count) in results)
+        List<(ItemData item, int count)> results = RollDrop(transform.position);
+        foreach ((ItemData item, int count) in results)
             Debug.Log($"  → {item.ItemName} x{count}");
     }
 #endif

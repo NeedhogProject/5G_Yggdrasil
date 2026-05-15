@@ -66,14 +66,14 @@ public class StemManager : MonoBehaviour
         // 3→4층: 줄기 1개 고정 → 열쇠 1종만 (northKey 사용)
         if (stems.Count == 1)
         {
-            var stem = stems[0];
+            StemConnector stem = stems[0];
             _directionKeyMap[ToKeyDirection(stem.Direction)] = GetKeyByDirection(ToKeyDirection(stem.Direction));
             Debug.Log($"[StemManager] {currentFloor}층 (고정 줄기) 열쇠: {stem.Direction}");
             return;
         }
 
         // 1~3층: 줄기 4개 → 열쇠 4종 1:1 랜덤 배정
-        var directions = new List<KeyDirection>
+        List<KeyDirection> directions = new List<KeyDirection>
             { KeyDirection.North, KeyDirection.South, KeyDirection.East, KeyDirection.West };
 
         // Fisher-Yates 셔플
@@ -100,7 +100,7 @@ public class StemManager : MonoBehaviour
         if (keyEnemies == null || keyEnemies.Count == 0) return;
 
         // 분배할 열쇠 목록 수집
-        var keys = new List<FloorKeyData>(_directionKeyMap.Values);
+        List<FloorKeyData> keys = new List<FloorKeyData>(_directionKeyMap.Values);
 
         // 생명체 수와 열쇠 수 중 작은 쪽 기준으로 분배
         int count = Mathf.Min(keyEnemies.Count, keys.Count);
@@ -125,7 +125,7 @@ public class StemManager : MonoBehaviour
     /// </summary>
     public FloorKeyData OnEnemyDied(GameObject enemy)
     {
-        if (!_enemyKeyMap.TryGetValue(enemy, out var key)) return null;
+        if (_enemyKeyMap.TryGetValue(enemy, out FloorKeyData key) == false) return null;
         _enemyKeyMap.Remove(enemy);
         Debug.Log($"[StemManager] {enemy.name} 사망 → {key.KeyDirection} 열쇠 드롭");
         return key;
@@ -142,7 +142,7 @@ public class StemManager : MonoBehaviour
         if (stem.IsUnlocked) return;
 
         // 이 줄기에 필요한 열쇠 확인
-        if (!_directionKeyMap.TryGetValue(ToKeyDirection(stem.Direction), out var requiredKey))
+        if (_directionKeyMap.TryGetValue(ToKeyDirection(stem.Direction), out FloorKeyData requiredKey) == false)
         {
             Debug.Log($"[StemManager] {stem.Direction} 줄기에 대응하는 열쇠 없음");
             return;
@@ -150,11 +150,11 @@ public class StemManager : MonoBehaviour
 
         // ── 인벤토리 연동 (InventorySystem 완성 후 주석 해제) ──────────────
         /*
-        var inventory = playerObj.GetComponent<InventorySystem>();
+        InventorySystem inventory = playerObj.GetComponent<InventorySystem>();
         if (inventory == null) return;
 
         bool hasKey = inventory.TryConsumeItem(requiredKey);
-        if (!hasKey)
+        if (hasKey == false)
         {
             Debug.Log($"[StemManager] {stem.Direction} 열쇠 없음 — 삽입 불가");
             // TODO: UI 메시지 ("맞는 열쇠가 없습니다") 표시
@@ -207,7 +207,7 @@ public class StemManager : MonoBehaviour
 
     /// <summary>특정 줄기에 필요한 열쇠 반환 (UI 힌트용)</summary>
     public FloorKeyData GetRequiredKey(KeyDirection dir) =>
-        _directionKeyMap.TryGetValue(dir, out var k) ? k : null;
+        _directionKeyMap.TryGetValue(dir, out FloorKeyData k) ? k : null;
 
     /// <summary>디버그: 열쇠 분배 재추첨</summary>
     [ContextMenu("열쇠 재분배")]

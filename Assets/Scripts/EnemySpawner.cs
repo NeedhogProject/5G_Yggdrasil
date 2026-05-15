@@ -56,14 +56,14 @@ public class SpawnPoint : MonoBehaviour
 
         // 총 가중치 합산
         int totalWeight = 0;
-        foreach (var e in enemyEntries)
+        foreach (EnemySpawnEntry e in enemyEntries)
             if (e.prefab != null) totalWeight += e.weight;
 
         if (totalWeight <= 0) return null;
 
         int roll = Random.Range(0, totalWeight);
         int cumulative = 0;
-        foreach (var e in enemyEntries)
+        foreach (EnemySpawnEntry e in enemyEntries)
         {
             if (e.prefab == null) continue;
             cumulative += e.weight;
@@ -175,7 +175,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void CheckSpawnPoints()
     {
-        foreach (var sp in spawnPoints)
+        foreach (SpawnPoint sp in spawnPoints)
         {
             if (sp == null || sp.HasSpawned) continue;
             if (sp.SelectRandomPrefab() == null) continue;
@@ -209,7 +209,7 @@ public class EnemySpawner : MonoBehaviour
                                        Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
 
         // 난이도 배율 적용
-        var enemyBase = enemy.GetComponent<EnemyBase>();
+        EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
         if (enemyBase != null)
         {
             enemyBase.ApplyDifficultyScale(healthMultiplier, attackMultiplier);
@@ -241,7 +241,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         // 스폰 포인트 인덱스 셔플
-        var indices = new List<int>();
+        List<int> indices = new List<int>();
         for (int i = 0; i < spawnPoints.Count; i++) indices.Add(i);
 
         for (int i = indices.Count - 1; i > 0; i--)

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -166,9 +166,9 @@ public class AudioManager : MonoBehaviour
 
     private void BuildLookupMaps()
     {
-        foreach (var entry in bgmEntries)
+        foreach (BGMEntry entry in bgmEntries)
             bgmMap[entry.track] = entry;
-        foreach (var entry in sfxEntries)
+        foreach (SFXEntry entry in sfxEntries)
             sfxMap[entry.sfx] = entry;
     }
 
@@ -218,7 +218,7 @@ public class AudioManager : MonoBehaviour
     public void PlayBGM(BGMTrack track, float fadeTime = 0f)
     {
         if (track == currentTrack) return;
-        if (!bgmMap.TryGetValue(track, out BGMEntry entry) || entry.clip == null)
+        if (bgmMap.TryGetValue(track, out BGMEntry entry) == false || entry.clip == null)
         {
             Debug.LogWarning($"[AudioManager] BGM 클립 없음: {track}");
             return;
@@ -319,7 +319,7 @@ public class AudioManager : MonoBehaviour
     /// <summary>효과음 재생 (풀링)</summary>
     public void PlaySFX(SFXClip sfx)
     {
-        if (!sfxMap.TryGetValue(sfx, out SFXEntry entry) || entry.clip == null)
+        if (sfxMap.TryGetValue(sfx, out SFXEntry entry) == false || entry.clip == null)
         {
             Debug.LogWarning($"[AudioManager] SFX 클립 없음: {sfx}");
             return;
@@ -342,7 +342,7 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     public void PlaySFXAt(SFXClip sfx, Vector3 position)
     {
-        if (!sfxMap.TryGetValue(sfx, out SFXEntry entry) || entry.clip == null) return;
+        if (sfxMap.TryGetValue(sfx, out SFXEntry entry) == false || entry.clip == null) return;
         AudioSource.PlayClipAtPoint(entry.clip, position, entry.volume * sfxVolume);
     }
 
@@ -353,7 +353,7 @@ public class AudioManager : MonoBehaviour
         // 재생 완료된 active 소스 먼저 재활용 시도
         for (int i = sfxActive.Count - 1; i >= 0; i--)
         {
-            if (!sfxActive[i].isPlaying)
+            if (sfxActive[i].isPlaying == false)
             {
                 AudioSource recycled = sfxActive[i];
                 sfxActive.RemoveAt(i);

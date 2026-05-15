@@ -74,7 +74,7 @@ public class InventorySlot : MonoBehaviour,
         // 우클릭 → 장착/해제
         if (e.button == PointerEventData.InputButton.Right && isOccupied && currentItem != null)
         {
-            InventorySystem.Instance?.UseItem(currentItem);
+            InventorySystem.Instance?.UseOrEquipItem(currentItem);
         }
     }
 
@@ -82,7 +82,7 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData e)
     {
-        if (!isOccupied || currentItem == null) return;
+        if (isOccupied == false || currentItem == null) return;
 
         _draggingSlot = this;
         UIItemTooltip.Instance?.HideTooltip();
@@ -92,11 +92,11 @@ public class InventorySlot : MonoBehaviour,
         _dragIcon.transform.SetParent(_canvas.transform, false);
         _dragIcon.transform.SetAsLastSibling();
 
-        var img = _dragIcon.AddComponent<Image>();
+        Image img = _dragIcon.AddComponent<Image>();
         img.sprite          = currentItem.itemIcon;
         img.raycastTarget   = false;
 
-        var rect = _dragIcon.GetComponent<RectTransform>();
+        RectTransform rect = _dragIcon.GetComponent<RectTransform>();
         rect.sizeDelta      = new Vector2(50, 50);
         rect.anchorMin      = Vector2.zero;
         rect.anchorMax      = Vector2.zero;
@@ -112,7 +112,12 @@ public class InventorySlot : MonoBehaviour,
     {
         if (_dragIcon == null) return;
 
-        _dragIcon.GetComponent<RectTransform>().position = e.position;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            _canvas.GetComponent<RectTransform>(),
+            e.position, _canvas.worldCamera,
+            out Vector2 localPoint);
+
+        _dragIcon.GetComponent<RectTransform>().anchoredPosition = localPoint;
     }
 
     // ─── 드래그 끝 (빈 공간에 놓음) ───

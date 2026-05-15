@@ -142,7 +142,7 @@ public class PlayerController : MonoBehaviour
         Ray ray = _mainCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
         Plane groundPlane = new Plane(Vector3.up, transform.position);
 
-        if (!groundPlane.Raycast(ray, out float distance)) return;
+        if (groundPlane.Raycast(ray, out float distance) == false) return;
 
         Vector3 worldMousePos = ray.GetPoint(distance);
         Vector3 direction     = worldMousePos - transform.position;
@@ -160,7 +160,7 @@ public class PlayerController : MonoBehaviour
 
     private void HandleSprintMentalCost()
     {
-        if (!IsSprinting) return;
+        if (IsSprinting == false) return;
         if (sprintMentalCostPerSec <= 0f) return;
         if (_stats == null) return;
 

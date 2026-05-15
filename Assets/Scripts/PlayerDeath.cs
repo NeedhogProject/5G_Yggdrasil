@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -98,7 +99,7 @@ public class PlayerDeath : MonoBehaviour
         // 장착 장비 전부 해제 및 삭제
         if (playerEquipment != null)
         {
-            var droppedItems = playerEquipment.UnequipAll();
+            List<ItemInstance> droppedItems = playerEquipment.UnequipAll();
             Debug.Log($"[PlayerDeath] 장착 장비 {droppedItems.Count}개 삭제");
         }
 

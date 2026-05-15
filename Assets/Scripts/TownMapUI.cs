@@ -145,7 +145,7 @@ public class TownMapUI : MonoBehaviour
     
     public void CloseMap()
     {
-        if (!isMapOpen) return;
+        if (isMapOpen == false) return;
         
         StartCoroutine(FadeOut());
         
@@ -259,7 +259,7 @@ public class TownMapUI : MonoBehaviour
         if (selectedLocation == null || player == null) return;
         
         // 텔레포트 가능 여부 확인
-        if (!selectedLocation.canTeleport)
+        if (selectedLocation.canTeleport == false)
         {
             Debug.Log("이 위치로는 이동할 수 없습니다.");
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);

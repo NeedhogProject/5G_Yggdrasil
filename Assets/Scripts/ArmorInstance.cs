@@ -60,7 +60,7 @@ public class ArmorInstance : ItemInstance
     /// </summary>
     public System.Collections.Generic.List<RuneElement> GetContributingElements()
     {
-        var result = new System.Collections.Generic.List<RuneElement>();
+        System.Collections.Generic.List<RuneElement> result = new System.Collections.Generic.List<RuneElement>();
         if (RuneSlot1 != RuneElement.None && !result.Contains(RuneSlot1))
             result.Add(RuneSlot1);
         if (RuneSlot2 != RuneElement.None && !result.Contains(RuneSlot2))
@@ -93,7 +93,7 @@ public class ArmorInstance : ItemInstance
     /// <summary>해제 처리 (PlayerEquipment 에서 호출)</summary>
     public bool Unequip()
     {
-        if (!IsEquipped) return false;
+        if (IsEquipped == false) return false;
         IsEquipped = false;
         return true;
     }

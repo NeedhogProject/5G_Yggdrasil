@@ -64,7 +64,7 @@ public class StemConnector : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (other.CompareTag("Player") == false) return;
         _playerInRange = true;
         _playerObj     = other.gameObject;
         Debug.Log($"[StemConnector] {direction} 줄기 범위 진입");
@@ -73,7 +73,7 @@ public class StemConnector : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (other.CompareTag("Player") == false) return;
         _playerInRange = false;
         _playerObj     = null;
         HideDirectionChoice();
@@ -83,9 +83,9 @@ public class StemConnector : MonoBehaviour
 
     private void Update()
     {
-        if (!_playerInRange) return;
+        if (_playerInRange == false) return;
         if (IsUnlocked) return;
-        if (!Keyboard.current.eKey.wasPressedThisFrame) return;
+        if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
 
         StemManager.Instance?.TryInsertKey(_playerObj, this);
     }

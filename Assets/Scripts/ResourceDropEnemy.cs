@@ -70,7 +70,7 @@ public class ResourceDropEnemy : MonoBehaviour
     private void ValidateFloor()
     {
         int currentFloor = FloorManager.Instance?.CurrentFloor ?? 1;
-        if (!availableFloors.Contains(currentFloor))
+        if (availableFloors.Contains(currentFloor) == false)
         {
             // 이 층에 등장하면 안 되는 몬스터 — 오브젝트 비활성화
             Debug.LogWarning($"[ResourceDropEnemy] {gameObject.name} — " +
@@ -110,7 +110,7 @@ public class ResourceDropEnemy : MonoBehaviour
 
         GameObject dropped = Instantiate(droppedItemPrefab, spawnPos, Quaternion.identity);
 
-        var droppedItem = dropped.GetComponent<DroppedItem>();
+        DroppedItem droppedItem = dropped.GetComponent<DroppedItem>();
         if (droppedItem != null)
             droppedItem.Initialize(new ResourceInstance(dropResourceData, 1));
     }
@@ -127,7 +127,7 @@ public class ResourceDropEnemy : MonoBehaviour
         if (dropResourceData == null) return;
 
         // 층별 등장 규칙 자동 설정 힌트
-        var type = dropResourceData.ResourceType;
+        ResourceType type = dropResourceData.ResourceType;
         string hint = type switch
         {
             ResourceType.Fire     => "권장 등장 층: 1, 3",
@@ -137,7 +137,7 @@ public class ResourceDropEnemy : MonoBehaviour
             ResourceType.Darkness => "권장 등장 층: 1, 2, 3",
             _                     => ""
         };
-        if (!string.IsNullOrEmpty(hint))
+        if (string.IsNullOrEmpty(hint) == false)
             Debug.Log($"[ResourceDropEnemy: {name}] {hint}");
     }
 #endif

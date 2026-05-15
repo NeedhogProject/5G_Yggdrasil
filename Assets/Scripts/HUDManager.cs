@@ -127,7 +127,7 @@ public class HUDManager : MonoBehaviour
         if (defFill != null) defFill.color = defColor;
 
         // 세트 슬롯 초기화
-        foreach (var slot in setEffectSlots)
+        foreach (SetEffectSlotUI slot in setEffectSlots)
             slot?.SetInactive();
     }
 

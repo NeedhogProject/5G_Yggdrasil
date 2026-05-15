@@ -60,7 +60,7 @@ public class ArmorData : ItemData
     /// </summary>
     public System.Collections.Generic.List<RuneElement> GetContributingElements()
     {
-        var result = new System.Collections.Generic.List<RuneElement>();
+        System.Collections.Generic.List<RuneElement> result = new System.Collections.Generic.List<RuneElement>();
         if (runeSlot1 != RuneElement.None && !result.Contains(runeSlot1))
             result.Add(runeSlot1);
         if (runeSlot2 != RuneElement.None && !result.Contains(runeSlot2))

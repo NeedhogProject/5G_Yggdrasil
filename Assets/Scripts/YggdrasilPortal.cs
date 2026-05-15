@@ -28,7 +28,7 @@ public class YggdrasilPortal : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (other.CompareTag("Player") == false) return;
         _playerInRange = true;
         string hint = isTownSide ? "E - 위그드라실로 입장" : "E - 마을로 복귀";
         Debug.Log($"[YggdrasilPortal] {hint}");
@@ -37,15 +37,15 @@ public class YggdrasilPortal : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (other.CompareTag("Player") == false) return;
         _playerInRange = false;
         // TODO: HUD 힌트 숨김
     }
 
     private void Update()
     {
-        if (!_playerInRange) return;
-        if (!Keyboard.current.eKey.wasPressedThisFrame) return;
+        if (_playerInRange == false) return;
+        if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
 
         Interact();
     }

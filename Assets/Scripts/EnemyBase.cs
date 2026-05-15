@@ -158,7 +158,7 @@ public class EnemyBase : MonoBehaviour
 
     private void UpdateHPBar()
     {
-        if (!_hpBarVisible || hpBarHideDelay <= 0f) return;
+        if (_hpBarVisible == false || hpBarHideDelay <= 0f) return;
 
         _hpBarTimer -= Time.deltaTime;
         if (_hpBarTimer <= 0f)

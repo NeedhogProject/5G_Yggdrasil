@@ -34,7 +34,7 @@ public class UIItemTooltip : MonoBehaviour
 
     void Update()
     {
-        if (!tooltipPanel.activeSelf) return;
+        if (tooltipPanel.activeSelf == false) return;
 
         // 마우스 위치 즉시 따라가기 (Lerp 없이 — 깜빡임 원인 제거)
         Vector2 mousePos = Mouse.current.position.ReadValue();

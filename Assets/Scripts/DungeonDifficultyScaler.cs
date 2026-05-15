@@ -84,7 +84,7 @@ public class DungeonDifficultyScaler : MonoBehaviour
         CurrentDifficulty = data;
 
         // EnemySpawner 에 배율 + 스폰 수 적용
-        var spawner = FindFirstObjectByType<EnemySpawner>();
+        EnemySpawner spawner = FindFirstObjectByType<EnemySpawner>();
         if (spawner != null)
         {
             spawner.SetDifficultyScale(data.enemyHealthMult, data.enemyAttackMult);
@@ -92,7 +92,7 @@ public class DungeonDifficultyScaler : MonoBehaviour
         }
 
         // LootTable 전체에 희귀도 보너스 적용
-        foreach (var loot in FindObjectsByType<LootTable>(FindObjectsSortMode.None))
+        foreach (LootTable loot in FindObjectsByType<LootTable>(FindObjectsSortMode.None))
             loot.RarityBonus = data.rarityBonus;
 
         Debug.Log($"[DifficultyScaler] {floor}층 난이도 적용 — " +
@@ -104,7 +104,7 @@ public class DungeonDifficultyScaler : MonoBehaviour
 
     private FloorDifficultyData GetDifficultyData(int floor)
     {
-        foreach (var data in floorDifficulties)
+        foreach (FloorDifficultyData data in floorDifficulties)
             if (data.floor == floor) return data;
         return null;
     }

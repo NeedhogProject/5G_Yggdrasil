@@ -125,7 +125,7 @@ public class HitboxSystem : MonoBehaviour
     /// </summary>
     private IEnumerator AttackDagger(System.Action<GameObject, int> onHit)
     {
-        var hitTargetsPerWave = new HashSet<GameObject>();
+        HashSet<GameObject> hitTargetsPerWave = new HashSet<GameObject>();
         int totalHits = 0;
 
         for (int i = 0; i < daggerHitCount; i++)
@@ -138,7 +138,7 @@ public class HitboxSystem : MonoBehaviour
             Collider[] hits = Physics.OverlapBox(
                 center, halfExtents, transform.rotation, CombinedLayer);
 
-            foreach (var col in hits)
+            foreach (Collider col in hits)
             {
                 GameObject target = col.gameObject;
                 if (target == gameObject) continue;
@@ -186,7 +186,7 @@ public class HitboxSystem : MonoBehaviour
         float halfAngle = swordAngle * 0.5f;
         int hitCount = 0;
 
-        foreach (var col in hits)
+        foreach (Collider col in hits)
         {
             if (col.gameObject == gameObject) continue;
 
@@ -227,7 +227,7 @@ public class HitboxSystem : MonoBehaviour
             center, halfExtents, transform.rotation, CombinedLayer);
 
         // 거리순 정렬
-        var sorted = new List<Collider>(hits);
+        List<Collider> sorted = new List<Collider>(hits);
         sorted.Sort((a, b) =>
         {
             float dA = Vector3.Distance(transform.position, a.transform.position);
@@ -237,7 +237,7 @@ public class HitboxSystem : MonoBehaviour
 
         int hitCount = 0;
 
-        foreach (var col in sorted)
+        foreach (Collider col in sorted)
         {
             if (col.gameObject == gameObject) continue;
 
@@ -306,7 +306,7 @@ public class HitboxSystem : MonoBehaviour
 
     private void OnDrawGizmosSelected()
     {
-        if (!showGizmos) return;
+        if (showGizmos == false) return;
 
         switch (previewWeaponType)
         {
@@ -399,14 +399,14 @@ public class HitboxSystem : MonoBehaviour
     [ContextMenu("테스트: 단검 공격")]
     private void TestDaggerAttack()
     {
-        if (!Application.isPlaying)
+        if (Application.isPlaying == false)
         {
             Debug.LogWarning("[HitboxSystem] 플레이 모드에서만 테스트 가능합니다.");
             return;
         }
 
-        var testWeapon = ScriptableObject.CreateInstance<WeaponData>();
-        var weaponInstance = new WeaponInstance(testWeapon, WeaponType.Dagger);
+        WeaponData testWeapon = ScriptableObject.CreateInstance<WeaponData>();
+        WeaponInstance weaponInstance = new WeaponInstance(testWeapon, WeaponType.Dagger);
 
         PerformAttack(weaponInstance, (target, hitIndex) =>
         {
@@ -417,14 +417,14 @@ public class HitboxSystem : MonoBehaviour
     [ContextMenu("테스트: 장검 공격")]
     private void TestSwordAttack()
     {
-        if (!Application.isPlaying)
+        if (Application.isPlaying == false)
         {
             Debug.LogWarning("[HitboxSystem] 플레이 모드에서만 테스트 가능합니다.");
             return;
         }
 
-        var testWeapon = ScriptableObject.CreateInstance<WeaponData>();
-        var weaponInstance = new WeaponInstance(testWeapon, WeaponType.Sword);
+        WeaponData testWeapon = ScriptableObject.CreateInstance<WeaponData>();
+        WeaponInstance weaponInstance = new WeaponInstance(testWeapon, WeaponType.Sword);
 
         PerformAttack(weaponInstance, (target, hitIndex) =>
         {
@@ -435,14 +435,14 @@ public class HitboxSystem : MonoBehaviour
     [ContextMenu("테스트: 창 공격")]
     private void TestSpearAttack()
     {
-        if (!Application.isPlaying)
+        if (Application.isPlaying == false)
         {
             Debug.LogWarning("[HitboxSystem] 플레이 모드에서만 테스트 가능합니다.");
             return;
         }
 
-        var testWeapon = ScriptableObject.CreateInstance<WeaponData>();
-        var weaponInstance = new WeaponInstance(testWeapon, WeaponType.Spear);
+        WeaponData testWeapon = ScriptableObject.CreateInstance<WeaponData>();
+        WeaponInstance weaponInstance = new WeaponInstance(testWeapon, WeaponType.Spear);
 
         PerformAttack(weaponInstance, (target, hitIndex) =>
         {

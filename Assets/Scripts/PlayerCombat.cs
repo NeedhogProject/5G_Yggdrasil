@@ -119,12 +119,12 @@ public class PlayerCombat : MonoBehaviour
     /// <summary>Attack 액션 콜백 (마우스 좌클릭)</summary>
     public void OnAttack(InputValue value)
     {
-        if (!value.isPressed) return;
+        if (value.isPressed == false) return;
 
         // UI 위에서 클릭 시 공격 차단
         if (_isPointerOverUI) return;
 
-        if (!CanAttack)
+        if (CanAttack == false)
         {
 #if UNITY_EDITOR
             if (CurrentWeapon == null)
@@ -164,7 +164,7 @@ public class PlayerCombat : MonoBehaviour
         if (target == null) return;
 
         // 적 피격
-        if (target.TryGetComponent<EnemyBase>(out var enemy))
+        if (target.TryGetComponent<EnemyBase>(out EnemyBase enemy))
         {
             float damage = CalculateDamage(hitIndex);
             enemy.TakeDamage(damage);
@@ -172,7 +172,7 @@ public class PlayerCombat : MonoBehaviour
         }
 
         // 자원 노드 채집
-        if (target.TryGetComponent<ResourceNode>(out var resourceNode))
+        if (target.TryGetComponent<ResourceNode>(out ResourceNode resourceNode))
         {
             resourceNode.OnHit();
             return;

@@ -89,7 +89,7 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!isEquipped || currentEquipment == null || playerEquipment == null) return;
+        if (isEquipped == false || currentEquipment == null || playerEquipment == null) return;
 
         if (eventData.button == PointerEventData.InputButton.Left ||
             eventData.button == PointerEventData.InputButton.Right)

@@ -81,7 +81,7 @@ public class ArmorSetManager : MonoBehaviour
     public void OnArmorUnequipped(ArmorInstance armor)
     {
         if (armor == null) return;
-        if (!_equippedArmors.Remove(armor)) return;
+        if (_equippedArmors.Remove(armor) == false) return;
 
         RecalculateSetEffects();
     }
@@ -100,9 +100,9 @@ public class ArmorSetManager : MonoBehaviour
             _elementCounts[e] = 0;
         }
 
-        foreach (var armor in _equippedArmors)
+        foreach (ArmorInstance armor in _equippedArmors)
         {
-            foreach (var elem in armor.GetContributingElements())
+            foreach (RuneElement elem in armor.GetContributingElements())
             {
                 if (_elementCounts.ContainsKey(elem))
                     _elementCounts[elem]++;
@@ -145,19 +145,19 @@ public class ArmorSetManager : MonoBehaviour
         SetEffectData data = GetData(element);
         if (data == null) return;
 
-        foreach (var bonus in data.GetStatBonuses(tier))
+        foreach (StatBonus bonus in data.GetStatBonuses(tier))
             ApplySingleBonus(bonus, add: true);
     }
 
     private void RemoveAllStatBonuses()
     {
-        foreach (var kv in _activeTiers)
+        foreach (System.Collections.Generic.KeyValuePair<RuneElement, SetTier> kv in _activeTiers)
         {
             if (kv.Value == SetTier.None) continue;
             SetEffectData data = GetData(kv.Key);
             if (data == null) continue;
 
-            foreach (var bonus in data.GetStatBonuses(kv.Value))
+            foreach (StatBonus bonus in data.GetStatBonuses(kv.Value))
                 ApplySingleBonus(bonus, add: false);
         }
     }
@@ -192,8 +192,8 @@ public class ArmorSetManager : MonoBehaviour
 
     private void TickCooldowns()
     {
-        var keys = _cooldownTimers.Keys.ToList();
-        foreach (var elem in keys)
+        System.Collections.Generic.List<RuneElement> keys = _cooldownTimers.Keys.ToList();
+        foreach (RuneElement elem in keys)
         {
             _cooldownTimers[elem] -= Time.deltaTime;
             if (_cooldownTimers[elem] <= 0f)
@@ -208,11 +208,11 @@ public class ArmorSetManager : MonoBehaviour
 
     private void TriggerSpecialEffect(RuneElement elem)
     {
-        if (!_activeTiers.TryGetValue(elem, out SetTier tier)) return;
+        if (_activeTiers.TryGetValue(elem, out SetTier tier) == false) return;
         SetEffectData data = GetData(elem);
         if (data == null) return;
 
-        foreach (var effect in data.GetSpecialEffects(tier))
+        foreach (SpecialEffect effect in data.GetSpecialEffects(tier))
             ApplySpecialEffect(effect);
     }
 
@@ -247,7 +247,7 @@ public class ArmorSetManager : MonoBehaviour
 
     private float GetCooldown(RuneElement elem)
     {
-        var effects = GetData(elem)?.GetSpecialEffects(_activeTiers[elem]);
+        SpecialEffect[] effects = GetData(elem)?.GetSpecialEffects(_activeTiers[elem]);
         if (effects == null || effects.Length == 0) return 5f;
         return effects[0].cooldown;
     }
@@ -259,13 +259,13 @@ public class ArmorSetManager : MonoBehaviour
 
     /// <summary>현재 원소의 활성 Tier 반환 (UI 표시용)</summary>
     public SetTier GetActiveTier(RuneElement elem) =>
-        _activeTiers.TryGetValue(elem, out var t) ? t : SetTier.None;
+        _activeTiers.TryGetValue(elem, out SetTier t) ? t : SetTier.None;
 
     /// <summary>현재 원소의 착용 카운트 반환 (UI 표시용)</summary>
     public int GetElementCount(RuneElement elem) =>
-        _elementCounts.TryGetValue(elem, out var c) ? c : 0;
+        _elementCounts.TryGetValue(elem, out int c) ? c : 0;
 
     /// <summary>특수 효과 쿨다운 남은 시간 반환 (UI 표시용)</summary>
     public float GetCooldownRemaining(RuneElement elem) =>
-        _cooldownTimers.TryGetValue(elem, out var t) ? Mathf.Max(0f, t) : 0f;
+        _cooldownTimers.TryGetValue(elem, out float t) ? Mathf.Max(0f, t) : 0f;
 }

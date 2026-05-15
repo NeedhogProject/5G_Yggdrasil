@@ -71,7 +71,7 @@ public class HouseSystem : MonoBehaviour
         get
         {
             int used = 0;
-            foreach (var item in _storageItems)
+            foreach (ItemInstance item in _storageItems)
                 used += item.Data.InventoryWidth * item.Data.InventoryHeight;
             return used;
         }
@@ -183,7 +183,7 @@ public class HouseSystem : MonoBehaviour
     /// </summary>
     public ItemInstance TakeFromStorage(ItemInstance item)
     {
-        if (!_storageItems.Remove(item)) return null;
+        if (_storageItems.Remove(item) == false) return null;
         Debug.Log($"[HouseSystem] 창고에서 꺼냄: {item.Data.ItemName}");
         return item;
     }
