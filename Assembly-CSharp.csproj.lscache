@@ -81,6 +81,7 @@ Assets/Scripts/
  InventoryUI.cs
  ItemData.cs
  ItemInstance.cs
+ ItemInventoryPanel.cs
  LootTable.cs
  MinimapUI.cs
  NPCDialogue.cs
@@ -481,6 +482,7 @@ Library/ScriptAssemblies/
  Unity.Properties.SourceGenerator.dll
  Unity.SourceGenerators.dll
  Unity.UIToolkit.SourceGenerator.dll
+../../../../.vscode/extensions/visualstudiotoolsforunity.vstuc-1.2.2/Analyzers/Microsoft.Unity.Analyzers.dll
 
 [analyzerConfigFiles]
 Temp/obj/Assembly-CSharp/Assembly-CSharp.GeneratedMSBuildEditorConfig.editorconfig
