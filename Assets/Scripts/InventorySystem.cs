@@ -149,17 +149,17 @@ public class InventorySystem : MonoBehaviour
         
         Debug.Log($"아이템 버림: {item.itemName}");
     }
-    
+
     public void UseItem(ItemData item)
     {
+        if (item == null) return;
+
         if (item.itemType == ItemType.Equipment)
         {
-            // 장비 장착
             playerEquipment?.EquipItem(new WeaponInstance(item as WeaponData));
         }
         else if (item.itemType == ItemType.Consumable)
         {
-            // 소비 아이템 사용
             item.UseItem();
             RemoveItem(item);
         }
