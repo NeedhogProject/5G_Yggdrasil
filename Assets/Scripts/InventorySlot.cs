@@ -74,7 +74,8 @@ public class InventorySlot : MonoBehaviour,
         // 우클릭 → 장착/해제
         if (e.button == PointerEventData.InputButton.Right && isOccupied && currentItem != null)
         {
-            InventorySystem.Instance?.UseOrEquipItem(currentItem);
+            // UseItem 구현 전 임시 처리 — 정건희님 UseItem 완성 후 되돌리기
+            Debug.Log($"[InventorySlot] UseItem 호출 대기 중: {currentItem.itemName}");
         }
     }
 
