@@ -74,7 +74,7 @@ public class InventorySlot : MonoBehaviour,
         // 우클릭 → 장착/해제
         if (e.button == PointerEventData.InputButton.Right && isOccupied && currentItem != null)
         {
-            InventorySystem.Instance?.UseOrEquipItem(currentItem);
+            InventorySystem.Instance?.UseItem(currentItem);
         }
     }
 
