@@ -2,141 +2,118 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// 대장장이 NPC 패널.
+/// 무기 선택 후 EnhancementSystem 패널로 넘겨 코인 플립 강화를 진행한다.
+/// </summary>
 public class BlacksmithSystem : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("UI 참조")]
     public GameObject blacksmithPanel;
-    public TMP_Text dialogueText;
-    public Button upgradeButton;
-    public Button repairButton;
-    public Button closeButton;
-    
-    [Header("Upgrade Settings")]
-    public Transform equipmentSlot;
-    public TMP_Text upgradeCostText;
+    public TMP_Text   dialogueText;
+    public Button     enhanceButton;
+    public Button     closeButton;
+
+    [Header("강화 UI")]
     public TMP_Text currentLevelText;
-    
-    private EquipmentData selectedEquipment;
+    public TMP_Text successRateText;
+
+    [Header("시스템 연동")]
+    [SerializeField] private EnhancementSystem enhancementSystem;
+
+    private WeaponData selectedWeapon;
     private bool isOpen = false;
-    
-    void Start()
+
+    private void Start()
     {
         blacksmithPanel.SetActive(false);
-        
-        upgradeButton.onClick.AddListener(OnUpgradeClicked);
-        repairButton.onClick.AddListener(OnRepairClicked);
+
+        enhanceButton.onClick.AddListener(OnEnhanceClicked);
         closeButton.onClick.AddListener(CloseBlacksmith);
     }
-    
+
     public void OpenBlacksmith()
     {
-        if (isOpen) return;
+        if (isOpen)
+        {
+            return;
+        }
         blacksmithPanel.SetActive(true);
         isOpen = true;
-        
-        dialogueText.text = "어서오게! 무엇을 도와줄까?";
-        
+
+        dialogueText.text = "어서오게! 무기를 벼릴 준비가 됐나?";
+
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
     }
-    
+
     public void CloseBlacksmith()
     {
         blacksmithPanel.SetActive(false);
         isOpen = false;
-        
-        selectedEquipment = null;
-        
+
+        selectedWeapon = null;
+
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
-    
-    public void SelectEquipment(EquipmentData equipment)
+
+    // 인벤토리 슬롯 클릭 시 외부에서 호출
+    public void SelectWeapon(WeaponData weapon)
     {
-        selectedEquipment = equipment;
-        UpdateUpgradeUI();
-    }
-    
-    private void UpdateUpgradeUI()
-    {
-        if (selectedEquipment != null)
+        if (weapon == null)
         {
-            currentLevelText.text = $"현재 레벨: {selectedEquipment.upgradeLevel}";
-            
-            int upgradeCost = CalculateUpgradeCost(selectedEquipment);
-            upgradeCostText.text = $"강화 비용: {upgradeCost} 골드";
-            
-            upgradeButton.interactable = PlayerStats.Instance.gold >= upgradeCost;
-        }
-    }
-    
-    private void OnUpgradeClicked()
-    {
-        if (selectedEquipment == null)
-        {
-            dialogueText.text = "먼저 강화할 장비를 선택해주게!";
+            dialogueText.text = "무기를 선택해주게.";
             return;
         }
-        
-        int upgradeCost = CalculateUpgradeCost(selectedEquipment);
-        
-        if (PlayerStats.Instance.gold >= upgradeCost)
-        {
-            // 골드 차감
-            PlayerStats.Instance.gold -= upgradeCost;
-            
-            // 장비 강화
-            selectedEquipment.upgradeLevel++;
-            selectedEquipment.UpgradeStats();
-            
-            dialogueText.text = $"{selectedEquipment.itemName}이(가) 강화되었네!";
-            
-            UpdateUpgradeUI();
-            
-            AudioManager.Instance?.PlaySFX(SFXClip.EnhanceSuccess);
-        }
-        else
-        {
-            dialogueText.text = "골드가 부족하군!";
-            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
-        }
+
+        selectedWeapon = weapon;
+        UpdateUI();
     }
-    
-    private void OnRepairClicked()
+
+    private void UpdateUI()
     {
-        if (selectedEquipment == null)
+        if (selectedWeapon == null)
         {
-            dialogueText.text = "먼저 수리할 장비를 선택해주게!";
             return;
         }
-        
-        int repairCost = CalculateRepairCost(selectedEquipment);
-        
-        if (PlayerStats.Instance.gold >= repairCost)
+
+        int level = selectedWeapon.EnhancementLevel;
+
+        if (level >= 5)
         {
-            PlayerStats.Instance.gold -= repairCost;
-            
-            selectedEquipment.durability = selectedEquipment.maxDurability;
-            
-            dialogueText.text = $"{selectedEquipment.itemName}을(를) 수리했네!";
-            
-            AudioManager.Instance?.PlaySFX(SFXClip.EnhanceSuccess);
+            currentLevelText.text      = $"현재 강화: +{level} (최대)";
+            successRateText.text       = "더 이상 강화할 수 없다네.";
+            enhanceButton.interactable = false;
+            return;
         }
-        else
+
+        currentLevelText.text      = $"현재 강화: +{level}";
+        successRateText.text       = $"성공 확률: {selectedWeapon.CurrentSuccessRate}%";
+        enhanceButton.interactable = true;
+    }
+
+    private void OnEnhanceClicked()
+    {
+        if (selectedWeapon == null)
         {
-            dialogueText.text = "골드가 부족하군!";
-            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            dialogueText.text = "먼저 강화할 무기를 선택해주게.";
+            return;
         }
-    }
-    
-    private int CalculateUpgradeCost(EquipmentData equipment)
-    {
-        // 강화 레벨에 따른 비용 계산
-        return 100 * (equipment.upgradeLevel + 1);
-    }
-    
-    private int CalculateRepairCost(EquipmentData equipment)
-    {
-        // 내구도에 따른 수리 비용 계산
-        float damagePercent = 1f - (equipment.durability / equipment.maxDurability);
-        return Mathf.RoundToInt(equipment.basePrice * 0.3f * damagePercent);
+
+        if (selectedWeapon.EnhancementLevel >= 5)
+        {
+            dialogueText.text = "이미 최대 강화 단계일세.";
+            return;
+        }
+
+        if (enhancementSystem == null)
+        {
+            Debug.LogWarning("[BlacksmithSystem] EnhancementSystem 참조가 없습니다.");
+            return;
+        }
+
+        // 대장간 패널 닫고 코인 플립 강화 패널 열기
+        blacksmithPanel.SetActive(false);
+        enhancementSystem.SelectWeapon(selectedWeapon);
+        enhancementSystem.OpenEnhancement();
     }
 }

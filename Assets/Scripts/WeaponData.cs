@@ -56,8 +56,14 @@ public class WeaponData : ItemData
     [Header("강화 단계 (0 ~ 5)")]
     [SerializeField] [Range(0, 5)] private int enhancementLevel = 0;
 
-    /// <summary>강화 단계별 성공 확률 (%) — 인덱스 = 현재 강화 단계</summary>
-    private static readonly float[] EnhanceSuccessRates = { 100f, 80f, 60f, 40f, 20f };
+    // 0강부터 4강 시도 시 성공 확률 (기획서 수치: 90/75/45/25/10%)
+    private static readonly float[] EnhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
+
+    // 강화 단계별 공격력 배율 (기획서 기준: 0/2/4/7/9/15%)
+    private static readonly float[] AttackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
+
+    // 강화 단계별 공격속도 배율 (기획서 기준: 3강부터 2/3/7%)
+    private static readonly float[] SpeedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
@@ -83,11 +89,13 @@ public class WeaponData : ItemData
 
     // ─────────────────────── 강화 보정 공격력 ───────────────────────
 
-    /// <summary>
-    /// 강화 단계가 반영된 실제 공격력
-    /// 1강마다 baseDamage 의 10% 증가
-    /// </summary>
-    public float FinalDamage => baseDamage * (1f + enhancementLevel * 0.1f);
+    /// <summary>강화 단계가 반영된 실제 공격력 (기획서 배율 적용)</summary>
+    public float FinalDamage =>
+        baseDamage * AttackMultipliers[Mathf.Clamp(enhancementLevel, 0, AttackMultipliers.Length - 1)];
+
+    /// <summary>강화 단계가 반영된 실제 공격속도 (기획서 배율 적용)</summary>
+    public float FinalAttackSpeed =>
+        attackSpeed * SpeedMultipliers[Mathf.Clamp(enhancementLevel, 0, SpeedMultipliers.Length - 1)];
 
     // ─────────────────────── 런타임 메서드 (무기 복사본에서 사용) ───────────────────────
 
@@ -109,12 +117,12 @@ public class WeaponData : ItemData
         }
         else
         {
-            if (IsLastEnhance) // 4→5 실패: 태초마을(완전 초기화)
+            if (IsLastEnhance) // 4강 실패: 2단계 하락 (4강에서 2강으로)
             {
-                enhancementLevel = 0;
-                return EnhanceResult.ResetToBase;
+                enhancementLevel = Mathf.Max(0, enhancementLevel - 2);
+                return EnhanceResult.Downgrade;
             }
-            else // 1~4 실패: 등급 하락
+            else // 0~3강 실패: 1단계 하락 (0강은 변동 없음)
             {
                 enhancementLevel = Mathf.Max(0, enhancementLevel - 1);
                 return EnhanceResult.Downgrade;

@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using System.Collections.Generic;
 
 /// <summary>
@@ -28,6 +30,15 @@ public class HouseSystem : MonoBehaviour
         // Meditate,   // 명상 — 체력+정신력 소폭 회복
         // Sauna,      // 사우나 — 버프 효과
     }
+
+    // ─────────────────────── UI 참조 ───────────────────────
+
+    [Header("UI 참조")]
+    public GameObject housePanel;
+    public TMP_Text   dialogueText;
+    public Button     sleepButton;
+    public Button     restButton;
+    public Button     closeButton;
 
     // ─────────────────────── 참조 ───────────────────────
 
@@ -85,7 +96,81 @@ public class HouseSystem : MonoBehaviour
     private void Awake()
     {
         if (playerStats == null)
+        {
             playerStats = FindFirstObjectByType<PlayerStats>();
+        }
+    }
+
+    private void Start()
+    {
+        if (housePanel != null)
+        {
+            housePanel.SetActive(false);
+        }
+
+        if (sleepButton != null)
+        {
+            sleepButton.onClick.AddListener(OnSleepClicked);
+        }
+
+        if (restButton != null)
+        {
+            restButton.onClick.AddListener(OnRestClicked);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(CloseHouse);
+        }
+    }
+
+    public void OpenHouse()
+    {
+        if (housePanel != null)
+        {
+            housePanel.SetActive(true);
+        }
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = "집에 돌아왔군요. 쉬시겠어요?";
+        }
+
+        AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+    }
+
+    public void CloseHouse()
+    {
+        if (housePanel != null)
+        {
+            housePanel.SetActive(false);
+        }
+
+        AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
+    }
+
+    private void OnSleepClicked()
+    {
+        bool success = TryRecover(RecoveryType.Sleep);
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = success
+                ? "푹 잤더니 몸이 개운하군요. 체력이 회복됐습니다."
+                : "이미 체력이 가득 찼습니다.";
+        }
+    }
+
+    private void OnRestClicked()
+    {
+        bool success = TryRecover(RecoveryType.Rest);
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = success
+                ? "잠시 쉬었더니 정신이 맑아졌습니다. 정신력이 회복됐습니다."
+                : "이미 정신력이 가득 찼습니다.";
+        }
     }
 
     // ─────────────────────── 회복 시스템 ───────────────────────

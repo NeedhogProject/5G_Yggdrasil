@@ -3,76 +3,75 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// <summary>
+/// 상인 NPC 패널.
+/// 구매 탭: shopItems 목록에서 아이템 구매.
+/// 판매 탭: 플레이어 인벤토리 아이템을 기본가의 절반에 판매.
+/// </summary>
 public class ShopSystem : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("UI 참조")]
     public GameObject shopPanel;
-    public TMP_Text dialogueText;
-    public TMP_Text goldText;
-    public Button buyTabButton;
-    public Button sellTabButton;
-    public Button closeButton;
-    
-    [Header("Shop Content")]
-    public Transform shopItemContainer;
+    public TMP_Text   dialogueText;
+    public TMP_Text   goldText;
+    public Button     buyTabButton;
+    public Button     sellTabButton;
+    public Button     closeButton;
+
+    [Header("상품 목록")]
+    public Transform  itemListContainer;
     public GameObject shopItemPrefab;
-    public Transform playerItemContainer;
-    
-    [Header("Shop Items")]
+
+    [Header("판매 목록")]
     public List<ShopItemData> shopItems = new List<ShopItemData>();
-    
-    private bool isOpen = false;
-    private ShopTab currentTab = ShopTab.Buy;
-    
+
+    private bool     isOpen      = false;
+    private ShopTab  currentTab  = ShopTab.Buy;
+
     private enum ShopTab
     {
         Buy,
         Sell
     }
-    
-    void Start()
+
+    private void Start()
     {
         shopPanel.SetActive(false);
-        
+
         buyTabButton.onClick.AddListener(() => SwitchTab(ShopTab.Buy));
         sellTabButton.onClick.AddListener(() => SwitchTab(ShopTab.Sell));
         closeButton.onClick.AddListener(CloseShop);
-        
-        InitializeShop();
     }
-    
-    private void InitializeShop()
-    {
-        // 상점 아이템 초기화
-        // 실제로는 데이터베이스나 ScriptableObject에서 로드
-    }
-    
+
     public void OpenShop()
     {
-        if (isOpen) return;
+        if (isOpen)
+        {
+            return;
+        }
         shopPanel.SetActive(true);
         isOpen = true;
-        
-        dialogueText.text = "어서오게! 좋은 물건들이 많다네!";
-        
+
+        dialogueText.text = "어서오세요! 좋은 물건들이 있답니다.";
+
         UpdateGoldDisplay();
         SwitchTab(ShopTab.Buy);
-        
+
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
     }
-    
+
     public void CloseShop()
     {
         shopPanel.SetActive(false);
         isOpen = false;
-        
+
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
-    
+
     private void SwitchTab(ShopTab tab)
     {
         currentTab = tab;
-        
+
         if (tab == ShopTab.Buy)
         {
             ShowBuyTab();
@@ -82,104 +81,84 @@ public class ShopSystem : MonoBehaviour
             ShowSellTab();
         }
     }
-    
+
     private void ShowBuyTab()
     {
-        ClearContainer(shopItemContainer);
-        
+        ClearList();
+
         foreach (ShopItemData shopItem in shopItems)
         {
-            GameObject itemObj = Instantiate(shopItemPrefab, shopItemContainer);
-            ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
-            
+            GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
+            ShopItemUI itemUI  = itemObj.GetComponent<ShopItemUI>();
             itemUI.SetupBuyItem(shopItem, this);
         }
-        
-        dialogueText.text = "무엇을 사겠나?";
+
+        dialogueText.text = "무엇을 구매하시겠어요?";
     }
-    
+
     private void ShowSellTab()
     {
-        ClearContainer(playerItemContainer);
-        
+        ClearList();
+
         List<ItemData> playerItems = InventorySystem.Instance.items;
-        
+
         foreach (ItemData item in playerItems)
         {
-            GameObject itemObj = Instantiate(shopItemPrefab, playerItemContainer);
-            ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
-            
+            GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
+            ShopItemUI itemUI  = itemObj.GetComponent<ShopItemUI>();
             itemUI.SetupSellItem(item, this);
         }
-        
-        dialogueText.text = "무엇을 팔겠나?";
+
+        dialogueText.text = "무엇을 판매하시겠어요?";
     }
-    
+
     public void BuyItem(ShopItemData shopItem)
     {
-        if (PlayerStats.Instance.gold >= shopItem.buyPrice)
+        if (PlayerStats.Instance.gold < shopItem.buyPrice)
         {
-            // 인벤토리 공간 확인
-            if (InventorySystem.Instance.AddItem(shopItem.itemData))
-            {
-                PlayerStats.Instance.gold -= shopItem.buyPrice;
-                
-                dialogueText.text = $"{shopItem.itemData.itemName}을(를) 구매했네!";
-                
-                UpdateGoldDisplay();
-                
-                AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
-            }
-            else
-            {
-                dialogueText.text = "인벤토리가 가득 찼네!";
-                AudioManager.Instance?.PlaySFX(SFXClip.UIError);
-            }
-        }
-        else
-        {
-            dialogueText.text = "골드가 부족하군!";
+            dialogueText.text = "골드가 부족합니다!";
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            return;
         }
-    }
-    
-    public void SellItem(ItemData item)
-    {
-        int sellPrice = CalculateSellPrice(item);
-        
-        PlayerStats.Instance.gold += sellPrice;
-        InventorySystem.Instance.RemoveItem(item);
-        
-        dialogueText.text = $"{item.itemName}을(를) {sellPrice} 골드에 팔았네!";
-        
+
+        if (InventorySystem.Instance.AddItem(shopItem.itemData) == false)
+        {
+            dialogueText.text = "인벤토리가 가득 찼습니다!";
+            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            return;
+        }
+
+        PlayerStats.Instance.gold -= shopItem.buyPrice;
+
+        dialogueText.text = $"{shopItem.itemData.itemName}을(를) 구매했습니다!";
+
         UpdateGoldDisplay();
-        ShowSellTab(); // 판매 목록 갱신
-        
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
     }
-    
-    private int CalculateSellPrice(ItemData item)
+
+    public void SellItem(ItemData item)
     {
-        // 기본 가격의 50%로 판매
-        int basePrice = item.basePrice / 2;
-        
-        // 각인된 장비는 일반 가격으로 판매 (기획서 규칙)
-        if (item is EquipmentData equipment && equipment.isInscribed)
-        {
-            return item.basePrice / 2;
-        }
-        
-        return basePrice;
+        int sellPrice = item.basePrice / 2;
+
+        PlayerStats.Instance.gold += sellPrice;
+        InventorySystem.Instance.RemoveItem(item);
+
+        dialogueText.text = $"{item.itemName}을(를) {sellPrice} 골드에 판매했습니다.";
+
+        UpdateGoldDisplay();
+        ShowSellTab();
+
+        AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
     }
-    
+
     private void UpdateGoldDisplay()
     {
         goldText.text = $"보유 골드: {PlayerStats.Instance.gold}";
     }
-    
-    private void ClearContainer(Transform container)
+
+    private void ClearList()
     {
-        foreach (Transform child in container)
+        foreach (Transform child in itemListContainer)
         {
             Destroy(child.gameObject);
         }
@@ -190,6 +169,6 @@ public class ShopSystem : MonoBehaviour
 public class ShopItemData
 {
     public ItemData itemData;
-    public int buyPrice;
-    public int stock = -1; // -1 = 무제한
+    public int      buyPrice;
+    public int      stock = -1; // -1 = 무제한
 }

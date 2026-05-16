@@ -5,20 +5,19 @@ using TMPro;
 
 public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
-    [Header("Slot Settings")]
+    [Header("슬롯 설정")]
     public EquipmentType slotType;
 
-    [Header("UI References")]
+    [Header("UI 참조")]
     public Image    equipmentIcon;
     public Image    highlightImage;
     public Image    inscriptionIcon;
     public TMP_Text equipmentLevelText;
 
-    [Header("Slot Data")]
-    public EquipmentData currentEquipment;
+    [Header("슬롯 데이터")]
+    public ItemData currentEquipment;
     public bool isEquipped = false;
 
-    // EquipmentSystem 대신 PlayerEquipment 직접 참조
     [SerializeField] private PlayerEquipment playerEquipment;
 
     private void Start()
@@ -28,7 +27,8 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         UpdateSlotUI();
     }
 
-    public void SetEquipment(EquipmentData equipment)
+    // ItemData 베이스 타입으로 받아 WeaponData / ArmorData 모두 수용
+    public void SetEquipment(ItemData equipment)
     {
         currentEquipment = equipment;
         isEquipped = equipment != null;
@@ -44,52 +44,82 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void UpdateSlotUI()
     {
-        if (equipmentIcon != null)
+        if (equipmentIcon == null)
         {
-            equipmentIcon.gameObject.SetActive(isEquipped);
+            return;
+        }
 
-            if (isEquipped && currentEquipment != null)
+        equipmentIcon.gameObject.SetActive(isEquipped);
+
+        if (isEquipped == false || currentEquipment == null)
+        {
+            if (equipmentLevelText != null) equipmentLevelText.gameObject.SetActive(false);
+            if (inscriptionIcon   != null) inscriptionIcon.gameObject.SetActive(false);
+            if (highlightImage    != null) highlightImage.gameObject.SetActive(false);
+            return;
+        }
+
+        equipmentIcon.sprite = currentEquipment.itemIcon;
+        equipmentIcon.color  = Color.white;
+
+        // 강화 단계: 무기(WeaponData)만 표시
+        if (equipmentLevelText != null)
+        {
+            int level = GetEnhancementLevel(currentEquipment);
+            bool showLevel = level > 0;
+            equipmentLevelText.gameObject.SetActive(showLevel);
+            if (showLevel)
             {
-                equipmentIcon.sprite = currentEquipment.itemIcon;
-                equipmentIcon.color  = Color.white;
+                equipmentLevelText.text = $"+{level}";
+            }
+        }
 
-                if (equipmentLevelText != null)
-                {
-                    bool show = currentEquipment.upgradeLevel > 0;
-                    equipmentLevelText.gameObject.SetActive(show);
-                    if (show) equipmentLevelText.text = $"+{currentEquipment.upgradeLevel}";
-                }
-
-                if (inscriptionIcon != null)
-                {
-                    bool show = currentEquipment.isInscribed;
-                    inscriptionIcon.gameObject.SetActive(show);
-                    if (show) inscriptionIcon.color = GetInscriptionColor(currentEquipment.inscriptionType);
-                }
+        // 각인 아이콘: 방어구(ArmorData)만 표시
+        if (inscriptionIcon != null)
+        {
+            RuneElement rune = GetFirstRune(currentEquipment);
+            bool showRune = rune != RuneElement.None;
+            inscriptionIcon.gameObject.SetActive(showRune);
+            if (showRune)
+            {
+                inscriptionIcon.color = GetRuneColor(rune);
             }
         }
 
         if (highlightImage != null)
+        {
             highlightImage.gameObject.SetActive(false);
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (highlightImage != null) highlightImage.gameObject.SetActive(true);
+        if (highlightImage != null)
+        {
+            highlightImage.gameObject.SetActive(true);
+        }
 
         if (isEquipped && currentEquipment != null && UIItemTooltip.Instance != null)
+        {
             UIItemTooltip.Instance.ShowTooltip(currentEquipment, transform.position);
+        }
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (highlightImage != null) highlightImage.gameObject.SetActive(false);
+        if (highlightImage != null)
+        {
+            highlightImage.gameObject.SetActive(false);
+        }
         UIItemTooltip.Instance?.HideTooltip();
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (isEquipped == false || currentEquipment == null || playerEquipment == null) return;
+        if (isEquipped == false || currentEquipment == null || playerEquipment == null)
+        {
+            return;
+        }
 
         if (eventData.button == PointerEventData.InputButton.Left ||
             eventData.button == PointerEventData.InputButton.Right)
@@ -98,7 +128,6 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         }
     }
 
-    // EquipmentType → PlayerEquipment 해제 메서드 매핑
     private void TryUnequip()
     {
         if (slotType == EquipmentType.Weapon)
@@ -113,22 +142,48 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         ClearSlot();
     }
 
-    private static ArmorSlot SlotTypeToArmorSlot(EquipmentType type) => type switch
+    // 강화 단계 조회: WeaponData면 EnhancementLevel, 그 외 0
+    private static int GetEnhancementLevel(ItemData data)
     {
-        EquipmentType.Helmet => ArmorSlot.Helmet,
-        EquipmentType.Chest  => ArmorSlot.Chest,
-        EquipmentType.Legs   => ArmorSlot.Legs,
-        EquipmentType.Boots  => ArmorSlot.Boots,
-        _                    => ArmorSlot.Helmet
-    };
+        if (data is WeaponData weaponData)
+        {
+            return weaponData.EnhancementLevel;
+        }
+        return 0;
+    }
 
-    private static Color GetInscriptionColor(InscriptionType type) => type switch
+    // 첫 번째 룬 조회: ArmorData면 RuneSlot1, 그 외 None
+    private static RuneElement GetFirstRune(ItemData data)
     {
-        InscriptionType.Fire     => new Color(1f, 0.3f, 0.3f),
-        InscriptionType.Water    => new Color(0.3f, 0.5f, 1f),
-        InscriptionType.Wind     => new Color(0.3f, 1f, 0.3f),
-        InscriptionType.Earth    => new Color(0.6f, 0.4f, 0.2f),
-        InscriptionType.Darkness => new Color(0.3f, 0.3f, 0.3f),
-        _                        => Color.white
-    };
+        if (data is ArmorData armorData)
+        {
+            return armorData.RuneSlot1;
+        }
+        return RuneElement.None;
+    }
+
+    private static ArmorSlot SlotTypeToArmorSlot(EquipmentType type)
+    {
+        switch (type)
+        {
+            case EquipmentType.Helmet: return ArmorSlot.Helmet;
+            case EquipmentType.Chest:  return ArmorSlot.Chest;
+            case EquipmentType.Legs:   return ArmorSlot.Legs;
+            case EquipmentType.Boots:  return ArmorSlot.Boots;
+            default:                   return ArmorSlot.Helmet;
+        }
+    }
+
+    private static Color GetRuneColor(RuneElement rune)
+    {
+        switch (rune)
+        {
+            case RuneElement.Fire:     return new Color(1f, 0.3f, 0.3f);
+            case RuneElement.Water:    return new Color(0.3f, 0.5f, 1f);
+            case RuneElement.Wind:     return new Color(0.3f, 1f, 0.3f);
+            case RuneElement.Earth:    return new Color(0.6f, 0.4f, 0.2f);
+            case RuneElement.Darkness: return new Color(0.4f, 0.2f, 0.6f);
+            default:                   return Color.white;
+        }
+    }
 }

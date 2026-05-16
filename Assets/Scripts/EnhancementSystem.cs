@@ -23,10 +23,8 @@ public class EnhancementSystem : MonoBehaviour
     
     [Header("Enhancement Settings")]
     public int baseCost = 100;
-    public float baseSuccessRate = 0.75f; // 75%
-    public float successRateDecreasePerLevel = 0.05f; // 레벨당 5% 감소
-    
-    private EquipmentData selectedEquipment;
+
+    private WeaponData selectedWeapon;
     private bool isEnhancing = false;
     private bool isOpen = false;
     
@@ -59,67 +57,69 @@ public class EnhancementSystem : MonoBehaviour
         
         enhancementPanel.SetActive(false);
         isOpen = false;
-        
-        selectedEquipment = null;
+
+        selectedWeapon = null;
         
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
     
-    public void SelectEquipment(EquipmentData equipment)
+    public void SelectWeapon(WeaponData weapon)
     {
-        selectedEquipment = equipment;
+        selectedWeapon = weapon;
         UpdateEnhancementUI();
     }
     
     private void UpdateEnhancementUI()
     {
-        if (selectedEquipment != null)
+        if (selectedWeapon == null)
         {
-            // 현재 능력치 표시
-            currentStatsText.text = $"현재 레벨: +{selectedEquipment.upgradeLevel}\n" +
-                                   $"공격력: {selectedEquipment.attack}\n" +
-                                   $"방어력: {selectedEquipment.defense}";
-            
-            // 다음 레벨 능력치 표시
-            int nextAttack = selectedEquipment.attack + Mathf.RoundToInt(selectedEquipment.attack * 0.1f);
-            int nextDefense = selectedEquipment.defense + Mathf.RoundToInt(selectedEquipment.defense * 0.1f);
-            
-            nextStatsText.text = $"다음 레벨: +{selectedEquipment.upgradeLevel + 1}\n" +
-                                $"공격력: {nextAttack}\n" +
-                                $"방어력: {nextDefense}";
-            
-            // 성공 확률 계산 및 표시
-            float successRate = CalculateSuccessRate(selectedEquipment.upgradeLevel);
-            successRateText.text = $"성공 확률: {successRate * 100:F1}%";
-            successRateSlider.value = successRate;
-            
-            // 강화 비용
-            int cost = CalculateEnhancementCost(selectedEquipment.upgradeLevel);
-            
-            enhanceButton.interactable = PlayerStats.Instance.gold >= cost && !isEnhancing;
+            return;
         }
+
+        int level = selectedWeapon.EnhancementLevel;
+
+        currentStatsText.text = $"현재 강화: +{level}\n" +
+                                $"공격력: {selectedWeapon.FinalDamage:F1}\n" +
+                                $"공격속도: {selectedWeapon.FinalAttackSpeed:F2}";
+
+        // 다음 강화 단계 미리보기 (5강이면 표시 없음)
+        if (level < 5)
+        {
+            nextStatsText.text = $"다음 강화: +{level + 1}\n" +
+                                 $"성공 확률: {selectedWeapon.CurrentSuccessRate}%";
+        }
+        else
+        {
+            nextStatsText.text = "최대 강화 단계입니다.";
+        }
+
+        float rateNormalized = selectedWeapon.CurrentSuccessRate / 100f;
+        successRateText.text = $"성공 확률: {selectedWeapon.CurrentSuccessRate}%";
+        successRateSlider.value = rateNormalized;
+
+        int cost = CalculateEnhancementCost(level);
+        enhanceButton.interactable = PlayerStats.Instance.gold >= cost && isEnhancing == false;
     }
     
     private void OnEnhanceClicked()
     {
-        if (selectedEquipment == null)
+        if (selectedWeapon == null)
         {
-            dialogueText.text = "먼저 강화할 장비를 선택해주게.";
+            dialogueText.text = "먼저 강화할 무기를 선택해주게.";
             return;
         }
-        
+
         if (isEnhancing)
         {
             dialogueText.text = "이미 강화 중일세!";
             return;
         }
-        
-        int cost = CalculateEnhancementCost(selectedEquipment.upgradeLevel);
-        
+
+        int cost = CalculateEnhancementCost(selectedWeapon.EnhancementLevel);
+
         if (PlayerStats.Instance.gold >= cost)
         {
             PlayerStats.Instance.gold -= cost;
-            
             StartCoroutine(EnhancementProcess());
         }
         else
@@ -133,43 +133,40 @@ public class EnhancementSystem : MonoBehaviour
     {
         isEnhancing = true;
         enhanceButton.interactable = false;
-        
+
         dialogueText.text = "코인을 던지는 중...";
-        
-        // 코인 플립 연출
-        float successRate = CalculateSuccessRate(selectedEquipment.upgradeLevel);
-        bool success = coinFlipUI.PlayCoinFlip(successRate);
-        
-        // 코인 애니메이션 대기
+
+        float rateNormalized = selectedWeapon.CurrentSuccessRate / 100f;
+        bool success = coinFlipUI.PlayCoinFlip(rateNormalized);
+
         yield return new WaitForSeconds(2f);
-        
-        if (success)
+
+        EnhanceResult result = selectedWeapon.TryEnhance(success);
+
+        switch (result)
         {
-            // 강화 성공
-            selectedEquipment.upgradeLevel++;
-            selectedEquipment.UpgradeStats();
-            
-            dialogueText.text = $"강화 성공! {selectedEquipment.itemName}이(가) +{selectedEquipment.upgradeLevel}이 되었네!";
-            
-            AudioManager.Instance?.PlaySFX(SFXClip.EnhanceSuccess);
+            case EnhanceResult.Success:
+                dialogueText.text = $"강화 성공! {selectedWeapon.itemName}이(가) +{selectedWeapon.EnhancementLevel}이 되었네!";
+                AudioManager.Instance?.PlaySFX(SFXClip.EnhanceSuccess);
+                break;
+
+            case EnhanceResult.MaxReached:
+                dialogueText.text = $"최대 강화 달성! {selectedWeapon.itemName}이(가) +5가 되었네!";
+                AudioManager.Instance?.PlaySFX(SFXClip.EnhanceSuccess);
+                break;
+
+            case EnhanceResult.Downgrade:
+                dialogueText.text = $"강화 실패... {selectedWeapon.itemName}이(가) +{selectedWeapon.EnhancementLevel}으로 낮아졌네.";
+                AudioManager.Instance?.PlaySFX(SFXClip.EnhanceFail);
+                break;
+
+            case EnhanceResult.AlreadyMax:
+                dialogueText.text = "이미 최대 강화 단계일세.";
+                break;
         }
-        else
-        {
-            // 강화 실패
-            dialogueText.text = "강화 실패... 아쉽지만 다음 기회를 노려보게.";
-            
-            AudioManager.Instance?.PlaySFX(SFXClip.EnhanceFail);
-        }
-        
+
         UpdateEnhancementUI();
-        
         isEnhancing = false;
-    }
-    
-    private float CalculateSuccessRate(int currentLevel)
-    {
-        float rate = baseSuccessRate - (currentLevel * successRateDecreasePerLevel);
-        return Mathf.Clamp(rate, 0.1f, 1f); // 최소 10%, 최대 100%
     }
     
     private int CalculateEnhancementCost(int currentLevel)
