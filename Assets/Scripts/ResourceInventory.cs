@@ -34,6 +34,12 @@ public class ResourceInventory : MonoBehaviour
         return _resources.TryGetValue(type, out int count) ? count : 0;
     }
 
+    /// <summary>GetResourceCount 래퍼 — ResourceInventoryPanel 참조</summary>
+    public int GetResourceAmount(InscriptionType type)
+    {
+        return GetResourceCount(type);
+    }
+
     /// <summary>자원 추가</summary>
     public void AddResource(InscriptionType type, int amount)
     {

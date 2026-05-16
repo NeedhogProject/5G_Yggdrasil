@@ -31,22 +31,24 @@ public class InventoryUI : MonoBehaviour
         Item,
         Resource
     }
-    
+
     void Start()
     {
         inventoryPanel.SetActive(false);
 
-        itemTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
-        resourceTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Resource));
-        closeButton.onClick.AddListener(CloseInventory);
-
+        if (itemTabButton != null)
+            itemTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
+        if (resourceTabButton != null)
+            resourceTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Resource));
+        if (closeButton != null)
+            closeButton.onClick.AddListener(CloseInventory);
         if (outsideCloseButton != null)
         {
             outsideCloseButton.onClick.AddListener(CloseInventory);
             outsideCloseButton.gameObject.SetActive(false);
         }
     }
-    
+
     void Update()
     {
         if (Keyboard.current.iKey.wasPressedThisFrame)
