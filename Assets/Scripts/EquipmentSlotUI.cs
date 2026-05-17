@@ -9,9 +9,9 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public EquipmentType slotType;
 
     [Header("UI 참조")]
-    public Image    equipmentIcon;
-    public Image    highlightImage;
-    public Image    inscriptionIcon;
+    public Image equipmentIcon;
+    public Image highlightImage;
+    public Image inscriptionIcon;
     public TMP_Text equipmentLevelText;
 
     [Header("슬롯 데이터")]
@@ -23,7 +23,9 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
     private void Start()
     {
         if (playerEquipment == null)
+        {
             playerEquipment = FindFirstObjectByType<PlayerEquipment>();
+        }
         UpdateSlotUI();
     }
 
@@ -53,14 +55,23 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
         if (isEquipped == false || currentEquipment == null)
         {
-            if (equipmentLevelText != null) equipmentLevelText.gameObject.SetActive(false);
-            if (inscriptionIcon   != null) inscriptionIcon.gameObject.SetActive(false);
-            if (highlightImage    != null) highlightImage.gameObject.SetActive(false);
+            if (equipmentLevelText != null)
+            {
+                equipmentLevelText.gameObject.SetActive(false);
+            }
+            if (inscriptionIcon != null)
+            {
+                inscriptionIcon.gameObject.SetActive(false);
+            }
+            if (highlightImage != null)
+            {
+                highlightImage.gameObject.SetActive(false);
+            }
             return;
         }
 
         equipmentIcon.sprite = currentEquipment.itemIcon;
-        equipmentIcon.color  = Color.white;
+        equipmentIcon.color = Color.white;
 
         // 강화 단계: 무기(WeaponData)만 표시
         if (equipmentLevelText != null)
@@ -68,9 +79,9 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             int level = GetEnhancementLevel(currentEquipment);
             bool showLevel = level > 0;
             equipmentLevelText.gameObject.SetActive(showLevel);
-            if (showLevel)
+            if (showLevel == true)
             {
-                equipmentLevelText.text = $"+{level}";
+                equipmentLevelText.text = "+" + level.ToString();
             }
         }
 
@@ -80,7 +91,7 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             RuneElement rune = GetFirstRune(currentEquipment);
             bool showRune = rune != RuneElement.None;
             inscriptionIcon.gameObject.SetActive(showRune);
-            if (showRune)
+            if (showRune == true)
             {
                 inscriptionIcon.color = GetRuneColor(rune);
             }
@@ -99,7 +110,12 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             highlightImage.gameObject.SetActive(true);
         }
 
-        if (isEquipped && currentEquipment != null && UIItemTooltip.Instance != null)
+        if (isEquipped == false || currentEquipment == null)
+        {
+            return;
+        }
+
+        if (UIItemTooltip.Instance != null)
         {
             UIItemTooltip.Instance.ShowTooltip(currentEquipment, transform.position);
         }
@@ -111,7 +127,11 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             highlightImage.gameObject.SetActive(false);
         }
-        UIItemTooltip.Instance?.HideTooltip();
+
+        if (UIItemTooltip.Instance != null)
+        {
+            UIItemTooltip.Instance.HideTooltip();
+        }
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -121,8 +141,10 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             return;
         }
 
-        if (eventData.button == PointerEventData.InputButton.Left ||
-            eventData.button == PointerEventData.InputButton.Right)
+        bool isLeftClick = eventData.button == PointerEventData.InputButton.Left;
+        bool isRightClick = eventData.button == PointerEventData.InputButton.Right;
+
+        if (isLeftClick == true || isRightClick == true)
         {
             TryUnequip();
         }
@@ -152,7 +174,7 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         return 0;
     }
 
-    // 첫 번째 룬 조회: ArmorData면 RuneSlot1, 그 외 None
+    // 각인 원소 조회: ArmorData면 RuneSlot1, 그 외 None
     private static RuneElement GetFirstRune(ItemData data)
     {
         if (data is ArmorData armorData)
@@ -164,26 +186,47 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private static ArmorSlot SlotTypeToArmorSlot(EquipmentType type)
     {
-        switch (type)
+        if (type == EquipmentType.Helmet)
         {
-            case EquipmentType.Helmet: return ArmorSlot.Helmet;
-            case EquipmentType.Chest:  return ArmorSlot.Chest;
-            case EquipmentType.Legs:   return ArmorSlot.Legs;
-            case EquipmentType.Boots:  return ArmorSlot.Boots;
-            default:                   return ArmorSlot.Helmet;
+            return ArmorSlot.Helmet;
         }
+        if (type == EquipmentType.Chest)
+        {
+            return ArmorSlot.Chest;
+        }
+        if (type == EquipmentType.Legs)
+        {
+            return ArmorSlot.Legs;
+        }
+        if (type == EquipmentType.Boots)
+        {
+            return ArmorSlot.Boots;
+        }
+        return ArmorSlot.Helmet; // 도달하면 안 되는 분기: slotType 설정 오류 의심
     }
 
     private static Color GetRuneColor(RuneElement rune)
     {
-        switch (rune)
+        if (rune == RuneElement.Fire)
         {
-            case RuneElement.Fire:     return new Color(1f, 0.3f, 0.3f);
-            case RuneElement.Water:    return new Color(0.3f, 0.5f, 1f);
-            case RuneElement.Wind:     return new Color(0.3f, 1f, 0.3f);
-            case RuneElement.Earth:    return new Color(0.6f, 0.4f, 0.2f);
-            case RuneElement.Darkness: return new Color(0.4f, 0.2f, 0.6f);
-            default:                   return Color.white;
+            return new Color(1f, 0.3f, 0.3f);
         }
+        if (rune == RuneElement.Water)
+        {
+            return new Color(0.3f, 0.5f, 1f);
+        }
+        if (rune == RuneElement.Wind)
+        {
+            return new Color(0.3f, 1f, 0.3f);
+        }
+        if (rune == RuneElement.Earth)
+        {
+            return new Color(0.6f, 0.4f, 0.2f);
+        }
+        if (rune == RuneElement.Darkness) // 정건희 enum 이름 확인 후 Dark / Darkness 통일
+        {
+            return new Color(0.4f, 0.2f, 0.6f);
+        }
+        return Color.white;
     }
 }

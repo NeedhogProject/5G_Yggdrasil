@@ -1,26 +1,18 @@
+
+
 using UnityEngine;
 using System;
 
-/// <summary>
-/// 플레이어 스탯 관리 - 체력, 방어력(기본 0~100, 장비로 추가 증가), 정신력 (0~100)
-/// 정신력이 낮을수록 방어력 효과 감소·받는 피해 증가. 물약으로 회복 가능.
-///
-/// [싱글턴]
-/// ShopSystem, BlacksmithSystem, ScholarSystem, EnhancementSystem 에서
-/// PlayerStats.Instance.gold 형태로 참조
-/// </summary>
 public class PlayerStats : MonoBehaviour
 {
-    // ─────────────────────── 싱글턴 ───────────────────────
-
+    // ── 싱글톤 ────────────────────────────────────
     public static PlayerStats Instance { get; private set; }
 
-    // ─────────────────────── Inspector 필드 ───────────────────────
-
+    // ── Inspector 필드 ────────────────────────────
     [Header("기본 스탯 (0~100)")]
-    [SerializeField] [Range(0, 100)] private float health      = 100f;
-    [SerializeField] [Range(0, 100)] private float baseDefense = 0f;
-    [SerializeField] [Range(0, 100)] private float mental      = 100f;
+    [SerializeField][Range(0, 100)] private float health = 100f;
+    [SerializeField][Range(0, 100)] private float baseDefense = 0f;
+    [SerializeField][Range(0, 100)] private float mental = 100f;
 
     [Header("장비 방어력 (착용 시 추가)")]
     [SerializeField] private float equipmentDefense = 0f;
@@ -32,218 +24,280 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float healthPotionAmount = 30f;
     [SerializeField] private float mentalPotionAmount = 25f;
 
-    // ─────────────────────── 상수 ───────────────────────
-
+    // ── 상수 ──────────────────────────────────────
     private const float MIN_STAT = 0f;
     private const float MAX_STAT = 100f;
 
-    // ─────────────────────── 계산 프로퍼티 ───────────────────────
-
-    /// <summary>정신력에 따른 능력치 배율 (0~1)</summary>
+    // ── 계산 프로퍼티 ─────────────────────────────
     public float MentalMultiplier => mental / MAX_STAT;
-
-    /// <summary>총 방어력 = 기본 + 장비</summary>
     public float TotalDefense => baseDefense + equipmentDefense;
-
-    /// <summary>정신력이 반영된 실제 방어력</summary>
     public float EffectiveDefense => TotalDefense * MentalMultiplier;
 
-    // ─────────────────────── 이벤트 ───────────────────────
-
+    // ── 이벤트 ────────────────────────────────────
     public event Action<float> OnHealthChanged;
     public event Action<float> OnDefenseChanged;
     public event Action<float> OnMentalChanged;
-    public event Action<int>   OnGoldChanged;
-    public event Action        OnStatsChanged;
+    public event Action<int> OnGoldChanged;
+    public event Action OnStatsChanged;
 
-    // ─────────────────────── 공개 프로퍼티 ───────────────────────
-
-    public float Health           => health;
-    public float BaseDefense      => baseDefense;
+    // ── 공개 프로퍼티 ─────────────────────────────
+    public float Health => health;
+    public float BaseDefense => baseDefense;
     public float EquipmentDefense => equipmentDefense;
-    public float Defense          => TotalDefense;
-    public float Mental           => mental;
+    public float Defense => TotalDefense;
+    public float Mental => mental;
 
-    /// <summary>
-    /// 골드 — ShopSystem, BlacksmithSystem, ScholarSystem, EnhancementSystem 에서
-    /// PlayerStats.Instance.gold 로 참조하므로 camelCase 프로퍼티 제공
-    /// </summary>
     public int gold
     {
         get => _gold;
         set
         {
             _gold = Mathf.Max(0, value);
-            OnGoldChanged?.Invoke(_gold);
+            if (OnGoldChanged != null)
+            {
+                OnGoldChanged.Invoke(_gold);
+            }
         }
     }
 
-    // ─────────────────────── 초기화 ───────────────────────
+    // ── 초기화 ────────────────────────────────────
 
     private void Awake()
     {
-        // 싱글턴 — 플레이어는 씬에 1개만 존재
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
         Instance = this;
-
         ClampAllStats();
     }
 
     private void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     private void Start()
     {
-        // HUDManager 자동 연결 — 씬 로드 후 HUD가 준비된 시점에 구독
-        OnHealthChanged += hp  => HUDManager.Instance?.UpdateHP(hp, MAX_STAT);
-        OnMentalChanged += men => HUDManager.Instance?.UpdateSanity(men, MAX_STAT);
+        // HUDManager 자동 연결
+        OnHealthChanged += HandleHealthChanged;
+        OnMentalChanged += HandleMentalChanged;
+        OnDefenseChanged += HandleDefenseChanged; // 방어력 HUD 연동 추가
 
         // 초기값으로 HUD 갱신
-        HUDManager.Instance?.UpdateHP(health, MAX_STAT);
-        HUDManager.Instance?.UpdateSanity(mental, MAX_STAT);
+        if (HUDManager.Instance != null)
+        {
+            HUDManager.Instance.UpdateHP(health, MAX_STAT);
+            HUDManager.Instance.UpdateSanity(mental, MAX_STAT);
+            HUDManager.Instance.UpdateDef(TotalDefense, MAX_STAT); // 방어력 초기값 반영
+        }
     }
 
-    /// <summary>
-    /// 체력 변경
-    /// </summary>
+    // ── 이벤트 핸들러 ─────────────────────────────
+
+    private void HandleHealthChanged(float hp)
+    {
+        if (HUDManager.Instance != null)
+        {
+            HUDManager.Instance.UpdateHP(hp, MAX_STAT);
+        }
+    }
+
+    private void HandleMentalChanged(float men)
+    {
+        if (HUDManager.Instance != null)
+        {
+            HUDManager.Instance.UpdateSanity(men, MAX_STAT);
+        }
+    }
+
+    private void HandleDefenseChanged(float def)
+    {
+        if (HUDManager.Instance != null)
+        {
+            HUDManager.Instance.UpdateDef(def, MAX_STAT);
+        }
+    }
+
+    // ── 스탯 변경 ─────────────────────────────────
+
     public void ModifyHealth(float amount)
     {
         health = Mathf.Clamp(health + amount, MIN_STAT, MAX_STAT);
-        OnHealthChanged?.Invoke(health);
-        OnStatsChanged?.Invoke();
+        if (OnHealthChanged != null)
+        {
+            OnHealthChanged.Invoke(health);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
     }
 
-    /// <summary>
-    /// 기본 방어력 변경 (0~100)
-    /// </summary>
     public void ModifyBaseDefense(float amount)
     {
         baseDefense = Mathf.Clamp(baseDefense + amount, MIN_STAT, MAX_STAT);
-        OnDefenseChanged?.Invoke(TotalDefense);
-        OnStatsChanged?.Invoke();
+        if (OnDefenseChanged != null)
+        {
+            OnDefenseChanged.Invoke(TotalDefense);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
     }
 
-    /// <summary>
-    /// 장비 방어력 추가 (착용 시 호출)
-    /// </summary>
     public void AddEquipmentDefense(float amount)
     {
         equipmentDefense += amount;
-        if (equipmentDefense < 0f) equipmentDefense = 0f;
-        OnDefenseChanged?.Invoke(TotalDefense);
-        OnStatsChanged?.Invoke();
+        if (equipmentDefense < 0f)
+        {
+            equipmentDefense = 0f;
+        }
+        if (OnDefenseChanged != null)
+        {
+            OnDefenseChanged.Invoke(TotalDefense);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
     }
 
-    /// <summary>
-    /// 장비 방어력 제거 (해제 시 호출)
-    /// </summary>
     public void RemoveEquipmentDefense(float amount)
     {
         equipmentDefense -= amount;
-        if (equipmentDefense < 0f) equipmentDefense = 0f;
-        OnDefenseChanged?.Invoke(TotalDefense);
-        OnStatsChanged?.Invoke();
+        if (equipmentDefense < 0f)
+        {
+            equipmentDefense = 0f;
+        }
+        if (OnDefenseChanged != null)
+        {
+            OnDefenseChanged.Invoke(TotalDefense);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
     }
 
-    /// <summary>
-    /// 장비 방어력 직접 설정 (장비 시스템에서 총량 관리 시)
-    /// </summary>
     public void SetEquipmentDefense(float value)
     {
         equipmentDefense = Mathf.Max(0f, value);
-        OnDefenseChanged?.Invoke(TotalDefense);
-        OnStatsChanged?.Invoke();
+        if (OnDefenseChanged != null)
+        {
+            OnDefenseChanged.Invoke(TotalDefense);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
     }
 
-    /// <summary>
-    /// 정신력 변경 - 하락 시 능력치 배율 감소
-    /// </summary>
     public void ModifyMental(float amount)
     {
         mental = Mathf.Clamp(mental + amount, MIN_STAT, MAX_STAT);
-        OnMentalChanged?.Invoke(mental);
-        OnStatsChanged?.Invoke();
+        if (OnMentalChanged != null)
+        {
+            OnMentalChanged.Invoke(mental);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
     }
 
-    /// <summary>
-    /// 체력 물약 사용
-    /// </summary>
+    // ── 물약 ──────────────────────────────────────
+
     public bool UseHealthPotion()
     {
-        if (health >= MAX_STAT) return false;
-
+        if (health >= MAX_STAT)
+        {
+            return false;
+        }
         ModifyHealth(healthPotionAmount);
         return true;
     }
 
-    /// <summary>
-    /// 정신력 물약 사용 - 정신력 회복으로 능력치 상승
-    /// </summary>
     public bool UseMentalPotion()
     {
-        if (mental >= MAX_STAT) return false;
-
+        if (mental >= MAX_STAT)
+        {
+            return false;
+        }
         ModifyMental(mentalPotionAmount);
         return true;
     }
 
-    /// <summary>
-    /// 맞은 데미지 계산 - AD(받는 피해), DD(데미지 감소). 정신력이 낮으면 불리 적용
-    /// 0~100: 1당 DD 0.25% 증가 (100→DD 25%, AD 75%)
-    /// 100~200: 1당 DD 0.125% 증가 (200→DD 37.5%, AD 62.5%)
-    /// 200~300: 1당 DD 0.0625% 증가 (300→DD 43.75%, AD 56.25%)
-    /// 300~400: 1당 DD 0.03125% 증가 (400→DD 46.875%, AD 53.125%)
-    /// 400~500: 1당 DD 0.015625% 증가 (500→DD 48.4375%, AD 51.5625%)
-    /// </summary>
+    // ── 데미지 계산 ───────────────────────────────
+
     public float TakeDamage(float rawDamage)
     {
         float def = EffectiveDefense;
-        float dd; // 데미지 감소 %
+        float dd = 0f;
+
         if (def <= 100f)
-            dd = def * 0.25f; // 0~100: 1당 DD 0.25% 증가
+        {
+            dd = def * 0.25f;
+        }
         else if (def <= 200f)
-            dd = 25f + (def - 100f) * 0.125f; // 100~200: 1당 DD 0.125% 증가
+        {
+            dd = 25f + (def - 100f) * 0.125f;
+        }
         else if (def <= 300f)
-            dd = 37.5f + (def - 200f) * 0.0625f; // 200~300: 1당 DD 0.0625% 증가
+        {
+            dd = 37.5f + (def - 200f) * 0.0625f;
+        }
         else if (def <= 400f)
-            dd = 43.75f + (def - 300f) * 0.03125f; // 300~400: 1당 DD 0.03125% 증가
+        {
+            dd = 43.75f + (def - 300f) * 0.03125f;
+        }
         else
-            dd = 46.875f + (def - 400f) * 0.015625f; // 400~500: 1당 DD 0.015625% 증가
-        dd = Mathf.Clamp(dd, 0f, 95f); // 0~95% (최소 5% 데미지)
-        float damageRatio = 1f - (dd / 100f); // AD = 100% - DD
+        {
+            dd = 46.875f + (def - 400f) * 0.015625f;
+        }
+
+        dd = Mathf.Clamp(dd, 0f, 95f);
+        float damageRatio = 1f - (dd / 100f);
         float actualDamage = rawDamage * Mathf.Max(damageRatio, 0.05f);
         actualDamage *= (2f - MentalMultiplier);
         ModifyHealth(-actualDamage);
         return actualDamage;
     }
 
-    /// <summary>
-    /// 정신력 소모 (스킬 사용 등)
-    /// </summary>
     public void ConsumeMental(float amount)
     {
         ModifyMental(-amount);
     }
 
+    // ── 내부 유틸 ─────────────────────────────────
+
     private void ClampAllStats()
     {
         health = Mathf.Clamp(health, MIN_STAT, MAX_STAT);
         baseDefense = Mathf.Clamp(baseDefense, MIN_STAT, MAX_STAT);
-        if (equipmentDefense < 0f) equipmentDefense = 0f;
+        if (equipmentDefense < 0f)
+        {
+            equipmentDefense = 0f;
+        }
         mental = Mathf.Clamp(mental, MIN_STAT, MAX_STAT);
     }
 
 #if UNITY_EDITOR
     [ContextMenu("테스트: 체력 물약")]
-    private void TestHealthPotion() => UseHealthPotion();
+    private void TestHealthPotion()
+    {
+        UseHealthPotion();
+    }
 
     [ContextMenu("테스트: 정신력 물약")]
-    private void TestMentalPotion() => UseMentalPotion();
+    private void TestMentalPotion()
+    {
+        UseMentalPotion();
+    }
 #endif
 }
