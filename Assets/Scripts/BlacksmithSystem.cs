@@ -1,18 +1,20 @@
+/*
+ * BlacksmithSystem.cs
+ * 대장장이 NPC 패널 — 무기 선택 후 EnhancementSystem 패널로 넘겨 코인 플립 강화 진행
+ * 담당: 김보민
+ */
+
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// 대장장이 NPC 패널.
-/// 무기 선택 후 EnhancementSystem 패널로 넘겨 코인 플립 강화를 진행한다.
-/// </summary>
 public class BlacksmithSystem : MonoBehaviour
 {
     [Header("UI 참조")]
     public GameObject blacksmithPanel;
-    public TMP_Text   dialogueText;
-    public Button     enhanceButton;
-    public Button     closeButton;
+    public TMP_Text dialogueText;
+    public Button enhanceButton;
+    public Button closeButton;
 
     [Header("강화 UI")]
     public TMP_Text currentLevelText;
@@ -21,8 +23,9 @@ public class BlacksmithSystem : MonoBehaviour
     [Header("시스템 연동")]
     [SerializeField] private EnhancementSystem enhancementSystem;
 
-    private WeaponData selectedWeapon;
-    private bool isOpen = false;
+    // WeaponData 대신 WeaponInstance 사용 (강화 단계는 런타임에 있음)
+    private WeaponInstance _selectedWeapon = null;
+    private bool _isOpen = false;
 
     private void Start()
     {
@@ -32,14 +35,17 @@ public class BlacksmithSystem : MonoBehaviour
         closeButton.onClick.AddListener(CloseBlacksmith);
     }
 
+    // ─────────────────────── 열기 / 닫기 ───────────────────────
+
     public void OpenBlacksmith()
     {
-        if (isOpen)
+        if (_isOpen == true)
         {
             return;
         }
+
         blacksmithPanel.SetActive(true);
-        isOpen = true;
+        _isOpen = true;
 
         dialogueText.text = "어서오게! 무기를 벼릴 준비가 됐나?";
 
@@ -49,15 +55,20 @@ public class BlacksmithSystem : MonoBehaviour
     public void CloseBlacksmith()
     {
         blacksmithPanel.SetActive(false);
-        isOpen = false;
+        _isOpen = false;
 
-        selectedWeapon = null;
+        _selectedWeapon = null;
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
 
-    // 인벤토리 슬롯 클릭 시 외부에서 호출
-    public void SelectWeapon(WeaponData weapon)
+    // ─────────────────────── 무기 선택 ───────────────────────
+
+    /// <summary>
+    /// 인벤토리 슬롯에서 무기 클릭 시 외부에서 호출
+    /// WeaponInstance 를 받아야 강화 단계 정보가 유지됨
+    /// </summary>
+    public void SelectWeapon(WeaponInstance weapon)
     {
         if (weapon == null)
         {
@@ -65,41 +76,45 @@ public class BlacksmithSystem : MonoBehaviour
             return;
         }
 
-        selectedWeapon = weapon;
+        _selectedWeapon = weapon;
         UpdateUI();
     }
 
+    // ─────────────────────── UI 갱신 ───────────────────────
+
     private void UpdateUI()
     {
-        if (selectedWeapon == null)
+        if (_selectedWeapon == null)
         {
             return;
         }
 
-        int level = selectedWeapon.EnhancementLevel;
+        int level = _selectedWeapon.EnhancementLevel;
 
         if (level >= 5)
         {
-            currentLevelText.text      = $"현재 강화: +{level} (최대)";
-            successRateText.text       = "더 이상 강화할 수 없다네.";
+            currentLevelText.text = "현재 강화: +" + level.ToString() + " (최대)";
+            successRateText.text = "더 이상 강화할 수 없다네.";
             enhanceButton.interactable = false;
             return;
         }
 
-        currentLevelText.text      = $"현재 강화: +{level}";
-        successRateText.text       = $"성공 확률: {selectedWeapon.CurrentSuccessRate}%";
+        currentLevelText.text = "현재 강화: +" + level.ToString();
+        successRateText.text = "성공 확률: " + _selectedWeapon.CurrentSuccessRate.ToString("F0") + "%";
         enhanceButton.interactable = true;
     }
 
+    // ─────────────────────── 강화 버튼 ───────────────────────
+
     private void OnEnhanceClicked()
     {
-        if (selectedWeapon == null)
+        if (_selectedWeapon == null)
         {
             dialogueText.text = "먼저 강화할 무기를 선택해주게.";
             return;
         }
 
-        if (selectedWeapon.EnhancementLevel >= 5)
+        if (_selectedWeapon.EnhancementLevel >= 5)
         {
             dialogueText.text = "이미 최대 강화 단계일세.";
             return;
@@ -113,7 +128,7 @@ public class BlacksmithSystem : MonoBehaviour
 
         // 대장간 패널 닫고 코인 플립 강화 패널 열기
         blacksmithPanel.SetActive(false);
-        enhancementSystem.SelectWeapon(selectedWeapon);
+        enhancementSystem.SelectWeapon(_selectedWeapon);
         enhancementSystem.OpenEnhancement();
     }
 }

@@ -8,81 +8,168 @@ public class InventorySlot : MonoBehaviour,
     IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
 {
     [Header("UI References")]
-    public Image     itemIcon;
-    public Image     highlightImage;
-    public TMP_Text  stackCountText;
+    public Image itemIcon;
+    public Image highlightImage;
+    public TMP_Text stackCountText;
 
     [Header("Slot Data")]
-    public ItemData  currentItem;
-    public bool      isOccupied = false;
-    public int       slotIndex  = 0;
+    public ItemData currentItem;
+    public bool isOccupied = false;
+    public int slotIndex = 0;
     public Vector2Int gridPosition;
 
-    // ─── 드래그 상태 ───
+    // 런타임 아이템 인스턴스 (강화 단계, 각인 등 실시간 정보 보유)
+    private ItemInstance _currentInstance = null;
+
+    // 드래그 상태
     private static InventorySlot _draggingSlot = null;
-    private static GameObject    _dragIcon     = null;
-    private static Canvas        _canvas;
+    private static GameObject _dragIcon = null;
+    private static Canvas _canvas;
 
     private void Awake()
     {
         if (_canvas == null)
+        {
             _canvas = GetComponentInParent<Canvas>();
+        }
     }
 
+    // ─────────────────────── 슬롯 세팅 ───────────────────────
+
+    /// <summary>
+    /// ItemData만 있을 때 세팅 (상점 미리보기 등 인스턴스 없는 경우)
+    /// </summary>
     public void SetItem(ItemData item)
     {
         currentItem = item;
-        isOccupied  = item != null;
+        _currentInstance = null;
+        isOccupied = item != null;
 
         if (itemIcon != null)
         {
             itemIcon.gameObject.SetActive(isOccupied);
-            if (isOccupied) itemIcon.sprite = item.itemIcon;
+            if (isOccupied == true)
+            {
+                itemIcon.sprite = item.itemIcon;
+            }
         }
         if (stackCountText != null)
+        {
             stackCountText.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// ItemInstance 기반 세팅 (인벤토리 실제 아이템 배치 시 사용)
+    /// 강화 단계, 각인 등 런타임 정보를 툴팁에 전달하기 위해 인스턴스 보존
+    /// </summary>
+    public void SetItem(ItemInstance instance)
+    {
+        if (instance == null || instance.Data == null)
+        {
+            ClearSlot();
+            return;
+        }
+
+        _currentInstance = instance;
+        currentItem = instance.Data;
+        isOccupied = true;
+
+        if (itemIcon != null)
+        {
+            itemIcon.gameObject.SetActive(true);
+            itemIcon.sprite = instance.Data.itemIcon;
+        }
+
+        // 수량이 2개 이상이면 숫자 표시
+        if (stackCountText != null)
+        {
+            bool showCount = instance.StackCount > 1;
+            stackCountText.gameObject.SetActive(showCount);
+            if (showCount == true)
+            {
+                stackCountText.text = instance.StackCount.ToString();
+            }
+        }
     }
 
     public void ClearSlot()
     {
         currentItem = null;
-        isOccupied  = false;
-        if (itemIcon != null)     itemIcon.gameObject.SetActive(false);
-        if (highlightImage != null) highlightImage.gameObject.SetActive(false);
-        if (stackCountText != null) stackCountText.gameObject.SetActive(false);
+        _currentInstance = null;
+        isOccupied = false;
+
+        if (itemIcon != null)
+        {
+            itemIcon.gameObject.SetActive(false);
+        }
+        if (highlightImage != null)
+        {
+            highlightImage.gameObject.SetActive(false);
+        }
+        if (stackCountText != null)
+        {
+            stackCountText.gameObject.SetActive(false);
+        }
     }
 
-    public bool CanPlaceItem(ItemData item) => item != null && !isOccupied;
+    public bool CanPlaceItem(ItemData item)
+    {
+        return item != null && isOccupied == false;
+    }
 
-    // ─── Pointer ───
+    // ─────────────────────── Pointer ───────────────────────
 
     public void OnPointerEnter(PointerEventData e)
     {
-        if (highlightImage != null) highlightImage.gameObject.SetActive(true);
-        if (isOccupied && currentItem != null)
+        if (highlightImage != null)
+        {
+            highlightImage.gameObject.SetActive(true);
+        }
+
+        if (isOccupied == false)
+        {
+            return;
+        }
+
+        // 인스턴스가 있으면 런타임 정보(강화/각인) 포함 툴팁 표시
+        // 인스턴스가 없으면 ItemData 기반 툴팁 표시
+        if (_currentInstance != null)
+        {
+            UIItemTooltip.Instance?.ShowTooltip(_currentInstance, transform.position);
+        }
+        else if (currentItem != null)
+        {
             UIItemTooltip.Instance?.ShowTooltip(currentItem, transform.position);
+        }
     }
 
     public void OnPointerExit(PointerEventData e)
     {
-        if (highlightImage != null) highlightImage.gameObject.SetActive(false);
+        if (highlightImage != null)
+        {
+            highlightImage.gameObject.SetActive(false);
+        }
         UIItemTooltip.Instance?.HideTooltip();
     }
 
     public void OnPointerClick(PointerEventData e)
     {
-        // 우클릭 → 장착/해제
-        if (e.button == PointerEventData.InputButton.Right && isOccupied && currentItem != null)
+        // 우클릭: 장착/해제
+        if (e.button == PointerEventData.InputButton.Right && isOccupied == true && currentItem != null)
         {
             InventorySystem.Instance?.UseItem(currentItem);
         }
     }
 
-    // ─── 드래그 시작 ───
+    // ─────────────────────── 드래그 시작 ───────────────────────
 
     public void OnBeginDrag(PointerEventData e)
     {
-        if (isOccupied == false || currentItem == null) return;
+        if (isOccupied == false || currentItem == null)
+        {
+            return;
+        }
 
         _draggingSlot = this;
         UIItemTooltip.Instance?.HideTooltip();
@@ -93,24 +180,30 @@ public class InventorySlot : MonoBehaviour,
         _dragIcon.transform.SetAsLastSibling();
 
         Image img = _dragIcon.AddComponent<Image>();
-        img.sprite          = currentItem.itemIcon;
-        img.raycastTarget   = false;
+        img.sprite = currentItem.itemIcon;
+        img.raycastTarget = false;
 
         RectTransform rect = _dragIcon.GetComponent<RectTransform>();
-        rect.sizeDelta      = new Vector2(50, 50);
-        rect.anchorMin      = Vector2.zero;
-        rect.anchorMax      = Vector2.zero;
-        rect.pivot          = new Vector2(0.5f, 0.5f);
+        rect.sizeDelta = new Vector2(50, 50);
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.zero;
+        rect.pivot = new Vector2(0.5f, 0.5f);
 
         // 원본 슬롯 아이콘 반투명
-        if (itemIcon != null) itemIcon.color = new Color(1, 1, 1, 0.4f);
+        if (itemIcon != null)
+        {
+            itemIcon.color = new Color(1, 1, 1, 0.4f);
+        }
     }
 
-    // ─── 드래그 중 ───
+    // ─────────────────────── 드래그 중 ───────────────────────
 
     public void OnDrag(PointerEventData e)
     {
-        if (_dragIcon == null) return;
+        if (_dragIcon == null)
+        {
+            return;
+        }
 
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             _canvas.GetComponent<RectTransform>(),
@@ -120,7 +213,7 @@ public class InventorySlot : MonoBehaviour,
         _dragIcon.GetComponent<RectTransform>().anchoredPosition = localPoint;
     }
 
-    // ─── 드래그 끝 (빈 공간에 놓음) ───
+    // ─────────────────────── 드래그 끝 (빈 공간에 놓음) ───────────────────────
 
     public void OnEndDrag(PointerEventData e)
     {
@@ -134,37 +227,73 @@ public class InventorySlot : MonoBehaviour,
         if (_draggingSlot != null)
         {
             if (_draggingSlot.itemIcon != null)
+            {
                 _draggingSlot.itemIcon.color = Color.white;
+            }
             _draggingSlot = null;
         }
     }
 
-    // ─── 드롭 받음 ───
+    // ─────────────────────── 드롭 받음 ───────────────────────
 
     public void OnDrop(PointerEventData e)
     {
-        if (_draggingSlot == null || _draggingSlot == this) return;
+        if (_draggingSlot == null || _draggingSlot == this)
+        {
+            return;
+        }
 
+        // 인스턴스 기반으로 스왑 (인스턴스 없으면 ItemData로 폴백)
+        ItemInstance draggedInstance = _draggingSlot._currentInstance;
         ItemData draggedItem = _draggingSlot.currentItem;
-        if (draggedItem == null) return;
 
-        if (isOccupied)
+        if (draggedItem == null)
+        {
+            return;
+        }
+
+        if (isOccupied == true)
         {
             // 두 슬롯 스왑
-            ItemData temp = currentItem;
-            SetItem(draggedItem);
-            _draggingSlot.SetItem(temp);
+            ItemInstance tempInstance = _currentInstance;
+            ItemData tempItem = currentItem;
+
+            if (draggedInstance != null)
+            {
+                SetItem(draggedInstance);
+            }
+            else
+            {
+                SetItem(draggedItem);
+            }
+
+            if (tempInstance != null)
+            {
+                _draggingSlot.SetItem(tempInstance);
+            }
+            else
+            {
+                _draggingSlot.SetItem(tempItem);
+            }
         }
         else
         {
             // 빈 슬롯으로 이동
-            SetItem(draggedItem);
+            if (draggedInstance != null)
+            {
+                SetItem(draggedInstance);
+            }
+            else
+            {
+                SetItem(draggedItem);
+            }
             _draggingSlot.ClearSlot();
         }
 
-        // 아이콘 색상 복원
-        if (_draggingSlot.itemIcon != null)
+        if (_draggingSlot != null && _draggingSlot.itemIcon != null)
+        {
             _draggingSlot.itemIcon.color = Color.white;
+        }
 
         _draggingSlot = null;
 
