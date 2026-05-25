@@ -44,9 +44,11 @@ public class InscriptionMasterSystem : MonoBehaviour
         resetButton.onClick.AddListener(OnResetClicked);
         closeButton.onClick.AddListener(CloseInscriptionMaster);
 
-        inscriptionTypeDropdown.onValueChanged.AddListener(OnInscriptionTypeChanged);
-
-        SetupDropdown();
+        if (inscriptionTypeDropdown == null == false)
+        {
+            inscriptionTypeDropdown.onValueChanged.AddListener(OnInscriptionTypeChanged);
+            SetupDropdown();
+        }
     }
 
     private void SetupDropdown()
