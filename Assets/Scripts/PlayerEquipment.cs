@@ -25,6 +25,7 @@ public class PlayerEquipment : MonoBehaviour
     [SerializeField] private PlayerCombat     playerCombat;
     [SerializeField] private ArmorSetManager  armorSetManager;
     [SerializeField] private InventorySystem  inventorySystem;
+    [SerializeField] private InscriptionColorHelper inscriptionColorHelper;
 
     // ─────────────────────── 장비 슬롯 ───────────────────────
 
@@ -133,9 +134,11 @@ public class PlayerEquipment : MonoBehaviour
         _armorSlots[slot] = newArmor;
         newArmor.Equip();
         playerStats?.AddEquipmentDefense(newArmor.DefenseBonus);
-        armorSetManager?.OnArmorEquipped(newArmor);
 
-        Debug.Log($"[PlayerEquipment] 방어구 장착: {newArmor.ArmorData?.ItemName} ({slot})");
+        // 각인 색상 UI 갱신
+        ArmorInstance.InscriptionInfo info = newArmor.GetInscription(1);
+        inscriptionColorHelper?.UpdateInscriptionColor(slot.ToString(), info.Element.ToString());
+    
         OnEquipmentChanged?.Invoke();
 
         // 교체된 기존 방어구 반환 (인벤토리로 돌아감)
@@ -148,6 +151,7 @@ public class PlayerEquipment : MonoBehaviour
         playerStats?.RemoveEquipmentDefense(armor.DefenseBonus);
         armorSetManager?.OnArmorUnequipped(armor);
         _armorSlots[armor.Slot] = null;
+        inscriptionColorHelper?.UpdateInscriptionColor(armor.Slot.ToString(), "");
     }
 
     // ─────────────────────── 해제 ───────────────────────

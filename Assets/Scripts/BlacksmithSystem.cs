@@ -17,6 +17,7 @@ public class BlacksmithSystem : MonoBehaviour
     public Button closeButton;
 
     [Header("강화 UI")]
+    public TMP_Text weaponNameText;  // 추가
     public TMP_Text currentLevelText;
     public TMP_Text successRateText;
 
@@ -89,16 +90,10 @@ public class BlacksmithSystem : MonoBehaviour
             return;
         }
 
+        // 추가
+        weaponNameText.text = _selectedWeapon.Data.itemName;
+
         int level = _selectedWeapon.EnhancementLevel;
-
-        if (level >= 5)
-        {
-            currentLevelText.text = "현재 강화: +" + level.ToString() + " (최대)";
-            successRateText.text = "더 이상 강화할 수 없다네.";
-            enhanceButton.interactable = false;
-            return;
-        }
-
         currentLevelText.text = "현재 강화: +" + level.ToString();
         successRateText.text = "성공 확률: " + _selectedWeapon.CurrentSuccessRate.ToString("F0") + "%";
         enhanceButton.interactable = true;

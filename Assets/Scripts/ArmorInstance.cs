@@ -139,4 +139,65 @@ public class ArmorInstance : ItemInstance
     public override string ToString() =>
         $"[{ArmorData?.ItemName ?? "null"}] {Slot} | 방어력+{DefenseBonus} | " +
         $"각인: {RuneSlot1}/{RuneSlot2} | 세트: {SetSignature} | 장착: {IsEquipped}";
+
+    // ─────────────────────── 각인 색상 UI 연동 ───────────────────────
+
+    /// <summary>
+    /// 각인 슬롯 1개의 UI 표시 정보
+    /// </summary>
+    public readonly struct InscriptionInfo
+    {
+        /// <summary>각인 원소 (None = 빈 슬롯)</summary>
+        public readonly RuneElement Element;
+
+        /// <summary>UI 표시용 색상</summary>
+        public readonly Color Color;
+
+        /// <summary>슬롯이 비어있는지</summary>
+        public bool IsEmpty => Element == RuneElement.None;
+
+        public InscriptionInfo(RuneElement element, Color color)
+        {
+            Element = element;
+            Color = color;
+        }
+    }
+
+    /// <summary>
+    /// 슬롯 번호에 해당하는 각인 UI 정보 반환
+    /// slot: 1 또는 2 / 유효하지 않은 슬롯이면 None + clear 반환
+    /// </summary>
+    /// <example>
+    /// var info = armor.GetInscription(1);
+    /// icon.color = info.Color;
+    /// label.text = info.IsEmpty ? "빈 슬롯" : info.Element.ToString();
+    /// </example>
+    public InscriptionInfo GetInscription(int slot)
+    {
+        RuneElement element = slot switch
+        {
+            1 => RuneSlot1,
+            2 => RuneSlot2,
+            _ => RuneElement.None
+        };
+        return new InscriptionInfo(element, GetRuneColor(element));
+    }
+
+    /// <summary>
+    /// RuneElement → UI 색상 매핑
+    /// 신규 원소 추가 시 여기에만 등록하면 됩니다
+    /// </summary>
+    private static Color GetRuneColor(RuneElement element) => element switch
+    {
+        RuneElement.Fire => new Color(1.00f, 0.35f, 0.10f), // 주황-적
+        RuneElement.Water => new Color(0.20f, 0.55f, 1.00f), // 하늘
+        RuneElement.Earth => new Color(0.50f, 0.75f, 0.20f), // 초록-황
+        RuneElement.Wind => new Color(0.65f, 0.95f, 0.75f), // 민트
+        RuneElement.Thunder => new Color(1.00f, 0.90f, 0.10f), // 노랑
+        RuneElement.Ice => new Color(0.70f, 0.90f, 1.00f), // 연파랑
+        RuneElement.Dark => new Color(0.55f, 0.20f, 0.80f), // 보라
+        RuneElement.Light => new Color(1.00f, 0.95f, 0.60f), // 연금
+        RuneElement.None => Color.gray,
+        _ => Color.white
+    };
 }
