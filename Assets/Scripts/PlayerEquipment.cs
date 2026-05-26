@@ -134,10 +134,13 @@ public class PlayerEquipment : MonoBehaviour
         _armorSlots[slot] = newArmor;
         newArmor.Equip();
         playerStats?.AddEquipmentDefense(newArmor.DefenseBonus);
+        armorSetManager?.OnArmorEquipped(newArmor); // 추가
 
         // 각인 색상 UI 갱신
         ArmorInstance.InscriptionInfo info = newArmor.GetInscription(1);
-        inscriptionColorHelper?.UpdateInscriptionColor(slot.ToString(), info.Element.ToString());
+
+       
+        //inscriptionColorHelper?.UpdateInscriptionColor(slot.ToString(), info.Element.ToString());
     
         OnEquipmentChanged?.Invoke();
 

@@ -193,10 +193,6 @@ public class ArmorInstance : ItemInstance
         RuneElement.Water => new Color(0.20f, 0.55f, 1.00f), // 하늘
         RuneElement.Earth => new Color(0.50f, 0.75f, 0.20f), // 초록-황
         RuneElement.Wind => new Color(0.65f, 0.95f, 0.75f), // 민트
-        RuneElement.Thunder => new Color(1.00f, 0.90f, 0.10f), // 노랑
-        RuneElement.Ice => new Color(0.70f, 0.90f, 1.00f), // 연파랑
-        RuneElement.Dark => new Color(0.55f, 0.20f, 0.80f), // 보라
-        RuneElement.Light => new Color(1.00f, 0.95f, 0.60f), // 연금
         RuneElement.None => Color.gray,
         _ => Color.white
     };

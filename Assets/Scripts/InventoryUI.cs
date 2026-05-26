@@ -14,6 +14,7 @@ public class InventoryUI : MonoBehaviour
     public Button itemTabButton;
     public Button resourceTabButton;
     public Button closeButton;
+    public Button dropButton;
 
     [Header("바깥 클릭 닫기")]
     [Tooltip("InventoryPanel 뒤에 배치할 전체화면 투명 버튼")]
@@ -22,10 +23,10 @@ public class InventoryUI : MonoBehaviour
     [Header("Info Display")]
     public TMP_Text inventoryInfoText;
     public TMP_Text weightText;
-    
+
     private bool isOpen = false;
     private InventoryTab currentTab = InventoryTab.Item;
-    
+
     private enum InventoryTab
     {
         Item,
@@ -36,13 +37,27 @@ public class InventoryUI : MonoBehaviour
     {
         inventoryPanel.SetActive(false);
 
-        if (itemTabButton != null)
+        if (itemTabButton == null == false)
+        {
             itemTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
-        if (resourceTabButton != null)
+        }
+
+        if (resourceTabButton == null == false)
+        {
             resourceTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Resource));
-        if (closeButton != null)
+        }
+
+        if (closeButton == null == false)
+        {
             closeButton.onClick.AddListener(CloseInventory);
-        if (outsideCloseButton != null)
+        }
+
+        if (dropButton == null == false)
+        {
+            dropButton.onClick.AddListener(OnDropButtonClicked);
+        }
+
+        if (outsideCloseButton == null == false)
         {
             outsideCloseButton.onClick.AddListener(CloseInventory);
             outsideCloseButton.gameObject.SetActive(false);
@@ -52,12 +67,16 @@ public class InventoryUI : MonoBehaviour
     void Update()
     {
         if (Keyboard.current.iKey.wasPressedThisFrame)
+        {
             ToggleInventory();
+        }
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame && isOpen)
+        {
             CloseInventory();
+        }
     }
-    
+
     public void ToggleInventory()
     {
         if (isOpen)
@@ -69,12 +88,16 @@ public class InventoryUI : MonoBehaviour
             OpenInventory();
         }
     }
-    
+
     public void OpenInventory()
     {
         inventoryPanel.SetActive(true);
         isOpen = true;
-        if (outsideCloseButton != null) outsideCloseButton.gameObject.SetActive(true);
+
+        if (outsideCloseButton == null == false)
+        {
+            outsideCloseButton.gameObject.SetActive(true);
+        }
 
         SwitchTab(InventoryTab.Item);
         UpdateInventoryInfo();
@@ -87,16 +110,33 @@ public class InventoryUI : MonoBehaviour
     {
         inventoryPanel.SetActive(false);
         isOpen = false;
-        if (outsideCloseButton != null) outsideCloseButton.gameObject.SetActive(false);
+
+        if (outsideCloseButton == null == false)
+        {
+            outsideCloseButton.gameObject.SetActive(false);
+        }
 
         Time.timeScale = 1f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
-    
+
+    // 버리기 버튼 클릭 시 호출
+    private void OnDropButtonClicked()
+    {
+        InventorySystem inventory = InventorySystem.Instance;
+
+        if (inventory == null)
+        {
+            return;
+        }
+
+        Debug.Log("[InventoryUI] 버리기 버튼 클릭");
+    }
+
     private void SwitchTab(InventoryTab tab)
     {
         currentTab = tab;
-        
+
         if (tab == InventoryTab.Item)
         {
             itemInventoryPanel.SetActive(true);
@@ -107,23 +147,22 @@ public class InventoryUI : MonoBehaviour
             itemInventoryPanel.SetActive(false);
             resourceInventoryPanel.SetActive(true);
         }
-        
+
         UpdateInventoryInfo();
     }
-    
+
     private void UpdateInventoryInfo()
     {
         InventorySystem inventory = InventorySystem.Instance;
-        
-        if (inventory != null)
+
+        if (inventory == null)
         {
-            int usedSlots = inventory.items.Count;
-            int maxSlots = inventory.maxSlots;
-            
-            inventoryInfoText.text = $"아이템: {usedSlots}/{maxSlots}";
-            
-            // 무게 시스템이 있다면
-            // weightText.text = $"무게: {currentWeight}/{maxWeight}";
+            return;
         }
+
+        int usedSlots = inventory.items.Count;
+        int maxSlots = inventory.maxSlots;
+
+        inventoryInfoText.text = "아이템: " + usedSlots + "/" + maxSlots;
     }
 }

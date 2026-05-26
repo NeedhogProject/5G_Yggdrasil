@@ -110,6 +110,7 @@ public class SaveSystem : MonoBehaviour
     [SerializeField] private PlayerStats     playerStats;
     [SerializeField] private PlayerEquipment playerEquipment;
     [SerializeField] private HouseSystem     houseSystem;
+    [SerializeField] private InventorySystem inventorySystem;
 
     private float _playTime = 0f;
 
@@ -174,10 +175,20 @@ public class SaveSystem : MonoBehaviour
             foreach (ItemInstance item in houseSystem.GetStorageItems())
                 data.storageItems.Add(SerializeItem(item));
 
-        // 인벤토리 (InventorySystem 완성 후 연동)
-        // if (inventorySystem != null)
-        //     foreach (var item in inventorySystem.GetAllItems())
-        //         data.inventoryItems.Add(SerializeItem(item));
+        // 인벤토리 저장
+        if (inventorySystem == null)
+        {
+            inventorySystem = InventorySystem.Instance;
+        }
+
+        if (inventorySystem == null == false)
+        {
+            List<ItemInstance> allInstances = inventorySystem.GetAllInstances();
+            for (int i = 0; i < allInstances.Count; i++)
+            {
+                data.inventoryItems.Add(SerializeItem(allInstances[i]));
+            }
+        }
 
         // JSON 직렬화 후 파일 저장
         try
@@ -344,6 +355,7 @@ public class SaveSystem : MonoBehaviour
         if (playerStats     == null) playerStats     = FindFirstObjectByType<PlayerStats>();
         if (playerEquipment == null) playerEquipment = FindFirstObjectByType<PlayerEquipment>();
         if (houseSystem     == null) houseSystem     = FindFirstObjectByType<HouseSystem>();
+        if (inventorySystem == null) inventorySystem = InventorySystem.Instance;
     }
 
 #if UNITY_EDITOR

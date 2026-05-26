@@ -9130,6 +9130,7 @@ MonoBehaviour:
   dialogueText: {fileID: 555838975}
   enhanceButton: {fileID: 2080730799}
   closeButton: {fileID: 1380792595}
+  weaponNameText: {fileID: 1980110232}
   currentLevelText: {fileID: 535628941}
   successRateText: {fileID: 609430691}
   enhancementSystem: {fileID: 0}
@@ -15663,6 +15664,7 @@ MonoBehaviour:
   itemTabButton: {fileID: 1658377917}
   resourceTabButton: {fileID: 506298865}
   closeButton: {fileID: 42993925}
+  dropButton: {fileID: 1331711703}
   outsideCloseButton: {fileID: 0}
   inventoryInfoText: {fileID: 354594729}
   weightText: {fileID: 0}
@@ -17387,6 +17389,7 @@ MonoBehaviour:
   playerStats: {fileID: 0}
   playerEquipment: {fileID: 0}
   houseSystem: {fileID: 0}
+  inventorySystem: {fileID: 0}
 --- !u!4 &1545246530
 Transform:
   m_ObjectHideFlags: 0
