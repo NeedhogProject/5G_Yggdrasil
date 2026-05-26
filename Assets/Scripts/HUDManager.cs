@@ -332,6 +332,11 @@ public class HUDManager : MonoBehaviour
 
     private void StartSanityPulse()
     {
+        // 비네트 이미지가 미할당이면 맥동 자체를 건너뜀
+        if (vignetteImage == null)
+        {
+            return;
+        }
         if (sanityPulseCoroutine != null)
         {
             return;

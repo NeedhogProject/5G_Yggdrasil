@@ -131,6 +131,11 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ---
 
+## 버그 수정 기록
+- HUDManager.StartSanityPulse: `vignetteImage` 미할당 시 NullReferenceException 폭증 문제 수정 (가드 추가, HUDManager.cs)
+
+---
+
 ## 씬 구성 완료
 - Town 씬
   - GameCore
