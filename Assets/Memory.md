@@ -144,8 +144,42 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 ---
 
 ## 추가 점검 필요 (요청 시 처리)
-- `Assets/Scripts/TestWeaponEquip.cs`: 시작 시 무기 자동 장착 테스트 스캐폴드. 출시 전 제거 검토.
+- `Assets/Scripts/Debug/TestWeaponEquip.cs`: 시작 시 무기 자동 장착 테스트 스캐폴드. 출시 전 제거 검토.
 - `StemManager.RerollKeys()`: `DistributeKeys()` 의 public 래퍼. C# 호출자 0건이라 사용처 확인 필요 (UI Button OnClick 바인딩일 가능성).
+
+---
+
+## 폴더 구조 재편 (Assets/Scripts)
+
+64개 평면 배치를 10개 카테고리 서브폴더로 분류. `.cs` 와 `.cs.meta` 를 함께 이동해 GUID 보존 → 씬/프리팹/인스펙터 참조 무변경.
+
+```
+Assets/Scripts/
+├── Core/        GameManager, AudioManager, SaveSystem, InitBase, GameEnums                                    (5)
+├── Player/      PlayerController, PlayerCombat, PlayerEquipment, PlayerStats, PlayerDeath, HitboxSystem        (6)
+├── Data/        ItemData, WeaponData, ArmorData, EquipmentData, RelicData, ResourceData,
+│                ConsumableData, FloorKeyData, SeteffectData, SetSignature                                     (10)
+├── Items/       ItemInstance, WeaponInstance, ArmorInstance, ConsumableResourceInstance,
+│                DroppedItem, LootTable, ResourceNode                                                           (7)
+├── Inventory/   InventorySystem, InventorySlot, InventoryUI, ItemInventoryPanel,
+│                ResourceInventory, ResourceInventoryPanel                                                      (6)
+├── Combat/      EnemyAI, EnemyBase, EnemySpawner, ResourceDropEnemy                                            (4)
+├── Dungeon/     FloorManager, DungeonDifficultyScaler, StemManager, StemConnector,
+│                StemAscender, YggdrasilPortal                                                                  (6)
+├── NPCSystems/  BlacksmithSystem, EnhancementSystem, HouseSystem, ShopSystem, ScholarSystem,
+│                RuneInscriptionSystem, InscriptionMasterSystem, ArmorSetManager, NPCDialogue,
+│                CoinFlipUI, ShopItemUI                                                                        (11)
+├── UI/          HUDManager, MinimapUI, TownMapUI, EndingUI, UIItemTooltip,
+│                EquipmentSlotUI, InscriptionColorHelper                                                        (7)
+├── Camera/      CameraFollow                                                                                   (1)
+└── Debug/       TestWeaponEquip                                                                                (1)
+```
+
+분류 결정 사유:
+- `Data` 와 `Items` 분리: `*Data.cs` 는 ScriptableObject 정의(에디터 에셋 생성용), `*Instance.cs` 는 런타임 상태 객체
+- `NPCSystems` 에 `ShopItemUI`, `CoinFlipUI`, `NPCDialogue` 포함: 단순 UI 가 아니라 NPC 기능과 강결합
+- `Combat` 에 `EnemyAI`, `EnemyBase`, `EnemySpawner`, `ResourceDropEnemy`: 적 행동/스폰만 분리. 플레이어 전투 로직은 `Player` 안에 둠 (`PlayerCombat`, `HitboxSystem`)
+- `Camera`, `Debug` 단일 파일이지만 의도(테스트/카메라 전용)가 다르므로 별도 폴더로 두어 향후 추가 시 자연스럽게 누적
 
 ---
 
