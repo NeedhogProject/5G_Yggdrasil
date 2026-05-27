@@ -28,16 +28,10 @@ public class ResourceInventory : MonoBehaviour
         Instance = this;
     }
 
-    /// <summary>특정 원소 자원 보유 수 반환 — InscriptionMasterSystem 참조</summary>
+    /// <summary>특정 원소 자원 보유 수 반환</summary>
     public int GetResourceCount(InscriptionType type)
     {
         return _resources.TryGetValue(type, out int count) ? count : 0;
-    }
-
-    /// <summary>GetResourceCount 래퍼 — ResourceInventoryPanel 참조</summary>
-    public int GetResourceAmount(InscriptionType type)
-    {
-        return GetResourceCount(type);
     }
 
     /// <summary>자원 추가</summary>

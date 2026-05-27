@@ -3,6 +3,8 @@
 using UnityEngine;
 using System;
 
+// HUDManager 보다 먼저 Awake 가 호출되도록 강제 (HUDManager.Start 에서 Instance 참조 안전)
+[DefaultExecutionOrder(-100)]
 public class PlayerStats : MonoBehaviour
 {
     // ── 싱글톤 ────────────────────────────────────
@@ -26,7 +28,7 @@ public class PlayerStats : MonoBehaviour
 
     // ── 상수 ──────────────────────────────────────
     private const float MIN_STAT = 0f;
-    private const float MAX_STAT = 100f;
+    public const float MAX_STAT = 100f;
 
     // ── 계산 프로퍼티 ─────────────────────────────
     public float MentalMultiplier => mental / MAX_STAT;
@@ -81,47 +83,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        // HUDManager 자동 연결
-        OnHealthChanged += HandleHealthChanged;
-        OnMentalChanged += HandleMentalChanged;
-        OnDefenseChanged += HandleDefenseChanged; // 방어력 HUD 연동 추가
-
-        // 초기값으로 HUD 갱신
-        if (HUDManager.Instance != null)
-        {
-            HUDManager.Instance.UpdateHP(health, MAX_STAT);
-            HUDManager.Instance.UpdateSanity(mental, MAX_STAT);
-            HUDManager.Instance.UpdateDef(TotalDefense, MAX_STAT); // 방어력 초기값 반영
-        }
-    }
-
-    // ── 이벤트 핸들러 ─────────────────────────────
-
-    private void HandleHealthChanged(float hp)
-    {
-        if (HUDManager.Instance != null)
-        {
-            HUDManager.Instance.UpdateHP(hp, MAX_STAT);
-        }
-    }
-
-    private void HandleMentalChanged(float men)
-    {
-        if (HUDManager.Instance != null)
-        {
-            HUDManager.Instance.UpdateSanity(men, MAX_STAT);
-        }
-    }
-
-    private void HandleDefenseChanged(float def)
-    {
-        if (HUDManager.Instance != null)
-        {
-            HUDManager.Instance.UpdateDef(def, MAX_STAT);
-        }
-    }
+    // HUD 갱신 구독은 HUDManager 측에서 담당 (PlayerStats 는 UI 를 모름)
 
     // ── 스탯 변경 ─────────────────────────────────
 

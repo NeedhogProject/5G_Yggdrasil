@@ -133,6 +133,19 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ## 버그 수정 기록
 - HUDManager.StartSanityPulse: `vignetteImage` 미할당 시 NullReferenceException 폭증 문제 수정 (가드 추가, HUDManager.cs)
+- InitBase.cs: `MonoBehaviour` 상속 누락으로 Awake 가 호출되지 않던 문제 수정 (베이스 클래스 동작 복구)
+- 싱글턴 초기화 순서 경합: `PlayerStats` 에 `[DefaultExecutionOrder(-100)]` 적용으로 HUDManager 보다 먼저 Awake 보장
+- 매니저 간 직접 결합 해소: `PlayerStats` 가 `HUDManager.Instance` 를 직접 호출하던 구조를 이벤트 구독 기반으로 역전 (PlayerStats 는 UI 를 모름)
+- HUDManager 에 `OnDestroy` 추가: PlayerStats 이벤트 구독을 안전 해제하고 `Instance` 를 정리 (씬 전환 시 데드 참조 방지)
+- `PlayerStats.MAX_STAT` public const 화: HUDManager 가 동일 최대값을 사용하도록 일원화
+- `ItemInventoryUI.cs` 삭제: Unity 기본 템플릿 빈 스텁, 코드/씬/프리팹 어디에서도 참조되지 않은 고아 파일
+- `ResourceInventory.GetResourceAmount` 제거: `GetResourceCount` 단순 래퍼였으며 호출자(`ResourceInventoryPanel`)를 `GetResourceCount` 로 통일
+
+---
+
+## 추가 점검 필요 (요청 시 처리)
+- `Assets/Scripts/TestWeaponEquip.cs`: 시작 시 무기 자동 장착 테스트 스캐폴드. 출시 전 제거 검토.
+- `StemManager.RerollKeys()`: `DistributeKeys()` 의 public 래퍼. C# 호출자 0건이라 사용처 확인 필요 (UI Button OnClick 바인딩일 가능성).
 
 ---
 

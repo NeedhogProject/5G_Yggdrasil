@@ -91,6 +91,22 @@ public class HUDManager : MonoBehaviour
         Instance = this;
     }
 
+    private void OnDestroy()
+    {
+        // 씬 전환/오브젝트 파괴 시 PlayerStats 이벤트에서 안전하게 해제
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.OnHealthChanged -= HandlePlayerHealthChanged;
+            PlayerStats.Instance.OnDefenseChanged -= HandlePlayerDefenseChanged;
+            PlayerStats.Instance.OnMentalChanged -= HandlePlayerMentalChanged;
+        }
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
+
     private void Start()
     {
         if (vignetteImage != null)
@@ -111,6 +127,36 @@ public class HUDManager : MonoBehaviour
                 slot.SetInactive();
             }
         }
+
+        // PlayerStats 이벤트 구독 및 초기값 반영
+        // PlayerStats 가 [DefaultExecutionOrder(-100)] 으로 먼저 Awake 됨이 보장됨
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.OnHealthChanged += HandlePlayerHealthChanged;
+            PlayerStats.Instance.OnDefenseChanged += HandlePlayerDefenseChanged;
+            PlayerStats.Instance.OnMentalChanged += HandlePlayerMentalChanged;
+
+            UpdateHP(PlayerStats.Instance.Health, PlayerStats.MAX_STAT);
+            UpdateDef(PlayerStats.Instance.Defense, PlayerStats.MAX_STAT);
+            UpdateSanity(PlayerStats.Instance.Mental, PlayerStats.MAX_STAT);
+        }
+    }
+
+    // ── PlayerStats 이벤트 핸들러 ─────────────────
+
+    private void HandlePlayerHealthChanged(float hp)
+    {
+        UpdateHP(hp, PlayerStats.MAX_STAT);
+    }
+
+    private void HandlePlayerDefenseChanged(float def)
+    {
+        UpdateDef(def, PlayerStats.MAX_STAT);
+    }
+
+    private void HandlePlayerMentalChanged(float men)
+    {
+        UpdateSanity(men, PlayerStats.MAX_STAT);
     }
 
     private void Update()

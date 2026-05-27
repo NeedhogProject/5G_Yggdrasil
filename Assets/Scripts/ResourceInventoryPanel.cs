@@ -19,7 +19,7 @@ public class ResourceInventoryPanel : MonoBehaviour
 
         for (int i = 0; i < amountTexts.Length; i++)
         {
-            int amount = ResourceInventory.Instance.GetResourceAmount(types[i]);
+            int amount = ResourceInventory.Instance.GetResourceCount(types[i]);
             amountTexts[i].text = $"{amount} / 99";
             amountTexts[i].color = amount >= 99 ? Color.red : Color.white;
         }
