@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1598824965081737788
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6333491244090691854}
+  - component: {fileID: 7485945044666893649}
+  - component: {fileID: 7226239186556597543}
+  m_Layer: 0
+  m_Name: DungeonCore
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6333491244090691854
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598824965081737788}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7485945044666893649
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598824965081737788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9df6c80a023b84b48b7fbc04964659e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DungeonDifficultyScaler
+  floorDifficulties:
+  - floor: 1
+    totalSpawnCount: 50
+    enemyHealthMult: 1
+    enemyAttackMult: 1
+    rarityBonus: 0
+  - floor: 2
+    totalSpawnCount: 125
+    enemyHealthMult: 1.5
+    enemyAttackMult: 1.3
+    rarityBonus: 1
+  - floor: 3
+    totalSpawnCount: 125
+    enemyHealthMult: 2.2
+    enemyAttackMult: 1.7
+    rarityBonus: 2.5
+  - floor: 4
+    totalSpawnCount: 1
+    enemyHealthMult: 3.5
+    enemyAttackMult: 2.5
+    rarityBonus: 5
+--- !u!114 &7226239186556597543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598824965081737788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7234a365cda26b4db71431bef909926, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  spawnPoints:
+  - {fileID: 0}
+  keyEnemyCount: 4
+  checkInterval: 0.3
+  healthMultiplier: 1
+  attackMultiplier: 1
+  maxSpawnCount: 50

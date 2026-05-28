@@ -9,12 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d70630c61a30b7428a0691f9593a257, type: 3}
-  m_Name: Resource_Earth
-  m_EditorClassIdentifier: Assembly-CSharp::ResourceData
-  _itemName: "\uB545 \uC6D0\uC18C \uAD11\uC11D"
-  _description: "\uB545 \uC6D0\uC18C \uAD11\uC11D\uC785\uB2C8\uB2E4."
-  _itemType: 3
+  m_Script: {fileID: 11500000, guid: 171abef1f86f23049bf6f24c3cfb44e8, type: 3}
+  m_Name: FloorKey_East_Floor_1
+  m_EditorClassIdentifier: Assembly-CSharp::FloorKeyData
+  _itemName: "\uB3D9\uCABD \uC904\uAE30 \uC5F4\uC1E0"
+  _description: 
+  _itemType: 4
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
@@ -23,9 +23,6 @@ MonoBehaviour:
   _buyPrice: 0
   _sellPrice: 0
   _isDroppable: 1
-  _isStackable: 1
+  _isStackable: 0
   _maxStack: 1
-  resourceType: 3
-  dropSource: 0
-  floorSpawnCounts: 0a000000080000000600000004000000
-  dropWeight: 20
+  keyDirection: 0
