@@ -132,6 +132,7 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 ---
 
 ## 버그 수정 기록
+- Floor_1.unity: Main Camera 에 붙어 있던 AudioListener 컴포넌트 제거 (마을 → 던전 1층 전환 시 AudioListener 2개 중복 경고 해소, 마을 씬 Main Camera 의 AudioListener 만 유효)
 - HUDManager.StartSanityPulse: `vignetteImage` 미할당 시 NullReferenceException 폭증 문제 수정 (가드 추가, HUDManager.cs)
 - InitBase.cs: `MonoBehaviour` 상속 누락으로 Awake 가 호출되지 않던 문제 수정 (베이스 클래스 동작 복구)
 - 싱글턴 초기화 순서 경합: `PlayerStats` 에 `[DefaultExecutionOrder(-100)]` 적용으로 HUDManager 보다 먼저 Awake 보장
