@@ -1,101 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-// ─────────────────────── 스폰 프리팹 가중치 항목 ───────────────────────
-
-/// <summary>
-/// 스폰 포인트의 몬스터 프리팹 + 가중치
-/// 여러 종류를 등록하면 가중치 기반으로 랜덤 선택
-/// </summary>
-[System.Serializable]
-public class EnemySpawnEntry
-{
-    [Tooltip("스폰할 적 프리팹")]
-    public GameObject prefab;
-
-    [Tooltip("선택 가중치. 높을수록 자주 스폰")]
-    [Range(1, 100)]
-    public int weight = 10;
-}
-
-/// <summary>
-/// 개별 스폰 포인트
-/// 플레이어가 activationRange 안에 들어오면 적 생성
-/// </summary>
-public class SpawnPoint : MonoBehaviour
-{
-    [Header("스폰 설정")]
-    [Tooltip("스폰 가능한 적 프리팹 목록 (가중치 기반 랜덤 선택)\n" +
-             "1개만 등록하면 항상 그 적만 스폰")]
-    [SerializeField] private List<EnemySpawnEntry> enemyEntries = new List<EnemySpawnEntry>();
-
-    [Tooltip("플레이어가 이 거리 안에 들어오면 스폰")]
-    [SerializeField] private float activationRange = 8f;
-
-    [Tooltip("스폰 시 적을 중심에서 퍼뜨릴 반경")]
-    [SerializeField] private float spawnSpreadRadius = 1.5f;
-
-    // ─────────────────────── 상태 ───────────────────────
-
-    /// <summary>이미 스폰됐는지 (한 번만 스폰)</summary>
-    public bool HasSpawned { get; private set; } = false;
-
-    /// <summary>스폰된 적 오브젝트</summary>
-    public GameObject SpawnedEnemy { get; private set; }
-
-    public float ActivationRange    => activationRange;
-    public float SpawnSpreadRadius  => spawnSpreadRadius;
-
-    /// <summary>
-    /// 가중치 기반 랜덤 프리팹 선택
-    /// EnemySpawner 에서 호출
-    /// </summary>
-    public GameObject SelectRandomPrefab()
-    {
-        if (enemyEntries == null || enemyEntries.Count == 0) return null;
-
-        // 총 가중치 합산
-        int totalWeight = 0;
-        foreach (EnemySpawnEntry e in enemyEntries)
-            if (e.prefab != null) totalWeight += e.weight;
-
-        if (totalWeight <= 0) return null;
-
-        int roll = Random.Range(0, totalWeight);
-        int cumulative = 0;
-        foreach (EnemySpawnEntry e in enemyEntries)
-        {
-            if (e.prefab == null) continue;
-            cumulative += e.weight;
-            if (roll < cumulative) return e.prefab;
-        }
-
-        return enemyEntries[enemyEntries.Count - 1].prefab;
-    }
-
-    /// <summary>스폰 완료 처리 (EnemySpawner 에서 호출)</summary>
-    public void MarkSpawned(GameObject enemy)
-    {
-        HasSpawned   = true;
-        SpawnedEnemy = enemy;
-    }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = HasSpawned
-            ? new Color(0.5f, 0.5f, 0.5f, 0.2f)
-            : new Color(1f, 0.3f, 0f, 0.25f);
-        Gizmos.DrawWireSphere(transform.position, activationRange);
-
-        Gizmos.color = new Color(1f, 1f, 0f, 0.4f);
-        Gizmos.DrawSphere(transform.position, 0.3f);
-    }
-#endif
-}
-
-// ─────────────────────────────────────────────────────────────────
-
 /// <summary>
 /// 층별 적 스폰 관리자
 ///
@@ -128,8 +33,8 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float checkInterval = 0.3f;
 
     [Header("난이도 배율 (DungeonDifficultyScaler 연동)")]
-    [SerializeField] private float healthMultiplier  = 1f;
-    [SerializeField] private float attackMultiplier  = 1f;
+    [SerializeField] private float healthMultiplier = 1f;
+    [SerializeField] private float attackMultiplier = 1f;
 
     [Header("최대 스폰 수 (DungeonDifficultyScaler 에서 자동 설정)")]
     [Tooltip("1층=50 / 2·3층=125 / 4층=1(보스)")]
@@ -142,6 +47,9 @@ public class EnemySpawner : MonoBehaviour
 
     /// <summary>스폰된 적 중 열쇠 소유 적 목록</summary>
     private readonly List<GameObject> _keyEnemies = new List<GameObject>();
+
+    /// <summary>열쇠를 부여할 스폰 포인트 인덱스 목록</summary>
+    private readonly List<int> _keySpawnIndices = new List<int>();
 
     /// <summary>현재 살아있는 적 수</summary>
     public int AliveEnemyCount { get; private set; } = 0;
@@ -156,7 +64,7 @@ public class EnemySpawner : MonoBehaviour
         GameObject playerObj = GameObject.FindWithTag("Player");
         if (playerObj != null) _player = playerObj.transform;
 
-        // 열쇠 소유 적 선정 (랜덤 스폰 포인트 4개 선택)
+        // 열쇠 소유 적 선정 (랜덤 스폰 포인트 keyEnemyCount 개 선택)
         SelectKeySpawnPoints();
     }
 
@@ -181,31 +89,31 @@ public class EnemySpawner : MonoBehaviour
             if (sp.SelectRandomPrefab() == null) continue;
             if (AliveEnemyCount >= maxSpawnCount) return; // 최대 스폰 수 초과 시 중단
 
-            float dist = Vector3.Distance(_player.position, sp.transform.position);
-            if (dist <= sp.ActivationRange)
+            float fDist = Vector3.Distance(_player.position, sp.transform.position);
+            if (fDist <= sp.ActivationRange)
                 SpawnEnemy(sp);
         }
     }
 
     // ─────────────────────── 적 생성 ───────────────────────
 
-    private void SpawnEnemy(SpawnPoint sp)
+    private void SpawnEnemy(SpawnPoint _sp)
     {
         // 가중치 기반 랜덤 프리팹 선택
-        GameObject prefab = sp.SelectRandomPrefab();
+        GameObject prefab = _sp.SelectRandomPrefab();
         if (prefab == null)
         {
-            Debug.LogWarning($"[EnemySpawner] {sp.name} 스폰 프리팹 없음 — 건너뜀");
-            sp.MarkSpawned(null);
+            Debug.LogWarning($"[EnemySpawner] {_sp.name} 스폰 프리팹 없음 — 건너뜀");
+            _sp.MarkSpawned(null);
             return;
         }
 
         // 스폰 위치에 살짝 랜덤 오프셋
-        Vector2 spread   = Random.insideUnitCircle * sp.SpawnSpreadRadius;
-        Vector3 spawnPos = sp.transform.position
-                         + new Vector3(spread.x, 0f, spread.y);
+        Vector2 vSpread  = Random.insideUnitCircle * _sp.SpawnSpreadRadius;
+        Vector3 vSpawnPos = _sp.transform.position
+                          + new Vector3(vSpread.x, 0f, vSpread.y);
 
-        GameObject enemy = Instantiate(prefab, spawnPos,
+        GameObject enemy = Instantiate(prefab, vSpawnPos,
                                        Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
 
         // 난이도 배율 적용
@@ -216,13 +124,13 @@ public class EnemySpawner : MonoBehaviour
             enemyBase.OnDied += OnEnemyDied;
         }
 
-        sp.MarkSpawned(enemy);
+        _sp.MarkSpawned(enemy);
         AliveEnemyCount++;
 
         // 열쇠 소유 적 등록 체크
-        TryRegisterKeyEnemy(sp, enemy);
+        TryRegisterKeyEnemy(_sp, enemy);
 
-        Debug.Log($"[EnemySpawner] {enemy.name} 스폰 @ {spawnPos}");
+        Debug.Log($"[EnemySpawner] {enemy.name} 스폰 @ {vSpawnPos}");
     }
 
     // ─────────────────────── 열쇠 소유 적 선정 ───────────────────────
@@ -246,11 +154,11 @@ public class EnemySpawner : MonoBehaviour
 
         for (int i = indices.Count - 1; i > 0; i--)
         {
-            int j = Random.Range(0, i + 1);
-            (indices[i], indices[j]) = (indices[j], indices[i]);
+            int nJ = Random.Range(0, i + 1);
+            (indices[i], indices[nJ]) = (indices[nJ], indices[i]);
         }
 
-        // 앞 keyEnemyCount 개를 열쇠 스폰 포인트로 지정 (태그로 구분)
+        // 앞 keyEnemyCount 개를 열쇠 스폰 포인트로 지정
         // 실제 열쇠 분배는 적 생성 후 StemManager.RegisterEnemies() 에서 처리
         _keySpawnIndices.Clear();
         for (int i = 0; i < keyEnemyCount; i++)
@@ -259,28 +167,25 @@ public class EnemySpawner : MonoBehaviour
         Debug.Log($"[EnemySpawner] 열쇠 소유 스폰 포인트 {keyEnemyCount}개 선정 완료");
     }
 
-    private readonly List<int> _keySpawnIndices = new List<int>();
-
     /// <summary>
     /// 스폰된 적이 열쇠 소유 대상인지 확인 후 _keyEnemies 에 추가
     /// SpawnEnemy 내부에서 호출
     /// </summary>
-    private void TryRegisterKeyEnemy(SpawnPoint sp, GameObject enemy)
+    private void TryRegisterKeyEnemy(SpawnPoint _sp, GameObject _enemy)
     {
-        int idx = spawnPoints.IndexOf(sp);
-        if (_keySpawnIndices.Contains(idx))
-        {
-            _keyEnemies.Add(enemy);
+        int nIdx = spawnPoints.IndexOf(_sp);
+        if (_keySpawnIndices.Contains(nIdx) == false) return;
 
-            // 열쇠 소유 적이 모두 모이면 StemManager 에 등록
-            if (_keyEnemies.Count >= keyEnemyCount)
-                StemManager.Instance?.RegisterEnemies(_keyEnemies);
-        }
+        _keyEnemies.Add(_enemy);
+
+        // 열쇠 소유 적이 모두 모이면 StemManager 에 등록
+        if (_keyEnemies.Count >= keyEnemyCount)
+            StemManager.Instance?.RegisterEnemies(_keyEnemies);
     }
 
     // ─────────────────────── 적 사망 콜백 ───────────────────────
 
-    private void OnEnemyDied(EnemyBase enemy)
+    private void OnEnemyDied(EnemyBase _enemy)
     {
         AliveEnemyCount = Mathf.Max(0, AliveEnemyCount - 1);
         Debug.Log($"[EnemySpawner] 잔여 적: {AliveEnemyCount}");
@@ -306,16 +211,16 @@ public class EnemySpawner : MonoBehaviour
     // ─────────────────────── 난이도 설정 ───────────────────────
 
     /// <summary>DungeonDifficultyScaler 에서 호출 — 난이도 배율 설정</summary>
-    public void SetDifficultyScale(float healthMult, float attackMult)
+    public void SetDifficultyScale(float _healthMult, float _attackMult)
     {
-        healthMultiplier = healthMult;
-        attackMultiplier = attackMult;
+        healthMultiplier = _healthMult;
+        attackMultiplier = _attackMult;
     }
 
     /// <summary>DungeonDifficultyScaler 에서 호출 — 층별 최대 스폰 수 설정</summary>
-    public void SetMaxSpawnCount(int count)
+    public void SetMaxSpawnCount(int _nCount)
     {
-        maxSpawnCount = Mathf.Max(1, count);
+        maxSpawnCount = Mathf.Max(1, _nCount);
         Debug.Log($"[EnemySpawner] 최대 스폰 수 설정: {maxSpawnCount}마리");
     }
 }

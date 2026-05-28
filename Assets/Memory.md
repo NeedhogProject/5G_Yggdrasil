@@ -131,62 +131,9 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ---
 
-## 버그 수정 기록
-- Floor_1.unity: Main Camera 에 붙어 있던 AudioListener 컴포넌트 제거 (마을 → 던전 1층 전환 시 AudioListener 2개 중복 경고 해소, 마을 씬 Main Camera 의 AudioListener 만 유효)
-- HUDManager.StartSanityPulse: `vignetteImage` 미할당 시 NullReferenceException 폭증 문제 수정 (가드 추가, HUDManager.cs)
-- InitBase.cs: `MonoBehaviour` 상속 누락으로 Awake 가 호출되지 않던 문제 수정 (베이스 클래스 동작 복구)
-- 싱글턴 초기화 순서 경합: `PlayerStats` 에 `[DefaultExecutionOrder(-100)]` 적용으로 HUDManager 보다 먼저 Awake 보장
-- 매니저 간 직접 결합 해소: `PlayerStats` 가 `HUDManager.Instance` 를 직접 호출하던 구조를 이벤트 구독 기반으로 역전 (PlayerStats 는 UI 를 모름)
-- HUDManager 에 `OnDestroy` 추가: PlayerStats 이벤트 구독을 안전 해제하고 `Instance` 를 정리 (씬 전환 시 데드 참조 방지)
-- `PlayerStats.MAX_STAT` public const 화: HUDManager 가 동일 최대값을 사용하도록 일원화
-- `ItemInventoryUI.cs` 삭제: Unity 기본 템플릿 빈 스텁, 코드/씬/프리팹 어디에서도 참조되지 않은 고아 파일
-- `ResourceInventory.GetResourceAmount` 제거: `GetResourceCount` 단순 래퍼였으며 호출자(`ResourceInventoryPanel`)를 `GetResourceCount` 로 통일
-
----
-
-## 추가 점검 필요 (요청 시 처리)
-- `Assets/Scripts/Debug/TestWeaponEquip.cs`: 시작 시 무기 자동 장착 테스트 스캐폴드. 출시 전 제거 검토.
-- `StemManager.RerollKeys()`: `DistributeKeys()` 의 public 래퍼. C# 호출자 0건이라 사용처 확인 필요 (UI Button OnClick 바인딩일 가능성).
-
----
-
-## 폴더 구조 재편 (Assets/Scripts)
-
-64개 평면 배치를 10개 카테고리 서브폴더로 분류. `.cs` 와 `.cs.meta` 를 함께 이동해 GUID 보존 → 씬/프리팹/인스펙터 참조 무변경.
-
-```
-Assets/Scripts/
-├── Core/        GameManager, AudioManager, SaveSystem, InitBase, GameEnums                                    (5)
-├── Player/      PlayerController, PlayerCombat, PlayerEquipment, PlayerStats, PlayerDeath, HitboxSystem        (6)
-├── Data/        ItemData, WeaponData, ArmorData, EquipmentData, RelicData, ResourceData,
-│                ConsumableData, FloorKeyData, SeteffectData, SetSignature                                     (10)
-├── Items/       ItemInstance, WeaponInstance, ArmorInstance, ConsumableResourceInstance,
-│                DroppedItem, LootTable, ResourceNode                                                           (7)
-├── Inventory/   InventorySystem, InventorySlot, InventoryUI, ItemInventoryPanel,
-│                ResourceInventory, ResourceInventoryPanel                                                      (6)
-├── Combat/      EnemyAI, EnemyBase, EnemySpawner, ResourceDropEnemy                                            (4)
-├── Dungeon/     FloorManager, DungeonDifficultyScaler, StemManager, StemConnector,
-│                StemAscender, YggdrasilPortal                                                                  (6)
-├── NPCSystems/  BlacksmithSystem, EnhancementSystem, HouseSystem, ShopSystem, ScholarSystem,
-│                RuneInscriptionSystem, InscriptionMasterSystem, ArmorSetManager, NPCDialogue,
-│                CoinFlipUI, ShopItemUI                                                                        (11)
-├── UI/          HUDManager, MinimapUI, TownMapUI, EndingUI, UIItemTooltip,
-│                EquipmentSlotUI, InscriptionColorHelper                                                        (7)
-├── Camera/      CameraFollow                                                                                   (1)
-└── Debug/       TestWeaponEquip                                                                                (1)
-```
-
-분류 결정 사유:
-- `Data` 와 `Items` 분리: `*Data.cs` 는 ScriptableObject 정의(에디터 에셋 생성용), `*Instance.cs` 는 런타임 상태 객체
-- `NPCSystems` 에 `ShopItemUI`, `CoinFlipUI`, `NPCDialogue` 포함: 단순 UI 가 아니라 NPC 기능과 강결합
-- `Combat` 에 `EnemyAI`, `EnemyBase`, `EnemySpawner`, `ResourceDropEnemy`: 적 행동/스폰만 분리. 플레이어 전투 로직은 `Player` 안에 둠 (`PlayerCombat`, `HitboxSystem`)
-- `Camera`, `Debug` 단일 파일이지만 의도(테스트/카메라 전용)가 다르므로 별도 폴더로 두어 향후 추가 시 자연스럽게 누적
-
----
-
 ## 씬 구성 완료
 - Town 씬
-  - GameCore
+  - GameCore (Main Camera 자식으로 포함, DontDestroyOnLoad)
   - Player (프리팹)
   - YggdrasilPortal
   - Inventory_Canvas (인벤토리 UI 전체)
@@ -194,6 +141,16 @@ Assets/Scripts/
   - GameOverCanvas
   - 임시 Ground (Plane)
   - 받은 배경 모델링 적용 중
+
+- Floor_1 씬 (완성)
+  - 바닥(Plane) + NavMesh 굽기 완료
+  - 임시 Main Camera (CameraFollow + DevTestCamera)
+  - Player 배치
+  - DungeonCore (프리팹화) — DungeonDifficultyScaler + EnemySpawner
+  - StemManager + 줄기 4방향 (North/South/East/West)
+  - SpawnPoint 배치 + EnemySpawner 연결
+  - ResourceNode 배치
+  - 진입/스폰/열쇠/층이동 테스트 완료
 
 ---
 
@@ -207,12 +164,15 @@ Assets/Scripts/
 ## 아직 미완성 (다음 작업)
 
 ### 다음 우선순위 작업
-1. **장비 장착 UI** — EquipmentSlotUI Canvas 배치
-2. **던전 씬** — Floor_1 ~ Floor_4_Boss
-3. **적 AI / 스폰** — EnemySpawner, EnemyBase 씬 배치
-4. **NPC 시스템** — Blacksmith, Scholar, InscriptionMaster, Shop UI Canvas
-5. **줄기/열쇠 시스템** — 던전 층 이동
-6. **미니맵**
+1. **Floor_2 ~ Floor_4_Boss 씬** — Floor_1 복제 후 수치 변경
+2. **적 프리팹** — 2~4층 적 (현재 1층만 완성)
+3. **보스 (니드호그)** — 4층
+4. **NPC 시스템 연동** — 코드 완성, UI는 별도 담당
+5. **미니맵 / 마을맵** — 코드 완성, UI는 별도 담당
+6. **세이브/로드 검증**
+
+### UI 작업 (별도 담당 - 개발 외)
+- 장비 장착 UI, NPC 창들, 미니맵, 타이틀, 세이브 슬롯 등
 
 ### 그래픽 작업 (개발 후반)
 - 캐릭터 모델링 (현재 Capsule 임시)
@@ -227,3 +187,8 @@ Assets/Scripts/
 - `TooltipPanel`의 Image와 자식 모두 **Raycast Target 체크 해제** 필수 (깜빡임 방지)
 - `OutsideCloseButton`은 Hierarchy에서 `InventoryPanel`보다 **위에 있어야** 함
 - 받은 씬 사용 시 중복 Audio Listener / Camera 제거 필요
+- **카메라 구조**: Main Camera는 GameCore 자식으로 DontDestroyOnLoad 유지. 던전 씬에는 별도 카메라 두지 않음. 단독 테스트용으로 DevTestCamera 부착 시 GameCore 카메라 진입하면 자동 제거됨
+- **CameraFollow**: 씬 전환 시 target 자동 재탐색 (PlayerController.Instance → Tag "Player" 순)
+- **DungeonCore 프리팹화 완료**: Floor_2~4에서 재사용, DifficultyScaler 수치만 변경
+- FloorKey 4개 ScriptableObject 완성 (North/South/East/West)
+- 1층 적 프리팹 전부 완성
