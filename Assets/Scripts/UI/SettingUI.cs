@@ -159,4 +159,23 @@ private void Update()
         Close();
     }
 }
+
+    // 탭이 활성화될 때마다 현재 볼륨으로 슬라이더 동기화
+    private void OnEnable()
+    {
+        if (AudioManager.Instance == null)
+        {
+            return;
+        }
+
+        if (bgmSlider != null)
+        {
+            bgmSlider.SetValueWithoutNotify(AudioManager.Instance.BGMVolume);
+        }
+        if (sfxSlider != null)
+        {
+            sfxSlider.SetValueWithoutNotify(AudioManager.Instance.SFXVolume);
+        }
+        RefreshValueText();
+    }
 }
