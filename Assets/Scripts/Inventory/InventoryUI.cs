@@ -66,12 +66,17 @@ public class InventoryUI : MonoBehaviour
 
     void Update()
     {
-        if (Keyboard.current.iKey.wasPressedThisFrame)
+        // 인벤토리 액션, 키 설정창에서 변경된 키가 그대로 반영됨
+        UnityEngine.InputSystem.InputAction inventoryAction =
+            KeyBindingManager.Instance?.FindAction("Inventory");
+
+        if (inventoryAction != null && inventoryAction.WasPressedThisFrame() == true)
         {
             ToggleInventory();
         }
 
-        if (Keyboard.current.escapeKey.wasPressedThisFrame && isOpen)
+        // Esc는 키 설정 대상이 아니라 그대로 둠
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == true && isOpen == true)
         {
             CloseInventory();
         }

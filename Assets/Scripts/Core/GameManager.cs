@@ -217,6 +217,85 @@ public class GameManager : MonoBehaviour
         OnGameStateChanged?.Invoke(newState);
     }
 
+
+    // 이어하기, 슬롯의 저장 데이터로 복원
+    public void ContinueGame(int slotIndex)
+    {
+        if (SaveSystem.Instance == null)
+        {
+            Debug.LogWarning("[GameManager] SaveSystem 없음");
+            return;
+        }
+
+        SaveData meta = SaveSystem.Instance.GetSaveMeta(slotIndex);
+        if (meta == null)
+        {
+            Debug.LogWarning($"[GameManager] 슬롯 {slotIndex} 저장 데이터 없음");
+            return;
+        }
+
+        // 저장된 층에 맞는 씬을 결정
+        CurrentFloor = meta.currentFloor;
+        string sceneName = GetSceneNameForFloor(CurrentFloor);
+
+        GameState targetState = CurrentFloor == 0 ? GameState.Town : GameState.Dungeon;
+
+        // 씬 로드 후 SaveSystem.Load 호출하기 위해 슬롯 인덱스를 보관
+        _pendingLoadSlot = slotIndex;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoadedForContinue;
+
+        LoadScene(sceneName, targetState);
+    }
+
+    // 이어하기용 대기 슬롯
+    private int _pendingLoadSlot = -1;
+
+    // 씬 로드가 끝나면 한 프레임 뒤에 데이터 적용
+    private void OnSceneLoadedForContinue(
+        UnityEngine.SceneManagement.Scene scene,
+        UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoadedForContinue;
+
+        if (_pendingLoadSlot < 0)
+        {
+            return;
+        }
+
+        StartCoroutine(ApplySavedDataNextFrame());
+    }
+
+
+    // ───────────────────── 이어하기 ───────────────────────
+
+
+    // 씬 안 오브젝트들의 Start가 다 돈 다음에 적용해야 안전함
+    private System.Collections.IEnumerator ApplySavedDataNextFrame()
+    {
+        yield return null;
+
+        if (SaveSystem.Instance != null && _pendingLoadSlot >= 0)
+        {
+            SaveSystem.Instance.Load(_pendingLoadSlot);
+        }
+
+        _pendingLoadSlot = -1;
+    }
+
+    // 층 번호에서 씬 이름 반환
+    private string GetSceneNameForFloor(int floor)
+    {
+        return floor switch
+        {
+            0 => townSceneName,
+            1 => floor1SceneName,
+            2 => floor2SceneName,
+            3 => floor3SceneName,
+            4 => floor4SceneName,
+            _ => townSceneName
+        };
+    }
+
     // ─────────────────────── 유틸 ───────────────────────
 
     /// <summary>현재 던전 안인지</summary>

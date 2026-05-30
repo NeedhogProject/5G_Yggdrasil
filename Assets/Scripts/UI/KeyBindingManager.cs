@@ -1,27 +1,40 @@
 // KeyBindingManager.cs
-// 키 바인딩 저장 및 조회 싱글턴
-// 액션 이름별 KeyCode를 PlayerPrefs에 영구 저장한다.
-// 주의: 실제 입력 소비는 PlayerController/PlayerCombat 영역이며
-//       현재 플레이어는 New Input System을 사용하므로 연동 방식은 정건희 팀원과 협의 필요
+// 키 바인딩 관리 싱글턴 (New Input System 기반)
+// 정건희 팀원의 InputActionAsset 바인딩을 런타임에 재설정하고
+// 그 오버라이드를 JSON으로 PlayerPrefs에 영구 저장한다.
+//
+// 전제
+// 1. 정건희 팀원의 InputActionAsset(.inputactions)을 인스펙터에 연결
+// 2. 슬롯의 액션 이름은 Asset에 등록된 이름과 정확히 일치해야 함
+// 3. 입력을 소비하는 쪽이 InputAction을 통해 읽어야 키 변경이 실제로 반영됨
+//    Keyboard.current.xxxKey.isPressed 같은 하드코딩 부분은 정건희 팀원과 협의 필요
 
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class KeyBindingManager : MonoBehaviour
 {
     public static KeyBindingManager Instance;
 
-    // 액션 이름과 키 매핑
-    private Dictionary<string, KeyCode> keyBindings = new Dictionary<string, KeyCode>();
+    [Header("정건희 팀원 InputActionAsset 연결")]
+    [SerializeField] private InputActionAsset inputActions;
+
+    // 다른 설정(볼륨 등)과 분리된 전용 PlayerPrefs 키
+    private const string OVERRIDES_KEY = "InputBindings_Overrides";
 
     private void Awake()
     {
-        // 싱글턴, 씬 전환에도 유지
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            LoadKeys();
+            LoadBindings();
+
+            // 직접 IsPressed/WasPressedThisFrame 호출하려면 액션을 활성화해야 함
+            if (inputActions != null)
+            {
+                inputActions.Enable();
+            }
         }
         else
         {
@@ -29,70 +42,108 @@ public class KeyBindingManager : MonoBehaviour
         }
     }
 
-    // 액션에 매핑된 키 반환, 없으면 None
-    public KeyCode GetKey(string actionName)
+    // 액션 이름으로 InputAction 찾기
+    public InputAction FindAction(string actionName)
     {
-        if (keyBindings.ContainsKey(actionName) == true)
+        if (inputActions == null)
         {
-            return keyBindings[actionName];
+            return null;
         }
-        return KeyCode.None;
+        return inputActions.FindAction(actionName, false);
     }
 
-    // 액션에 키 설정
-    public void SetKey(string actionName, KeyCode key)
+    // 현재 바인딩된 키의 표시 문자열 반환 ("W", "Shift", "LMB" 등)
+    public string GetBindingDisplay(string actionName, int bindingIndex)
     {
-        keyBindings[actionName] = key;
+        InputAction action = FindAction(actionName);
+        if (action == null)
+        {
+            return "-";
+        }
+        if (bindingIndex < 0 || bindingIndex >= action.bindings.Count)
+        {
+            return "-";
+        }
+        return action.GetBindingDisplayString(bindingIndex);
     }
 
-    // 모든 키를 PlayerPrefs에 저장
-    public void SaveKeys()
+    // 키 재설정 시작
+    // onComplete: 새 키 입력이 완료된 경우
+    // onCancel : Esc 또는 외부에서 취소된 경우
+    // 반환된 RebindingOperation은 호출자가 보관해서 필요 시 Cancel/Dispose 해야 함
+    public InputActionRebindingExtensions.RebindingOperation StartRebind(
+        string actionName,
+        int bindingIndex,
+        System.Action onComplete,
+        System.Action onCancel)
     {
-        foreach (KeyValuePair<string, KeyCode> pair in keyBindings)
+        InputAction action = FindAction(actionName);
+        if (action == null)
         {
-            PlayerPrefs.SetString("KEY_" + pair.Key, pair.Value.ToString());
+            onCancel?.Invoke();
+            return null;
         }
+
+        // 리바인딩 중에는 액션을 비활성화해야 입력이 게임 쪽으로 새지 않음
+        action.Disable();
+
+        InputActionRebindingExtensions.RebindingOperation op = action
+            .PerformInteractiveRebinding(bindingIndex)
+            .WithCancelingThrough("<Keyboard>/escape")
+            .OnCancel(_ =>
+            {
+                action.Enable();
+                onCancel?.Invoke();
+            })
+            .OnComplete(rebindOp =>
+            {
+                action.Enable();
+                SaveBindings();
+                onComplete?.Invoke();
+                rebindOp.Dispose();
+            })
+            .Start();
+
+        return op;
+    }
+
+    // 현재의 모든 바인딩 오버라이드를 JSON으로 PlayerPrefs에 저장
+    public void SaveBindings()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+        string json = inputActions.SaveBindingOverridesAsJson();
+        PlayerPrefs.SetString(OVERRIDES_KEY, json);
         PlayerPrefs.Save();
     }
 
-    // 저장된 키 불러오기, 없으면 기본값
-    public void LoadKeys()
+    // 저장된 오버라이드를 불러와 적용
+    public void LoadBindings()
     {
-        keyBindings.Clear();
-        keyBindings["MoveForward"] = LoadKey("MoveForward", KeyCode.W);
-        keyBindings["MoveBack"] = LoadKey("MoveBack", KeyCode.S);
-        keyBindings["MoveLeft"] = LoadKey("MoveLeft", KeyCode.A);
-        keyBindings["MoveRight"] = LoadKey("MoveRight", KeyCode.D);
-        keyBindings["Run"] = LoadKey("Run", KeyCode.LeftShift);
-        keyBindings["Attack"] = LoadKey("Attack", KeyCode.Mouse0);
-        keyBindings["Inventory"] = LoadKey("Inventory", KeyCode.I);
-        keyBindings["DropItem"] = LoadKey("DropItem", KeyCode.G);
-        keyBindings["Interact"] = LoadKey("Interact", KeyCode.F);
-        keyBindings["RotateItem"] = LoadKey("RotateItem", KeyCode.R);
-    }
-
-    // 단일 키 로드, 저장값 없으면 기본 키
-    private KeyCode LoadKey(string actionName, KeyCode defaultKey)
-    {
-        string saved = PlayerPrefs.GetString("KEY_" + actionName, defaultKey.ToString());
-        return (KeyCode)System.Enum.Parse(typeof(KeyCode), saved);
-    }
-
-    // 기본값 복원
-    // 키 관련 항목만 삭제한다. DeleteAll은 볼륨 등 다른 설정까지 지우므로 사용 금지
-    public void ResetDefaults()
-    {
-        string[] actionNames =
+        if (inputActions == null)
         {
-            "MoveForward", "MoveBack", "MoveLeft", "MoveRight", "Run",
-            "Attack", "Inventory", "DropItem", "Interact", "RotateItem"
-        };
-
-        foreach (string actionName in actionNames)
-        {
-            PlayerPrefs.DeleteKey("KEY_" + actionName);
+            return;
         }
+        string json = PlayerPrefs.GetString(OVERRIDES_KEY, string.Empty);
+        if (string.IsNullOrEmpty(json) == true)
+        {
+            return;
+        }
+        inputActions.LoadBindingOverridesFromJson(json);
+    }
 
-        LoadKeys();
+    // 기본값으로 복원
+    // 키 관련 PlayerPrefs만 지움, 볼륨 등 다른 설정은 건드리지 않음
+    public void ResetBindings()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+        inputActions.RemoveAllBindingOverrides();
+        PlayerPrefs.DeleteKey(OVERRIDES_KEY);
+        PlayerPrefs.Save();
     }
 }

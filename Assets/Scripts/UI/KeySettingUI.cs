@@ -1,18 +1,24 @@
 // KeySettingUI.cs
-// 키 설정 팝업 UI
-// 각 액션 슬롯 버튼을 누르면 다음에 입력되는 키로 재설정한다.
+// 키 설정 팝업 UI (New Input System 리바인딩 기반)
+// 각 슬롯의 버튼을 누르면 다음 입력 키로 해당 바인딩을 재설정한다.
 
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class KeySettingUI : MonoBehaviour
 {
-    // 액션 한 줄에 대응하는 UI 묶음
+    // 한 줄(액션 하나)에 대응하는 UI 묶음
     [System.Serializable]
     public class KeySlot
     {
+        [Tooltip("InputActionAsset에 등록된 액션 이름")]
         public string actionName;
+
+        [Tooltip("바인딩 인덱스. 단일 키는 0, 2D Vector 컴포짓(Move)은 1=Up, 2=Down, 3=Left, 4=Right")]
+        public int bindingIndex;
+
         public TMP_Text keyText;
         public Button changeButton;
     }
@@ -21,12 +27,13 @@ public class KeySettingUI : MonoBehaviour
     [SerializeField] private Button applyButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button closeButton;
+    [SerializeField] private GameObject popupRoot;  // 설정창 전체, 비우면 자기 자신을 닫음
 
-    // 키 입력 대기 중인지
-    private bool waitingForKey = false;
+    // 진행 중인 리바인딩 작업
+    private InputActionRebindingExtensions.RebindingOperation currentRebind;
 
-    // 현재 재설정 중인 액션 이름
-    private string currentAction;
+    // 현재 재설정 중인 슬롯
+    private KeySlot rebindingSlot;
 
     private void Start()
     {
@@ -38,9 +45,8 @@ public class KeySettingUI : MonoBehaviour
                 {
                     continue;
                 }
-
-                string action = slot.actionName;
-                slot.changeButton.onClick.AddListener(() => StartRebind(action));
+                KeySlot captured = slot;
+                slot.changeButton.onClick.AddListener(() => StartRebind(captured));
             }
         }
 
@@ -60,67 +66,99 @@ public class KeySettingUI : MonoBehaviour
         RefreshUI();
     }
 
-    private void Update()
+    // 슬롯의 키 재설정 시작
+    private void StartRebind(KeySlot slot)
     {
-        if (waitingForKey == false)
+        if (KeyBindingManager.Instance == null)
         {
             return;
         }
 
-        // 다음으로 눌린 키를 현재 액션에 할당
-        foreach (KeyCode key in System.Enum.GetValues(typeof(KeyCode)))
+        // 이미 다른 리바인딩이 진행 중이면 취소
+        if (currentRebind != null)
         {
-            if (Input.GetKeyDown(key) == true)
-            {
-                if (KeyBindingManager.Instance != null)
-                {
-                    KeyBindingManager.Instance.SetKey(currentAction, key);
-                }
-
-                waitingForKey = false;
-                RefreshUI();
-                break;
-            }
+            currentRebind.Cancel();
+            currentRebind.Dispose();
+            currentRebind = null;
         }
+
+        rebindingSlot = slot;
+        if (slot.keyText != null)
+        {
+            slot.keyText.text = "Press Key...";
+        }
+
+        currentRebind = KeyBindingManager.Instance.StartRebind(
+            slot.actionName,
+            slot.bindingIndex,
+            onComplete: OnRebindFinished,
+            onCancel: OnRebindFinished);
     }
 
-    // 재설정 시작, 다음 입력 대기
-    private void StartRebind(string actionName)
+    // 리바인딩 종료(완료 또는 취소) 공통 처리
+    private void OnRebindFinished()
     {
-        waitingForKey = true;
-        currentAction = actionName;
+        currentRebind = null;
+        rebindingSlot = null;
         RefreshUI();
     }
 
-    // 적용, PlayerPrefs 저장
+    // 변경사항 저장 (적용 버튼)
     private void Apply()
     {
         if (KeyBindingManager.Instance != null)
         {
-            KeyBindingManager.Instance.SaveKeys();
+            KeyBindingManager.Instance.SaveBindings();
         }
     }
 
-    // 기본값으로 초기화
+    // 기본값으로 복원 (설정 초기화 버튼)
     private void ResetKeys()
     {
         if (KeyBindingManager.Instance != null)
         {
-            KeyBindingManager.Instance.ResetDefaults();
+            KeyBindingManager.Instance.ResetBindings();
         }
         RefreshUI();
     }
 
-    // 팝업 닫기
+    // 팝업 닫기 (나가기 버튼)
+    // 팝업 닫기 (나가기 버튼)
     private void Close()
     {
-        gameObject.SetActive(false);
+        CancelPendingRebind();
+
+        if (popupRoot != null)
+        {
+            popupRoot.SetActive(false);
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
-    // 슬롯 텍스트 갱신
+    // 진행 중인 리바인딩이 있으면 취소
+    private void CancelPendingRebind()
+    {
+        if (currentRebind == null)
+        {
+            return;
+        }
+        currentRebind.Cancel();
+        currentRebind.Dispose();
+        currentRebind = null;
+        rebindingSlot = null;
+    }
+
+    // 모든 슬롯의 표시 글자 갱신
     private void RefreshUI()
     {
         if (keySlots == null)
+        {
+            return;
+        }
+        if (KeyBindingManager.Instance == null)
         {
             return;
         }
@@ -132,14 +170,21 @@ public class KeySettingUI : MonoBehaviour
                 continue;
             }
 
-            if (waitingForKey == true && currentAction == slot.actionName)
+            if (rebindingSlot == slot)
             {
                 slot.keyText.text = "Press Key...";
             }
-            else if (KeyBindingManager.Instance != null)
+            else
             {
-                slot.keyText.text = KeyBindingManager.Instance.GetKey(slot.actionName).ToString();
+                slot.keyText.text = KeyBindingManager.Instance.GetBindingDisplay(
+                    slot.actionName, slot.bindingIndex);
             }
         }
+    }
+
+    // 비활성화 시 리바인딩 안전 정리
+    private void OnDisable()
+    {
+        CancelPendingRebind();
     }
 }
