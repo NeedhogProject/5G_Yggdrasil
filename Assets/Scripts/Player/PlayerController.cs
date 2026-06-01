@@ -95,11 +95,16 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        // Shift 키 상태를 매 프레임 직접 체크 — 누르는 동안만 true, 떼면 즉시 false
+        // 달리기 — InputReader 에서 받음 (리바인딩 호환)
+        bool sprintInput = InputReader.Instance != null && InputReader.Instance.SprintHeld;
         if (_stats != null && _stats.Mental <= 0f)
             _isSprinting = false;
         else
-            _isSprinting = Keyboard.current.leftShiftKey.isPressed;
+            _isSprinting = sprintInput;
+
+        // 이동 입력도 InputReader 에서 받음
+        if (InputReader.Instance != null)
+            _moveInput = InputReader.Instance.MoveInput;
 
         RotateTowardsMouse();
         HandleSprintMentalCost();
@@ -122,8 +127,26 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        // 탑뷰 월드 축 기준 — X 입력 → 월드 Right, Y 입력 → 월드 Forward
-        Vector3 moveDir = new Vector3(_moveInput.x, 0f, _moveInput.y).normalized;
+        // 카메라 기준 이동 — 카메라가 바라보는 방향을 화면 기준 전진으로 사용
+        Vector3 camForward = Vector3.forward;
+        Vector3 camRight   = Vector3.right;
+
+        if (_mainCamera == null)
+            _mainCamera = Camera.main;
+
+        if (_mainCamera != null)
+        {
+            // 카메라의 forward/right 를 수평면(XZ)에 투영
+            camForward = _mainCamera.transform.forward;
+            camForward.y = 0f;
+            camForward.Normalize();
+
+            camRight = _mainCamera.transform.right;
+            camRight.y = 0f;
+            camRight.Normalize();
+        }
+
+        Vector3 moveDir = (camForward * _moveInput.y + camRight * _moveInput.x).normalized;
         float   speed   = IsSprinting ? sprintSpeed : walkSpeed;
 
         _rb.linearVelocity = new Vector3(
@@ -180,14 +203,6 @@ public class PlayerController : MonoBehaviour
             Vector3.down,
             groundCheckDistance + 0.1f,
             groundLayer);
-    }
-
-    // ─────────────────────── New Input System 콜백 ───────────────────────
-
-    /// <summary>Move 액션 콜백 (WASD / 좌측 스틱)</summary>
-    public void OnMove(InputValue value)
-    {
-        _moveInput = value.Get<Vector2>();
     }
 
     // ─────────────────────── 에디터 기즈모 ───────────────────────

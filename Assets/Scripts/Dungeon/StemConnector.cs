@@ -85,7 +85,7 @@ public class StemConnector : MonoBehaviour
     {
         if (_playerInRange == false) return;
         if (IsUnlocked) return;
-        if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
+        if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
         StemManager.Instance?.TryInsertKey(_playerObj, this);
     }

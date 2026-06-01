@@ -34,6 +34,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Interact",
+                    "type": "Button",
+                    "id": "6d70181e-b8a9-4eee-97b9-17529153909c",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Inventory",
                     "type": "Button",
                     "id": "586f95d8-925e-4c0b-bd57-9ee28dae5179",
@@ -43,18 +52,27 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "DropItem",
+                    "name": "Map",
                     "type": "Button",
-                    "id": "e389c298-1436-4a8f-896e-50220d7f7c1f",
+                    "id": "00648297-db22-40ae-8d9e-87fd54e80247",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Interact",
+                    "name": "Cancel",
                     "type": "Button",
-                    "id": "6d70181e-b8a9-4eee-97b9-17529153909c",
+                    "id": "3149fc00-7a0f-42ee-9a30-cb12425bb543",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "DropItem",
+                    "type": "Button",
+                    "id": "e389c298-1436-4a8f-896e-50220d7f7c1f",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -189,6 +207,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "RotateItem",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "dd0e8a05-5122-4685-ae41-0c4b0c638328",
+                    "path": "<Keyboard>/m",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Map",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "afcaeb0a-250e-4131-8f31-9b4a923004e3",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Cancel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

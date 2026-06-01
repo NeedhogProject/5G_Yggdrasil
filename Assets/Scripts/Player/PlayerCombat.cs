@@ -98,32 +98,28 @@ public class PlayerCombat : MonoBehaviour
 
     // ─────────────────────── 업데이트 ───────────────────────
 
-    // UI 위 여부를 매 프레임 캐싱 (Input System 콜백에서 직접 호출 불가)
-    private bool _isPointerOverUI = false;
-
     private void Update()
     {
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer -= Time.deltaTime;
 
-        _isPointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
-                           UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+        bool pointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
+                             UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
+
+        // 공격 입력 — InputReader 에서 받음 (리바인딩 호환)
+        if (InputReader.Instance != null && InputReader.Instance.AttackPressed)
+        {
+            if (pointerOverUI == false)
+                TryAttackChecked();
+        }
 
 #if UNITY_EDITOR
         _currentAttackInterval = AttackInterval;
 #endif
     }
 
-    // ─────────────────────── New Input System 콜백 ───────────────────────
-
-    /// <summary>Attack 액션 콜백 (마우스 좌클릭)</summary>
-    public void OnAttack(InputValue value)
+    private void TryAttackChecked()
     {
-        if (value.isPressed == false) return;
-
-        // UI 위에서 클릭 시 공격 차단
-        if (_isPointerOverUI) return;
-
         if (CanAttack == false)
         {
 #if UNITY_EDITOR

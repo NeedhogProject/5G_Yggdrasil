@@ -48,13 +48,13 @@ public class TownMapUI : MonoBehaviour
     void Update()
     {
         // M 키로 맵 토글
-        if (Keyboard.current.mKey.wasPressedThisFrame)
+        if (InputReader.Instance != null && InputReader.Instance.MapPressed)
         {
             ToggleMap();
         }
         
         // ESC로 맵 닫기
-        if (Keyboard.current.escapeKey.wasPressedThisFrame && isMapOpen)
+        if (InputReader.Instance != null && InputReader.Instance.CancelPressed && isMapOpen)
         {
             CloseMap();
         }
