@@ -23,6 +23,11 @@ public class KeySettingUI : MonoBehaviour
         public Button changeButton;
     }
 
+
+    [Header("탭 분기 (설정 초기화 버튼이 어느 쪽을 초기화할지 판단)")]
+    [SerializeField] private GameObject audioPanel;
+    [SerializeField] private SettingsUI audioSettingsUI;
+    [SerializeField] private GameObject keyPanel;
     [SerializeField] private KeySlot[] keySlots;
     [SerializeField] private Button applyButton;
     [SerializeField] private Button resetButton;
@@ -56,7 +61,7 @@ public class KeySettingUI : MonoBehaviour
         }
         if (resetButton != null)
         {
-            resetButton.onClick.AddListener(ResetKeys);
+            resetButton.onClick.AddListener(ResetCurrent);
         }
         if (closeButton != null)
         {
@@ -122,7 +127,26 @@ public class KeySettingUI : MonoBehaviour
         RefreshUI();
     }
 
-    // 팝업 닫기 (나가기 버튼)
+    // 현재 활성화된 탭에 맞춰 오디오 또는 키를 초기화
+    private void ResetCurrent()
+    {
+        // 오디오 탭이 켜져있으면 오디오 초기화
+        if (audioPanel != null && audioPanel.activeSelf == true)
+        {
+            if (audioSettingsUI != null)
+            {
+                audioSettingsUI.ResetAudio();
+            }
+            return;
+        }
+
+        // 그 외엔 키 초기화
+        if (keyPanel != null && keyPanel.activeSelf == true)
+        {
+            ResetKeys();
+        }
+    }
+
     // 팝업 닫기 (나가기 버튼)
     private void Close()
     {
