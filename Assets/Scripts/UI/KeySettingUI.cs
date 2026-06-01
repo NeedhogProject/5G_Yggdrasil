@@ -39,6 +39,8 @@ public class KeySettingUI : MonoBehaviour
 
     // 현재 재설정 중인 슬롯
     private KeySlot rebindingSlot;
+    // 이번 세션에서 적용 버튼을 눌렀는지
+    private bool _changesApplied = false;
 
     private void Start()
     {
@@ -109,16 +111,18 @@ public class KeySettingUI : MonoBehaviour
     }
 
     // 변경사항 저장 (적용 버튼)
+    // 변경사항 저장 (적용 버튼)
     private void Apply()
     {
         if (KeyBindingManager.Instance != null)
         {
             KeyBindingManager.Instance.SaveBindings();
         }
+        _changesApplied = true;   // 추가
     }
 
     // 기본값으로 복원 (설정 초기화 버튼)
-    private void ResetKeys()
+    public void ResetKeys()   // private → public
     {
         if (KeyBindingManager.Instance != null)
         {
@@ -130,27 +134,42 @@ public class KeySettingUI : MonoBehaviour
     // 현재 활성화된 탭에 맞춰 오디오 또는 키를 초기화
     private void ResetCurrent()
     {
-        // 오디오 탭이 켜져있으면 오디오 초기화
+        Debug.Log($"[Reset] audioPanel={audioPanel}, activeSelf={audioPanel?.activeSelf}, audioSettingsUI={audioSettingsUI}");
+        Debug.Log($"[Reset] keyPanel={keyPanel}, activeSelf={keyPanel?.activeSelf}");
+
         if (audioPanel != null && audioPanel.activeSelf == true)
         {
             if (audioSettingsUI != null)
             {
+                Debug.Log("[Reset] 오디오 초기화 실행");
                 audioSettingsUI.ResetAudio();
+            }
+            else
+            {
+                Debug.Log("[Reset] audioSettingsUI가 null 이라 초기화 못 함");
             }
             return;
         }
 
-        // 그 외엔 키 초기화
         if (keyPanel != null && keyPanel.activeSelf == true)
         {
+            Debug.Log("[Reset] 키 초기화 실행");
             ResetKeys();
         }
     }
 
     // 팝업 닫기 (나가기 버튼)
+    // 팝업 닫기 (나가기 버튼)
     private void Close()
     {
         CancelPendingRebind();
+
+        // 적용 안 누른 변경사항이 있으면 스냅샷으로 복원
+        if (_changesApplied == false && KeyBindingManager.Instance != null)
+        {
+            KeyBindingManager.Instance.RestoreSnapshot();
+            RefreshUI();
+        }
 
         if (popupRoot != null)
         {
@@ -210,5 +229,16 @@ public class KeySettingUI : MonoBehaviour
     private void OnDisable()
     {
         CancelPendingRebind();
+    }
+
+    // 팝업 켜질 때 현재 바인딩 스냅샷 저장
+    private void OnEnable()
+    {
+        _changesApplied = false;
+
+        if (KeyBindingManager.Instance != null)
+        {
+            KeyBindingManager.Instance.TakeSnapshot();
+        }
     }
 }

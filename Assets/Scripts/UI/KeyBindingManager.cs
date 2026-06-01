@@ -98,7 +98,7 @@ public class KeyBindingManager : MonoBehaviour
             .OnComplete(rebindOp =>
             {
                 action.Enable();
-                SaveBindings();
+                // SaveBindings();   ← 이 줄 삭제 또는 주석. 적용 버튼이 누른 후에만 저장
                 onComplete?.Invoke();
                 rebindOp.Dispose();
             })
@@ -145,5 +145,31 @@ public class KeyBindingManager : MonoBehaviour
         inputActions.RemoveAllBindingOverrides();
         PlayerPrefs.DeleteKey(OVERRIDES_KEY);
         PlayerPrefs.Save();
+    }
+    // 임시 스냅샷 (적용 안 한 변경 되돌리기 용도)
+    private string _snapshotJson = string.Empty;
+
+    // 현재 바인딩 상태를 스냅샷으로 보관
+    public void TakeSnapshot()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+        _snapshotJson = inputActions.SaveBindingOverridesAsJson();
+    }
+
+    // 스냅샷 상태로 복원 (적용 안 했을 때 호출)
+    public void RestoreSnapshot()
+    {
+        if (inputActions == null)
+        {
+            return;
+        }
+        inputActions.RemoveAllBindingOverrides();
+        if (string.IsNullOrEmpty(_snapshotJson) == false)
+        {
+            inputActions.LoadBindingOverridesFromJson(_snapshotJson);
+        }
     }
 }
