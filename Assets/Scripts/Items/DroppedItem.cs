@@ -53,17 +53,8 @@ public class DroppedItem : MonoBehaviour
         transform.position = new Vector3(transform.position.x, newY, transform.position.z);
 
         // E키 획득 — unscaledTime 기반으로 체크
-        // Interact 액션으로 획득, 설정창에서 키를 바꾸면 그 키로 동작
-        if (_playerInRange == true)
-        {
-            UnityEngine.InputSystem.InputAction interactAction =
-                KeyBindingManager.Instance?.FindAction("Interact");
-
-            if (interactAction != null && interactAction.WasPressedThisFrame() == true)
-            {
-                TryPickup();
-            }
-        }
+        if (_playerInRange && InputReader.Instance != null && InputReader.Instance.InteractPressed)
+            TryPickup();
     }
 
     private void OnTriggerEnter(Collider other)

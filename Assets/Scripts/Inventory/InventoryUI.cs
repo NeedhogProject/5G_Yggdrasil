@@ -66,17 +66,12 @@ public class InventoryUI : MonoBehaviour
 
     void Update()
     {
-        // 인벤토리 액션, 키 설정창에서 변경된 키가 그대로 반영됨
-        UnityEngine.InputSystem.InputAction inventoryAction =
-            KeyBindingManager.Instance?.FindAction("Inventory");
-
-        if (inventoryAction != null && inventoryAction.WasPressedThisFrame() == true)
+        if (InputReader.Instance != null && InputReader.Instance.InventoryPressed)
         {
             ToggleInventory();
         }
 
-        // Esc는 키 설정 대상이 아니라 그대로 둠
-        if (Keyboard.current.escapeKey.wasPressedThisFrame == true && isOpen == true)
+        if (InputReader.Instance != null && InputReader.Instance.CancelPressed && isOpen)
         {
             CloseInventory();
         }
@@ -107,6 +102,7 @@ public class InventoryUI : MonoBehaviour
         SwitchTab(InventoryTab.Item);
         UpdateInventoryInfo();
 
+        if (InputReader.Instance != null) InputReader.Instance.UIBlocking = true;
         Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
     }
@@ -121,6 +117,7 @@ public class InventoryUI : MonoBehaviour
             outsideCloseButton.gameObject.SetActive(false);
         }
 
+        if (InputReader.Instance != null) InputReader.Instance.UIBlocking = false;
         Time.timeScale = 1f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }

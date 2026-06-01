@@ -45,7 +45,7 @@ public class YggdrasilPortal : MonoBehaviour
     private void Update()
     {
         if (_playerInRange == false) return;
-        if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
+        if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
         Interact();
     }

@@ -125,9 +125,20 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ## 일괄 작업 완료
 - AudioManager 호출: `PlaySFX(string)` → `PlaySFX(SFXClip.XXX)` enum 방식
-- 입력: 구버전 `Input.GetKeyDown` → New Input System (`Keyboard.current`)
+- 입력: 구버전 `Input.GetKeyDown` → New Input System
 - `FindObjectOfType<T>()` → `FindFirstObjectByType<T>()`
 - NPC 시스템 Open 메서드에 `isOpen` 가드 추가
+- **전체 키 입력 → InputReader 싱글턴 중앙화 (키 리바인딩 호환)**
+  - 이동/달리기/공격/상호작용(E)/인벤토리(I)/맵(M)/취소(ESC) 모두 InputReader 경유
+  - 하드코딩 키 전부 제거 (마우스 위치값만 직접 사용 — 리바인딩 무관)
+  - UIBlocking 플래그로 UI 열림 시 게임플레이 입력 차단
+
+## InputReader 싱글턴 (신규)
+- GameCore 같은 상시 오브젝트에 PlayerInput과 함께 부착
+- DontDestroyOnLoad
+- PlayerInputActions 에셋에 액션 필요: Move, Sprint, Attack, Interact, Inventory, Map, Cancel
+- PlayerController/PlayerCombat은 InputReader에서 입력 읽음 (자체 콜백 제거됨)
+- 이동은 카메라 기준 방향 (camForward/camRight 투영)
 
 ---
 
