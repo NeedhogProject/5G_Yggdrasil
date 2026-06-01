@@ -34,6 +34,7 @@ public class KeySettingUI : MonoBehaviour
     [SerializeField] private Button closeButton;
     [SerializeField] private GameObject popupRoot;  // 설정창 전체, 비우면 자기 자신을 닫음
 
+
     // 진행 중인 리바인딩 작업
     private InputActionRebindingExtensions.RebindingOperation currentRebind;
 
@@ -118,7 +119,14 @@ public class KeySettingUI : MonoBehaviour
         {
             KeyBindingManager.Instance.SaveBindings();
         }
-        _changesApplied = true;   // 추가
+
+        // ↓ 이 부분 추가 (오디오도 저장)
+        if (audioSettingsUI != null)
+        {
+            audioSettingsUI.ApplyAudio();
+        }
+
+        _changesApplied = true;
     }
 
     // 기본값으로 복원 (설정 초기화 버튼)
@@ -164,11 +172,19 @@ public class KeySettingUI : MonoBehaviour
     {
         CancelPendingRebind();
 
-        // 적용 안 누른 변경사항이 있으면 스냅샷으로 복원
-        if (_changesApplied == false && KeyBindingManager.Instance != null)
+        if (_changesApplied == false)
         {
-            KeyBindingManager.Instance.RestoreSnapshot();
-            RefreshUI();
+            if (KeyBindingManager.Instance != null)
+            {
+                KeyBindingManager.Instance.RestoreSnapshot();
+                RefreshUI();
+            }
+
+            // ↓ 이 부분 추가 (오디오도 되돌리기)
+            if (audioSettingsUI != null)
+            {
+                audioSettingsUI.RestoreAudioSnapshot();
+            }
         }
 
         if (popupRoot != null)
@@ -226,12 +242,6 @@ public class KeySettingUI : MonoBehaviour
     }
 
     // 비활성화 시 리바인딩 안전 정리
-    private void OnDisable()
-    {
-        CancelPendingRebind();
-    }
-
-    // 팝업 켜질 때 현재 바인딩 스냅샷 저장
     private void OnEnable()
     {
         _changesApplied = false;
@@ -239,6 +249,12 @@ public class KeySettingUI : MonoBehaviour
         if (KeyBindingManager.Instance != null)
         {
             KeyBindingManager.Instance.TakeSnapshot();
+        }
+
+        // ↓ 이 부분 추가 (오디오도 사진 찍기)
+        if (audioSettingsUI != null)
+        {
+            audioSettingsUI.TakeAudioSnapshot();
         }
     }
 }
