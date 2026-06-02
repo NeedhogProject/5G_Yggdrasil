@@ -10,25 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
-  m_Name: NewWeapon
+  m_Name: W-003-1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  _itemName: "\uC544\uC774\uD15C"
-  _description: 
+  _itemName: "\uD3C9\uBC94\uD55C \uCC3D"
+  _description: "\uAC00\uC7A5 \uB9CE\uC774 \uBCFC \uC218 \uC788\uB294 \uD3C9\uBC94\uD55C
+    \uCC3D\uC774\uB2E4."
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
-  _inventoryWidth: 1
-  _inventoryHeight: 1
+  _inventoryWidth: 4
+  _inventoryHeight: 2
   _buyPrice: 0
   _sellPrice: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
-  weaponType: 1
+  weaponType: 2
   _weaponRarity: 0
-  baseDamage: 10
-  attackSpeed: 1
-  reach: 2
+  baseDamage: 35
+  attackSpeed: 0.1
+  reach: 4
   attackWidth: 0.5
   enhancementLevel: 0
