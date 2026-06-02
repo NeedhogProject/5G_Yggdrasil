@@ -303,4 +303,12 @@ public class InventorySlot : MonoBehaviour,
             _dragIcon = null;
         }
     }
+
+    // 이 슬롯이 어느 보관함 소속인지 (드래그 이동 시 데이터 동기화 분기용)
+    public enum SlotContainer
+    {
+        Inventory,
+        Storage
+    }
+    public SlotContainer container = SlotContainer.Inventory;
 }

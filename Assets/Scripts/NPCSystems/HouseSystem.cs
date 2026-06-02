@@ -245,6 +245,17 @@ public class HouseSystem : MonoBehaviour
     /// 창고에 아이템 추가 — UI 드래그앤드롭에서 호출
     /// 반환값: 성공 여부
     /// </summary>
+    /// 
+
+    // 창고 UI 열기 (StorageInteractable 에서 호출)
+    public void OpenStorage()
+    {
+        if (StorageUI.Instance != null)
+        {
+            StorageUI.Instance.OpenStorage();
+        }
+    }
+
     public bool AddToStorage(ItemInstance item)
     {
         if (item == null) return false;
