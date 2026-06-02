@@ -20,6 +20,7 @@ public enum StemMode
     DownOnly,       // 1층: 하강만 가능 (열쇠 필요)
     UpOrDown,       // 2~3층: 열쇠 삽입 후 위/아래 선택
     DownOnlyFixed,  // 3→4층: 고정 줄기, 하강만 (열쇠 필요)
+    UpOnly          // 최하층(2층): 상승만 가능 (더 내려갈 수 없음)
 }
 
 /// <summary>
@@ -87,6 +88,7 @@ public class StemConnector : MonoBehaviour
         if (IsUnlocked) return;
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
+        // 모든 줄기는 열쇠 필요 (상승 전용도 동일 — 무한 파밍 방지)
         StemManager.Instance?.TryInsertKey(_playerObj, this);
     }
 
@@ -104,6 +106,12 @@ public class StemConnector : MonoBehaviour
                 // 바로 하강 연출 시작
                 PlayHoleVFX();
                 Invoke(nameof(GoDown), transitionDelay);
+                break;
+
+            case StemMode.UpOnly:
+                // 최하층 — 상승만 가능
+                PlayHoleVFX();
+                Invoke(nameof(GoUp), transitionDelay);
                 break;
 
             case StemMode.UpOrDown:

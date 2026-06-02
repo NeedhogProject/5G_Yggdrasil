@@ -47,6 +47,11 @@ public class InputReader : MonoBehaviour
     /// <summary>UI 가 열려 게임플레이 입력을 막아야 할 때 true</summary>
     public bool UIBlocking { get; set; }
 
+    // ─────────────────────── 내부 참조 ───────────────────────
+
+    private PlayerInput _playerInput;
+    private InputAction _sprintAction;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -56,11 +61,23 @@ public class InputReader : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+
+        // Sprint 는 홀드 판정을 위해 액션을 직접 polling
+        _playerInput = GetComponent<PlayerInput>();
+        if (_playerInput != null)
+            _sprintAction = _playerInput.actions["Sprint"];
     }
 
     private void OnDestroy()
     {
         if (Instance == this) Instance = null;
+    }
+
+    private void Update()
+    {
+        // 달리기는 홀드 판정 — 액션을 매 프레임 직접 읽어 누르는 동안만 true
+        if (_sprintAction != null)
+            SprintHeld = _sprintAction.ReadValue<float>() > 0.5f;
     }
 
     private void LateUpdate()
@@ -78,11 +95,6 @@ public class InputReader : MonoBehaviour
     public void OnMove(InputValue value)
     {
         MoveInput = value.Get<Vector2>();
-    }
-
-    public void OnSprint(InputValue value)
-    {
-        SprintHeld = value.isPressed;
     }
 
     public void OnAttack(InputValue value)

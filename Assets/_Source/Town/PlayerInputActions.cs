@@ -103,12 +103,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": ""Sprint"",
-                    ""type"": ""Button"",
+                    ""type"": ""Value"",
                     ""id"": ""e3c2ecf9-8eea-4db4-aa2d-9861bae8dee5"",
-                    ""expectedControlType"": """",
+                    ""expectedControlType"": ""Axis"",
                     ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": false
+                    ""initialStateCheck"": true
                 },
                 {
                     ""name"": ""Attack"",
