@@ -133,6 +133,16 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
   - 하드코딩 키 전부 제거 (마우스 위치값만 직접 사용 — 리바인딩 무관)
   - UIBlocking 플래그로 UI 열림 시 게임플레이 입력 차단
 
+## 장비 최대체력 옵션 (신규)
+- ArmorData에 maxHealthBonus 필드 추가
+- PlayerStats: MaxHealth = 100 + equipmentMaxHealth (동적 최대체력)
+- AddEquipmentMaxHealth / RemoveEquipmentMaxHealth 메서드
+- 마을(IsInTown)에서 방어구 착용: 최대치 증가 + 현재 체력도 회복
+- 던전에서 방어구 착용: 최대치만 증가, 현재 체력 유지
+- 방어구 해제 시 최대치 감소 → 현재 체력 상한 보정
+- HUD 체력바 max를 MaxHealth로 연동 (고정 100 아님)
+- ModifyHealth, UseHealthPotion 상한도 MaxHealth 기준
+
 ## 던전 범위 조정 (2층까지만 구현)
 - 모델링 일정상 1~2층만 구현, 3~4층 보류
 - StemConnector에 UpOnly 모드 추가 (최하층=2층 전용, 상승만 가능)

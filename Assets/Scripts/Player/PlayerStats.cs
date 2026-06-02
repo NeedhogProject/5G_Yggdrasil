@@ -19,6 +19,9 @@ public class PlayerStats : MonoBehaviour
     [Header("장비 방어력 (착용 시 추가)")]
     [SerializeField] private float equipmentDefense = 0f;
 
+    [Header("장비 최대 체력 보너스 (착용 시 추가)")]
+    [SerializeField] private float equipmentMaxHealth = 0f;
+
     [Header("골드")]
     [SerializeField] private int _gold = 0;
 
@@ -34,6 +37,9 @@ public class PlayerStats : MonoBehaviour
     public float MentalMultiplier => mental / MAX_STAT;
     public float TotalDefense => baseDefense + equipmentDefense;
     public float EffectiveDefense => TotalDefense * MentalMultiplier;
+
+    /// <summary>최대 체력 = 기본(100) + 장비 보너스</summary>
+    public float MaxHealth => MAX_STAT + equipmentMaxHealth;
 
     // ── 이벤트 ────────────────────────────────────
     public event Action<float> OnHealthChanged;
@@ -89,7 +95,7 @@ public class PlayerStats : MonoBehaviour
 
     public void ModifyHealth(float amount)
     {
-        health = Mathf.Clamp(health + amount, MIN_STAT, MAX_STAT);
+        health = Mathf.Clamp(health + amount, MIN_STAT, MaxHealth);
         if (OnHealthChanged != null)
         {
             OnHealthChanged.Invoke(health);
@@ -147,6 +153,64 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 장비 최대 체력 추가 (방어구 착용 시 호출)
+    /// 마을에서는 늘어난 최대치만큼 현재 체력도 회복
+    /// 던전에서는 최대치만 늘고 현재 체력은 유지
+    /// </summary>
+    public void AddEquipmentMaxHealth(float amount)
+    {
+        equipmentMaxHealth += amount;
+        if (equipmentMaxHealth < 0f)
+        {
+            equipmentMaxHealth = 0f;
+        }
+
+        // 마을이면 늘어난 만큼 현재 체력도 채움
+        bool bInTown = GameManager.Instance == null || GameManager.Instance.IsInTown;
+        if (bInTown && amount > 0f)
+        {
+            health += amount;
+        }
+
+        // 현재 체력이 최대치를 넘지 않도록 정리
+        health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
+
+        if (OnHealthChanged != null)
+        {
+            OnHealthChanged.Invoke(health);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// 장비 최대 체력 제거 (방어구 해제 시 호출)
+    /// 최대치가 줄면 현재 체력도 그 상한으로 깎임
+    /// </summary>
+    public void RemoveEquipmentMaxHealth(float amount)
+    {
+        equipmentMaxHealth -= amount;
+        if (equipmentMaxHealth < 0f)
+        {
+            equipmentMaxHealth = 0f;
+        }
+
+        // 최대치 감소로 현재 체력이 넘치면 상한으로 보정
+        health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
+
+        if (OnHealthChanged != null)
+        {
+            OnHealthChanged.Invoke(health);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
+    }
+
     public void SetEquipmentDefense(float value)
     {
         equipmentDefense = Mathf.Max(0f, value);
@@ -177,7 +241,7 @@ public class PlayerStats : MonoBehaviour
 
     public bool UseHealthPotion()
     {
-        if (health >= MAX_STAT)
+        if (health >= MaxHealth)
         {
             return false;
         }

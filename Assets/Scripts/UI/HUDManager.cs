@@ -136,7 +136,7 @@ public class HUDManager : MonoBehaviour
             PlayerStats.Instance.OnDefenseChanged += HandlePlayerDefenseChanged;
             PlayerStats.Instance.OnMentalChanged += HandlePlayerMentalChanged;
 
-            UpdateHP(PlayerStats.Instance.Health, PlayerStats.MAX_STAT);
+            UpdateHP(PlayerStats.Instance.Health, PlayerStats.Instance.MaxHealth);
             UpdateDef(PlayerStats.Instance.Defense, PlayerStats.MAX_STAT);
             UpdateSanity(PlayerStats.Instance.Mental, PlayerStats.MAX_STAT);
         }
@@ -146,7 +146,8 @@ public class HUDManager : MonoBehaviour
 
     private void HandlePlayerHealthChanged(float hp)
     {
-        UpdateHP(hp, PlayerStats.MAX_STAT);
+        float max = PlayerStats.Instance != null ? PlayerStats.Instance.MaxHealth : PlayerStats.MAX_STAT;
+        UpdateHP(hp, max);
     }
 
     private void HandlePlayerDefenseChanged(float def)

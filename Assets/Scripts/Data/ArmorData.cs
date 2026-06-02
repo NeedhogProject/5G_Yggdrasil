@@ -35,6 +35,10 @@ public class ArmorData : ItemData
     [Tooltip("착용 시 PlayerStats.AddEquipmentDefense() 에 전달되는 값")]
     [SerializeField] [Range(0f, 200f)] private float defenseBonus = 10f;
 
+    [Header("최대 체력")]
+    [Tooltip("착용 시 PlayerStats.AddEquipmentMaxHealth() 에 전달되는 값")]
+    [SerializeField] [Range(0f, 200f)] private float maxHealthBonus = 0f;
+
     // ─────────────────────── 각인 슬롯 ───────────────────────
 
     [Header("각인 슬롯 (최대 2개) — 방어구 전용")]
@@ -48,6 +52,7 @@ public class ArmorData : ItemData
 
     public ArmorSlot   ArmorSlot   => armorSlot;
     public float       DefenseBonus => defenseBonus;
+    public float       MaxHealthBonus => maxHealthBonus;
     public RuneElement RuneSlot1   => runeSlot1;
     public RuneElement RuneSlot2   => runeSlot2;
     public bool HasRune    => runeSlot1 != RuneElement.None || runeSlot2 != RuneElement.None;
