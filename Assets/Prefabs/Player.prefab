@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 6010569377580550517}
   - component: {fileID: 3731365602666153022}
   - component: {fileID: 7483592433788517892}
+  - component: {fileID: 2333802226974840277}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -197,6 +198,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ArmorSetManager
   playerStats: {fileID: 3693487522456573021}
   setEffectDatabase: []
+--- !u!114 &2333802226974840277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3523993642365406597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edba8c5daf9865e4dbadc4da1172ffb0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StartingEquipment
+  startingWeapons: []
+  equipOnStart: {fileID: 0}
+  bAlreadyGranted: 0
 --- !u!1 &4525919307855606178
 GameObject:
   m_ObjectHideFlags: 0
