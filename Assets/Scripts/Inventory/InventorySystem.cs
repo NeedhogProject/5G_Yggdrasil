@@ -180,6 +180,27 @@ public class InventorySystem : MonoBehaviour
 
         Debug.Log("[InventorySystem] 아이템 제거: " + item.itemName);
     }
+    // 슬롯은 건드리지 않고 데이터 리스트에서만 제거 (컨테이너 간 이동용)
+    public void RemoveInstanceData(ItemInstance instance)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+        _itemInstances.Remove(instance);
+        items.Remove(instance.Data);
+    }
+
+    // 데이터 리스트에만 추가 (슬롯 배치는 호출측에서) (컨테이너 간 이동용)
+    public void AddInstanceData(ItemInstance instance)
+    {
+        if (instance == null)
+        {
+            return;
+        }
+        _itemInstances.Add(instance);
+        items.Add(instance.Data);
+    }
 
     // ─────────────────────── 슬롯 클릭 ───────────────────────
 

@@ -176,4 +176,32 @@ public class StorageUI : MonoBehaviour
             _slots[i].SetItem(items[i]);
         }
     }
+
+    // 창고 데이터에 추가 + 화면 갱신 (드래그 이동용), 성공 여부 반환
+    public bool AddToStorageData(ItemInstance instance)
+    {
+        if (houseSystem == null)
+        {
+            return false;
+        }
+
+        bool added = houseSystem.AddToStorage(instance);
+        if (added == true)
+        {
+            RefreshSlots();
+        }
+        return added;
+    }
+
+    // 창고 데이터에서 제거 + 화면 갱신 (드래그 이동용)
+    public void RemoveFromStorageData(ItemInstance instance)
+    {
+        if (houseSystem == null)
+        {
+            return;
+        }
+
+        houseSystem.TakeFromStorage(instance);
+        RefreshSlots();
+    }
 }

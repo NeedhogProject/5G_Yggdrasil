@@ -34,6 +34,51 @@ public class InventorySlot : MonoBehaviour,
         }
     }
 
+    // 인벤토리 <-> 창고 간 아이템 이동 (데이터 동기화 포함)
+    private void HandleCrossContainerDrop(ItemInstance draggedInstance)
+    {
+        // 창고는 인스턴스 단위 보관 — 인스턴스 없는 아이템은 이동 불가
+        if (draggedInstance == null)
+        {
+            Debug.LogWarning("[InventorySlot] 인스턴스 없는 아이템은 옮길 수 없습니다.");
+            return;
+        }
+
+        // 목적지 칸이 차있으면 이동 막음 (컨테이너 간 스왑은 미지원)
+        if (isOccupied == true)
+        {
+            Debug.Log("[InventorySlot] 빈 칸에만 옮길 수 있습니다.");
+            return;
+        }
+
+        if (container == SlotContainer.Storage)
+        {
+            // 인벤토리에서 창고로
+            if (StorageUI.Instance == null)
+            {
+                return;
+            }
+
+            bool added = StorageUI.Instance.AddToStorageData(draggedInstance);
+            if (added == true)
+            {
+                InventorySystem.Instance?.RemoveInstanceData(draggedInstance);
+                _draggingSlot.ClearSlot();
+            }
+        }
+        else
+        {
+            // 창고에서 인벤토리로
+            if (StorageUI.Instance != null)
+            {
+                StorageUI.Instance.RemoveFromStorageData(draggedInstance);
+            }
+            InventorySystem.Instance?.AddInstanceData(draggedInstance);
+            _draggingSlot.ClearSlot();
+            SetItem(draggedInstance);
+        }
+    }
+
     // ─────────────────────── 슬롯 세팅 ───────────────────────
 
     /// <summary>
@@ -301,6 +346,24 @@ public class InventorySlot : MonoBehaviour,
         {
             Destroy(_dragIcon);
             _dragIcon = null;
+        }
+        // 컨테이너 간 이동 (인벤토리 <-> 창고)
+        if (_draggingSlot.container != this.container)
+        {
+            HandleCrossContainerDrop(draggedInstance);
+
+            // 드래그 정리
+            if (_draggingSlot != null && _draggingSlot.itemIcon != null)
+            {
+                _draggingSlot.itemIcon.color = Color.white;
+            }
+            _draggingSlot = null;
+            if (_dragIcon != null)
+            {
+                Destroy(_dragIcon);
+                _dragIcon = null;
+            }
+            return;
         }
     }
 
