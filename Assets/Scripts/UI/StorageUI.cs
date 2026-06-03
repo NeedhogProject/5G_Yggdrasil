@@ -29,7 +29,8 @@ public class StorageUI : MonoBehaviour
     [SerializeField] private HouseSystem houseSystem;
 
     // ─────────────────────── 상태 ───────────────────────
-
+    // 창고와 함께 여닫을 인벤토리 UI (지연 탐색)
+    private InventoryUI _inventoryUI = null;
     private List<InventorySlot> _slots = new List<InventorySlot>();
     private bool _initialized = false;
     private bool _isOpen = false;
@@ -117,6 +118,26 @@ public class StorageUI : MonoBehaviour
         _initialized = true;
     }
 
+    // 인벤토리 UI 참조 확보 (InventorySystem 우선, 없으면 씬 탐색)
+    private InventoryUI ResolveInventoryUI()
+    {
+        if (_inventoryUI != null)
+        {
+            return _inventoryUI;
+        }
+
+        if (InventorySystem.Instance != null && InventorySystem.Instance.inventoryUI != null)
+        {
+            _inventoryUI = InventorySystem.Instance.inventoryUI;
+        }
+        else
+        {
+            _inventoryUI = FindFirstObjectByType<InventoryUI>();
+        }
+
+        return _inventoryUI;
+    }
+
     // 창고 열기
     public void OpenStorage()
     {
@@ -131,6 +152,13 @@ public class StorageUI : MonoBehaviour
 
         Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+
+        // 창고를 열면 인벤토리도 같이 열기 (드래그로 아이템 옮기기 위함)
+        InventoryUI inventoryUI = ResolveInventoryUI();
+        if (inventoryUI != null)
+        {
+            inventoryUI.OpenInventory(false);
+        }
     }
 
     // 창고 닫기
@@ -144,6 +172,13 @@ public class StorageUI : MonoBehaviour
 
         Time.timeScale = 1f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
+
+        // 같이 열었던 인벤토리도 닫기
+        InventoryUI inventoryUI = ResolveInventoryUI();
+        if (inventoryUI != null)
+        {
+            inventoryUI.CloseInventory();
+        }
     }
 
     public bool IsOpen
