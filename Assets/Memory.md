@@ -133,6 +133,36 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
   - 하드코딩 키 전부 제거 (마우스 위치값만 직접 사용 — 리바인딩 무관)
   - UIBlocking 플래그로 UI 열림 시 게임플레이 입력 차단
 
+## 등급/방어력 시스템 재정비 (신규)
+- 아이템 등급 4단계로 축소: Common / Rare / Epic / Legendary (Uncommon 제거)
+  - ItemRarity, WeaponRarity 양쪽에서 제거
+  - UIItemTooltip 색상 처리에서 Uncommon 제거
+- 기본 방어력 100 고정 (방어구 없어도) — 정신력 패널티 계산 기준
+- 방어력 공식 선형화: 방어력 1당 데미지 0.05% 감소
+  - 방어력 100 = 5% 감소, 500 = 25%, 1000 = 50%
+  - 감소율 상한 95%
+- 방어력 상한 제거: 기본 100 + 장비 방어력 (100 초과 가능)
+- baseDefense Range/Clamp 제한 제거
+
+## 장비 최대체력 옵션 (신규)
+- ArmorData에 maxHealthBonus 필드 추가
+- PlayerStats: MaxHealth = 100 + equipmentMaxHealth (동적 최대체력)
+- AddEquipmentMaxHealth / RemoveEquipmentMaxHealth 메서드
+- 마을(IsInTown)에서 방어구 착용: 최대치 증가 + 현재 체력도 회복
+- 던전에서 방어구 착용: 최대치만 증가, 현재 체력 유지
+- 방어구 해제 시 최대치 감소 → 현재 체력 상한 보정
+- HUD 체력바 max를 MaxHealth로 연동 (고정 100 아님)
+- ModifyHealth, UseHealthPotion 상한도 MaxHealth 기준
+- 던전에서 만피 상태로 체력 방어구 착용 시 → 새 최대치로 만피 유지 (bWasFull 판정)
+  - 만피 아니면 현재 체력 유지 (악용 방지)
+
+## 던전 범위 조정 (2층까지만 구현)
+- 모델링 일정상 1~2층만 구현, 3~4층 보류
+- StemConnector에 UpOnly 모드 추가 (최하층=2층 전용, 상승만 가능)
+- 2층 줄기는 UpOnly로 설정 → 하강 옵션 없음, 상승만
+- 단, UpOnly도 열쇠 필요 (무한 파밍 방지)
+- 2층 줄기 흐름: 열쇠 삽입 → 상승 연출 → 1층 복귀
+
 ## 새게임/이어하기 시스템 (신규)
 - 다중 슬롯 (SLOT_COUNT = 3) + 수동 저장 방식
 - GameManager.IsNewGame 플래그, CurrentSlot 추적

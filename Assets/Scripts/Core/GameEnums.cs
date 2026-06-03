@@ -17,7 +17,6 @@ public enum ItemType
 public enum ItemRarity
 {
     Common,    // 일반  (회색)
-    Uncommon,  // 비범  (초록)
     Rare,      // 희귀  (파랑)
     Epic,      // 영웅  (보라)
     Legendary  // 전설  (주황)

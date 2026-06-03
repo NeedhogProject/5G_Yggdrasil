@@ -16,7 +16,6 @@ public enum WeaponType
 public enum WeaponRarity
 {
     Common,     // 일반
-    Uncommon,   // 비범
     Rare,       // 희귀
     Epic,       // 영웅
     Legendary   // 전설

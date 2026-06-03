@@ -378,10 +378,6 @@ public class UIItemTooltip : MonoBehaviour
         {
             return new Color(0.8f, 0.8f, 0.8f);
         }
-        if (rarity == ItemRarity.Uncommon)
-        {
-            return new Color(0.3f, 1f, 0.3f);
-        }
         if (rarity == ItemRarity.Rare)
         {
             return new Color(0.3f, 0.5f, 1f);

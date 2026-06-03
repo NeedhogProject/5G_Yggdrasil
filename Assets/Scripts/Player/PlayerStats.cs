@@ -11,9 +11,9 @@ public class PlayerStats : MonoBehaviour
     public static PlayerStats Instance { get; private set; }
 
     // ── Inspector 필드 ────────────────────────────
-    [Header("기본 스탯 (0~100)")]
+    [Header("기본 스탯")]
     [SerializeField][Range(0, 100)] private float health = 100f;
-    [SerializeField][Range(0, 100)] private float baseDefense = 0f;
+    [SerializeField] private float baseDefense = 100f;
     [SerializeField][Range(0, 100)] private float mental = 100f;
 
     [Header("장비 방어력 (착용 시 추가)")]
@@ -108,7 +108,7 @@ public class PlayerStats : MonoBehaviour
 
     public void ModifyBaseDefense(float amount)
     {
-        baseDefense = Mathf.Clamp(baseDefense + amount, MIN_STAT, MAX_STAT);
+        baseDefense = Mathf.Max(MIN_STAT, baseDefense + amount);
         if (OnDefenseChanged != null)
         {
             OnDefenseChanged.Invoke(TotalDefense);
@@ -155,22 +155,35 @@ public class PlayerStats : MonoBehaviour
 
     /// <summary>
     /// 장비 최대 체력 추가 (방어구 착용 시 호출)
-    /// 마을에서는 늘어난 최대치만큼 현재 체력도 회복
-    /// 던전에서는 최대치만 늘고 현재 체력은 유지
+    /// 마을: 늘어난 최대치만큼 현재 체력도 회복
+    /// 던전: 최대치만 늘고 현재 체력 유지 (단, 만피였으면 새 최대치로 만피 유지)
     /// </summary>
     public void AddEquipmentMaxHealth(float amount)
     {
+        // 증가 전 만피 여부 판정
+        bool bWasFull = health >= MaxHealth;
+
         equipmentMaxHealth += amount;
         if (equipmentMaxHealth < 0f)
         {
             equipmentMaxHealth = 0f;
         }
 
-        // 마을이면 늘어난 만큼 현재 체력도 채움
         bool bInTown = GameManager.Instance == null || GameManager.Instance.IsInTown;
-        if (bInTown && amount > 0f)
+
+        if (amount > 0f)
         {
-            health += amount;
+            if (bInTown)
+            {
+                // 마을: 늘어난 만큼 현재 체력도 회복
+                health += amount;
+            }
+            else if (bWasFull)
+            {
+                // 던전이지만 만피였으면 새 최대치로 만피 유지
+                health = MaxHealth;
+            }
+            // 던전 + 만피 아니면 현재 체력 그대로
         }
 
         // 현재 체력이 최대치를 넘지 않도록 정리
@@ -264,33 +277,18 @@ public class PlayerStats : MonoBehaviour
     public float TakeDamage(float rawDamage)
     {
         float def = EffectiveDefense;
-        float dd = 0f;
 
-        if (def <= 100f)
-        {
-            dd = def * 0.25f;
-        }
-        else if (def <= 200f)
-        {
-            dd = 25f + (def - 100f) * 0.125f;
-        }
-        else if (def <= 300f)
-        {
-            dd = 37.5f + (def - 200f) * 0.0625f;
-        }
-        else if (def <= 400f)
-        {
-            dd = 43.75f + (def - 300f) * 0.03125f;
-        }
-        else
-        {
-            dd = 46.875f + (def - 400f) * 0.015625f;
-        }
+        // 방어력 1당 데미지 0.05% 감소 (방어력 100 = 5% 감소)
+        float dd = def * 0.05f;
 
+        // 감소율 상한 95% (최소 5% 는 항상 피해)
         dd = Mathf.Clamp(dd, 0f, 95f);
         float damageRatio = 1f - (dd / 100f);
         float actualDamage = rawDamage * Mathf.Max(damageRatio, 0.05f);
+
+        // 정신력 패널티 — 정신력 낮을수록 받는 피해 증가
         actualDamage *= (2f - MentalMultiplier);
+
         ModifyHealth(-actualDamage);
         return actualDamage;
     }
@@ -304,8 +302,8 @@ public class PlayerStats : MonoBehaviour
 
     private void ClampAllStats()
     {
-        health = Mathf.Clamp(health, MIN_STAT, MAX_STAT);
-        baseDefense = Mathf.Clamp(baseDefense, MIN_STAT, MAX_STAT);
+        health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
+        baseDefense = Mathf.Max(MIN_STAT, baseDefense);
         if (equipmentDefense < 0f)
         {
             equipmentDefense = 0f;
