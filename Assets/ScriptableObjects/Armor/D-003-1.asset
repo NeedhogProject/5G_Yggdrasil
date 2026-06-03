@@ -10,23 +10,23 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6922df947ffad7c41b9e5f01e864f473, type: 3}
-  m_Name: NewArmor
+  m_Name: D-003-1
   m_EditorClassIdentifier: Assembly-CSharp::ArmorData
-  _itemName: "\uC544\uC774\uD15C"
+  _itemName: "\uB0A1\uC740 \uBC14\uC9C0"
   _description: 
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
-  _inventoryWidth: 1
-  _inventoryHeight: 1
+  _inventoryWidth: 3
+  _inventoryHeight: 2
   _buyPrice: 0
   _sellPrice: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
-  armorSlot: 1
-  defenseBonus: 10
-  maxHealthBonus: 0
+  armorSlot: 2
+  defenseBonus: 3
+  maxHealthBonus: 30
   runeSlot1: -1
   runeSlot2: -1
