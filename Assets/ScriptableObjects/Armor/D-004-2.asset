@@ -9,20 +9,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 171abef1f86f23049bf6f24c3cfb44e8, type: 3}
-  m_Name: FloorKey_South_Floor_1
-  m_EditorClassIdentifier: Assembly-CSharp::FloorKeyData
-  _itemName: "\uB0A8\uCABD \uC904\uAE30 \uC5F4\uC1E0"
+  m_Script: {fileID: 11500000, guid: 6922df947ffad7c41b9e5f01e864f473, type: 3}
+  m_Name: D-004-2
+  m_EditorClassIdentifier: Assembly-CSharp::ArmorData
+  _itemName: "\uD3C9\uBC94\uD55C \uC2E0\uBC1C"
   _description: 
-  _itemType: 4
-  _rarity: 0
+  _itemType: 0
+  _rarity: 1
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
-  _inventoryWidth: 1
-  _inventoryHeight: 1
+  _inventoryWidth: 2
+  _inventoryHeight: 2
   _buyPrice: 0
   _sellPrice: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
-  keyDirection: 1
+  armorSlot: 3
+  defenseBonus: 2.4
+  maxHealthBonus: 39
+  runeSlot1: -1
+  runeSlot2: -1
