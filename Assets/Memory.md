@@ -245,3 +245,5 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 - **DungeonCore 프리팹화 완료**: Floor_2~4에서 재사용, DifficultyScaler 수치만 변경
 - FloorKey 4개 ScriptableObject 완성 (North/South/East/West)
 - 1층 적 프리팹 전부 완성
+- **인벤토리 캔버스 크기**: Inventory_Canvas 는 부모 Canvas(Overlay) 아래 중첩되어 자체 CanvasScaler 가 아닌 부모 스케일에 자기 localScale 이 곱해진다. 따라서 RectTransform scale 은 반드시 1 유지. Town 씬에서 실수로 0.48 로 축소되어 인벤토리가 작게 보이던 버그 수정 (Floor_1 기준값 scale 1 / anchoredPos 960,540 / sizeDelta 1920x1080 으로 통일)
+- Town 씬에 Inventory_Canvas 가 2개 존재 (활성 1개 + scale 0 비활성 죽은 중복본 1개). 비활성이라 무해하나 정리 권장
