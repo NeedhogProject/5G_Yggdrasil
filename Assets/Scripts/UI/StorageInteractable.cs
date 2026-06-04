@@ -1,45 +1,50 @@
 ﻿// StorageInteractable.cs
-// 창고 오브젝트 — 플레이어가 근처에 오면 힌트 표시, 창고 키로 열기/닫기
-// 집 안의 창고 오브젝트에 부착, Collider(isTrigger=true) 필요
+// 창고 오브젝트 — 플레이어가 일정 거리 안에 오면 힌트 표시, 창고 키로 열기/닫기
+// 거리 기반 감지 (콜라이더 트리거 불필요)
 
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class StorageInteractable : MonoBehaviour
 {
-    [Header("UI 힌트")]
-    [SerializeField] private GameObject hintObject;  // "G - 창고 열기" 표시용 UI 오브젝트
+    [Header("상호작용 범위")]
+    [SerializeField] private float interactRange = 1.5f;
 
+    [Header("UI 힌트")]
+    [SerializeField] private GameObject hintObject;
+
+    private Transform _player = null;
     private bool _playerInRange = false;
 
     private void Start()
     {
-        // 시작 시 힌트 숨김
-        SetHintVisible(false);
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("Player") == false)
-        {
-            return;
-        }
-        _playerInRange = true;
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.CompareTag("Player") == false)
-        {
-            return;
-        }
-        _playerInRange = false;
         SetHintVisible(false);
     }
 
     private void Update()
     {
-        // 힌트는 범위 안 + 창고가 닫혀있을 때만 표시
+        // 플레이어 참조 확보 (한 번만)
+        if (_player == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                _player = playerObj.transform;
+            }
+        }
+
+        // 거리로 범위 안인지 판단
+        _playerInRange = false;
+        if (_player != null)
+        {
+            float distance = Vector3.Distance(transform.position, _player.position);
+            if (distance <= interactRange)
+            {
+                _playerInRange = true;
+            }
+        }
+
+        // 힌트는 범위 안 + 창고 닫힘 상태에서만 표시
         bool storageClosed = StorageUI.Instance == null || StorageUI.Instance.IsOpen == false;
         SetHintVisible(_playerInRange == true && storageClosed == true);
 
@@ -67,8 +72,7 @@ public class StorageInteractable : MonoBehaviour
         }
     }
 
-    // 창고 키 입력 확인
-    // KeyBindingManager 와 Storage 액션이 있으면 설정된 키, 없으면 기본 G 폴백
+    // 창고 키 입력 확인 (Storage 액션, 없으면 기본 G 폴백)
     private bool WasStorageKeyPressed()
     {
         if (Keyboard.current == null)
@@ -108,7 +112,7 @@ public class StorageInteractable : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1f, 0.8f, 0f, 0.4f);
-        Gizmos.DrawWireSphere(transform.position, 2f);
+        Gizmos.DrawWireSphere(transform.position, interactRange);
     }
 #endif
 }
