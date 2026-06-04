@@ -30,5 +30,5 @@ MonoBehaviour:
   baseDamage: 30
   attackSpeed: 1
   reach: 3
-  attackWidth: 0.5
+  attackWidth: 1.5
   enhancementLevel: 0

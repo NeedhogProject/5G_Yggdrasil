@@ -30,6 +30,6 @@ MonoBehaviour:
   _weaponRarity: 0
   baseDamage: 35
   attackSpeed: 0.1
-  reach: 4
-  attackWidth: 0.5
+  reach: 5
+  attackWidth: 0.2
   enhancementLevel: 0
