@@ -15,7 +15,7 @@ MonoBehaviour:
   _itemName: "\uD3C9\uBC94\uD55C \uAC11\uC637"
   _description: 
   _itemType: 0
-  _rarity: 0
+  _rarity: 1
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 3

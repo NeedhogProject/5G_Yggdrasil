@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6922df947ffad7c41b9e5f01e864f473, type: 3}
   m_Name: D-002-3
   m_EditorClassIdentifier: Assembly-CSharp::ArmorData
-  _itemName: "\uAE30\uC0AC\uC758  \uAC11\uC637"
+  _itemName: "\uAE30\uC0AC\uC758 \uAC11\uC637"
   _description: 
   _itemType: 0
-  _rarity: 0
+  _rarity: 2
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 3
