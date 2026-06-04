@@ -72,20 +72,8 @@ public class StorageUI : MonoBehaviour
             return;
         }
 
-        // G 키로 창고 열기/닫기
-        if (Keyboard.current.gKey.wasPressedThisFrame == true)
-        {
-            if (_isOpen == true)
-            {
-                CloseStorage();
-            }
-            else
-            {
-                OpenStorage();
-            }
-        }
-
-        // Esc 로 닫기
+        // 여는 건 상자 앞 StorageInteractable 이 담당
+        // 여기선 Esc 로 닫기만 처리
         if (_isOpen == true && Keyboard.current.escapeKey.wasPressedThisFrame == true)
         {
             CloseStorage();
