@@ -217,11 +217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a7e97b8fc42644d820cf2880b7d2c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootTable
-  lootEntries:
-  - item: {fileID: 0}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+  lootEntries: []
   dropCount: 1
   skipChance: 0
   droppedItemPrefab: {fileID: 0}
