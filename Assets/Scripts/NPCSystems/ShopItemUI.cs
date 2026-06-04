@@ -1,58 +1,79 @@
+// ShopItemUI.cs
+// 상점 아이템 슬롯 UI — 구매 모드에선 우클릭 시 구매 확인 팝업을 연다
+
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 
-/// <summary>
-/// 상점 아이템 슬롯 UI — ShopSystem 에서 Instantiate 후 SetupBuyItem / SetupSellItem 호출
-/// </summary>
-public class ShopItemUI : MonoBehaviour
+public class ShopItemUI : MonoBehaviour, IPointerClickHandler
 {
     [Header("UI References")]
-    [SerializeField] private Image    itemIcon;
+    [SerializeField] private Image itemIcon;
     [SerializeField] private TMP_Text itemNameText;
     [SerializeField] private TMP_Text priceText;
-    [SerializeField] private Button   actionButton;
 
-    private ShopSystem    _shopSystem;
-    private ShopItemData  _shopItemData;
-    private ItemData      _sellItemData;
-    private bool          _isBuyMode;
+    private ShopSystem _shopSystem;
+    private ShopItemData _shopItemData;
+    private ItemData _sellItemData;
+    private bool _isBuyMode;
 
-    /// <summary>구매 슬롯 초기화 — ShopSystem.ShowBuyTab() 에서 호출</summary>
+    // 구매 슬롯 초기화
     public void SetupBuyItem(ShopItemData shopItem, ShopSystem shop)
     {
-        _shopSystem   = shop;
+        _shopSystem = shop;
         _shopItemData = shopItem;
-        _isBuyMode    = true;
+        _isBuyMode = true;
 
-        if (itemIcon     != null && shopItem.itemData != null)
+        if (itemIcon != null && shopItem.itemData != null)
+        {
             itemIcon.sprite = shopItem.itemData.itemIcon;
+        }
         if (itemNameText != null && shopItem.itemData != null)
+        {
             itemNameText.text = shopItem.itemData.itemName;
-        if (priceText    != null)
-            priceText.text = $"{shopItem.buyPrice} G";
-        if (actionButton != null)
-            actionButton.onClick.AddListener(OnClicked);
+        }
+        if (priceText != null)
+        {
+            priceText.text = shopItem.buyPrice + " G";
+        }
     }
 
-    /// <summary>판매 슬롯 초기화 — ShopSystem.ShowSellTab() 에서 호출</summary>
+    // 판매 슬롯 초기화 (판매 로직은 4단계에서 연결)
     public void SetupSellItem(ItemData item, ShopSystem shop)
     {
-        _shopSystem  = shop;
+        _shopSystem = shop;
         _sellItemData = item;
-        _isBuyMode   = false;
+        _isBuyMode = false;
 
-        if (itemIcon     != null) itemIcon.sprite     = item.itemIcon;
-        if (itemNameText != null) itemNameText.text   = item.itemName;
-        if (priceText    != null) priceText.text      = $"{item.basePrice / 2} G";
-        if (actionButton != null) actionButton.onClick.AddListener(OnClicked);
+        if (itemIcon != null)
+        {
+            itemIcon.sprite = item.itemIcon;
+        }
+        if (itemNameText != null)
+        {
+            itemNameText.text = item.itemName;
+        }
+        if (priceText != null)
+        {
+            priceText.text = (item.basePrice / 2) + " G";
+        }
     }
 
-    private void OnClicked()
+    // 우클릭: 구매 모드면 구매 확인 팝업 열기
+    public void OnPointerClick(PointerEventData eventData)
     {
-        if (_isBuyMode)
-            _shopSystem?.BuyItem(_shopItemData);
-        else
-            _shopSystem?.SellItem(_sellItemData);
+        if (eventData.button != PointerEventData.InputButton.Right)
+        {
+            return;
+        }
+
+        if (_isBuyMode == true)
+        {
+            if (_shopSystem != null)
+            {
+                _shopSystem.OpenBuyConfirm(_shopItemData);
+            }
+        }
     }
 }

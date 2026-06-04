@@ -27,6 +27,13 @@ public class InventoryUI : MonoBehaviour
     [Header("창고와 같이 열릴 때 인벤토리 위치")]
     [SerializeField] private Vector2 storageModePosition = new Vector2(-370f, 0f);
 
+    [Header("상점과 같이 열릴 때 인벤토리 위치")]
+    [SerializeField] private Vector2 shopModePosition = new Vector2(370f, 0f);
+
+    // 다른 패널(창고/상점)과 같이 열린 상태인지
+    private bool _openedBeside = false;
+
+
     private RectTransform _panelRect = null;
     private Vector2 _defaultPanelPosition = Vector2.zero;
 
@@ -80,9 +87,12 @@ public class InventoryUI : MonoBehaviour
     {
         if (Keyboard.current.iKey.wasPressedThisFrame)
         {
-            // 창고가 열려있는 동안에는 I 로 인벤토리를 닫지 않음
-            bool storageOpen = StorageUI.Instance != null && StorageUI.Instance.IsOpen == true;
-            if (storageOpen == false)
+            // 창고/상점과 같이 열린 상태면 I 로 닫지 않음
+            if (isOpen == true && _openedBeside == true)
+            {
+                // 아무것도 안 함
+            }
+            else
             {
                 ToggleInventory();
             }
@@ -108,28 +118,41 @@ public class InventoryUI : MonoBehaviour
 
     public void OpenInventory()
     {
-        OpenInventory(true);
+        _openedBeside = false;
+        OpenInventoryAt(_defaultPanelPosition, true);
     }
 
-    // showOutsideClose: 전체화면 바깥클릭-닫기 버튼 사용 여부
-    // 창고와 같이 열 때는 false (창고 클릭을 가로채지 않도록)
+    // 창고와 같이 열기 (왼쪽). showOutsideClose=true 면 단독과 동일
     public void OpenInventory(bool showOutsideClose)
     {
-        Debug.Log("[InventoryUI] storageModePosition = " + storageModePosition);   // 임시
+        if (showOutsideClose == true)
+        {
+            _openedBeside = false;
+            OpenInventoryAt(_defaultPanelPosition, true);
+        }
+        else
+        {
+            _openedBeside = true;
+            OpenInventoryAt(storageModePosition, false);
+        }
+    }
+
+    // 상점과 같이 열기 (오른쪽)
+    public void OpenInventoryForShop()
+    {
+        _openedBeside = true;
+        OpenInventoryAt(shopModePosition, false);
+    }
+
+    // 실제 열기 처리 (위치 + 바깥닫기 버튼)
+    private void OpenInventoryAt(Vector2 position, bool showOutsideClose)
+    {
         inventoryPanel.SetActive(true);
         isOpen = true;
 
-        // 위치 조정: 창고와 같이 열 때는 옆으로, 단독으로 열 때는 기본 위치
         if (_panelRect == null == false)
         {
-            if (showOutsideClose == false)
-            {
-                _panelRect.anchoredPosition = storageModePosition;
-            }
-            else
-            {
-                _panelRect.anchoredPosition = _defaultPanelPosition;
-            }
+            _panelRect.anchoredPosition = position;
         }
 
         if (outsideCloseButton == null == false)
@@ -146,6 +169,7 @@ public class InventoryUI : MonoBehaviour
 
     public void CloseInventory()
     {
+        _openedBeside = false;
         inventoryPanel.SetActive(false);
         isOpen = false;
 
