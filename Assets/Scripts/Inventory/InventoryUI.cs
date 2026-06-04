@@ -91,18 +91,24 @@ public class InventoryUI : MonoBehaviour
 
     public void OpenInventory()
     {
+        OpenInventory(true);
+    }
+
+    // showOutsideClose: 전체화면 바깥클릭-닫기 버튼 사용 여부
+    // 창고와 같이 열 때는 false (창고 클릭을 가로채지 않도록)
+    public void OpenInventory(bool showOutsideClose)
+    {
         inventoryPanel.SetActive(true);
         isOpen = true;
 
         if (outsideCloseButton == null == false)
         {
-            outsideCloseButton.gameObject.SetActive(true);
+            outsideCloseButton.gameObject.SetActive(showOutsideClose);
         }
 
         SwitchTab(InventoryTab.Item);
         UpdateInventoryInfo();
 
-        if (InputReader.Instance != null) InputReader.Instance.UIBlocking = true;
         Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
     }

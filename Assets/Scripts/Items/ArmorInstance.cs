@@ -132,6 +132,7 @@ public class ArmorInstance : ItemInstance
 
     /// <summary>이 방어구가 제공하는 방어력 수치</summary>
     public float DefenseBonus => ArmorData?.DefenseBonus ?? 0f;
+    public float MaxHealthBonus => ArmorData?.MaxHealthBonus ?? 0f;
 
     /// <summary>착용 부위</summary>
     public ArmorSlot Slot => ArmorData?.ArmorSlot ?? ArmorSlot.Chest;

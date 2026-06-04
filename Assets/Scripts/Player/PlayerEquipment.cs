@@ -134,6 +134,7 @@ public class PlayerEquipment : MonoBehaviour
         _armorSlots[slot] = newArmor;
         newArmor.Equip();
         playerStats?.AddEquipmentDefense(newArmor.DefenseBonus);
+        playerStats?.AddEquipmentMaxHealth(newArmor.MaxHealthBonus);
         armorSetManager?.OnArmorEquipped(newArmor); // 추가
 
         // 각인 색상 UI 갱신
@@ -152,6 +153,7 @@ public class PlayerEquipment : MonoBehaviour
     {
         armor.Unequip();
         playerStats?.RemoveEquipmentDefense(armor.DefenseBonus);
+        playerStats?.RemoveEquipmentMaxHealth(armor.MaxHealthBonus);
         armorSetManager?.OnArmorUnequipped(armor);
         _armorSlots[armor.Slot] = null;
         inscriptionColorHelper?.UpdateInscriptionColor(armor.Slot.ToString(), "");
