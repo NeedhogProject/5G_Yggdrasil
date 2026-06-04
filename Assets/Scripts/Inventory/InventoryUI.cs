@@ -24,6 +24,12 @@ public class InventoryUI : MonoBehaviour
     public TMP_Text inventoryInfoText;
     public TMP_Text weightText;
 
+    [Header("창고와 같이 열릴 때 인벤토리 위치")]
+    [SerializeField] private Vector2 storageModePosition = new Vector2(-370f, 0f);
+
+    private RectTransform _panelRect = null;
+    private Vector2 _defaultPanelPosition = Vector2.zero;
+
     private bool isOpen = false;
     private InventoryTab currentTab = InventoryTab.Item;
 
@@ -62,16 +68,27 @@ public class InventoryUI : MonoBehaviour
             outsideCloseButton.onClick.AddListener(CloseInventory);
             outsideCloseButton.gameObject.SetActive(false);
         }
+
+        _panelRect = inventoryPanel.GetComponent<RectTransform>();
+        if (_panelRect == null == false)
+        {
+            _defaultPanelPosition = _panelRect.anchoredPosition;
+        }
     }
 
     void Update()
     {
-        if (InputReader.Instance != null && InputReader.Instance.InventoryPressed)
+        if (Keyboard.current.iKey.wasPressedThisFrame)
         {
-            ToggleInventory();
+            // 창고가 열려있는 동안에는 I 로 인벤토리를 닫지 않음
+            bool storageOpen = StorageUI.Instance != null && StorageUI.Instance.IsOpen == true;
+            if (storageOpen == false)
+            {
+                ToggleInventory();
+            }
         }
 
-        if (InputReader.Instance != null && InputReader.Instance.CancelPressed && isOpen)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame && isOpen)
         {
             CloseInventory();
         }
@@ -98,8 +115,22 @@ public class InventoryUI : MonoBehaviour
     // 창고와 같이 열 때는 false (창고 클릭을 가로채지 않도록)
     public void OpenInventory(bool showOutsideClose)
     {
+        Debug.Log("[InventoryUI] storageModePosition = " + storageModePosition);   // 임시
         inventoryPanel.SetActive(true);
         isOpen = true;
+
+        // 위치 조정: 창고와 같이 열 때는 옆으로, 단독으로 열 때는 기본 위치
+        if (_panelRect == null == false)
+        {
+            if (showOutsideClose == false)
+            {
+                _panelRect.anchoredPosition = storageModePosition;
+            }
+            else
+            {
+                _panelRect.anchoredPosition = _defaultPanelPosition;
+            }
+        }
 
         if (outsideCloseButton == null == false)
         {

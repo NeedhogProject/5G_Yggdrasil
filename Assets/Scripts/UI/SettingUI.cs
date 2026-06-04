@@ -263,4 +263,5 @@ public class SettingsUI : MonoBehaviour
             sfxValueText.text = percent.ToString() + "%";
         }
     }
+
 }
