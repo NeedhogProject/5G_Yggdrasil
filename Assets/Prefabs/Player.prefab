@@ -58,6 +58,7 @@ MonoBehaviour:
   baseDefense: 0
   mental: 100
   equipmentDefense: 0
+  equipmentMaxHealth: 0
   _gold: 0
   healthPotionAmount: 30
   mentalPotionAmount: 25
@@ -215,7 +216,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1a7e726fec3e81a40ae577b801a6f1f6, type: 2}
   - {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   equipOnStart: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
-  bAlreadyGranted: 1
+  bAlreadyGranted: 0
 --- !u!1 &4525919307855606178
 GameObject:
   m_ObjectHideFlags: 0

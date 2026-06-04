@@ -8056,6 +8056,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 4252504774960479583, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
+      propertyPath: far clip plane
+      value: 50
+      objectReference: {fileID: 0}
     - target: {fileID: 5135092209221955581, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
       propertyPath: m_LocalRotation.w
       value: 0.61237246
