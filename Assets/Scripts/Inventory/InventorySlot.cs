@@ -18,6 +18,13 @@ public class InventorySlot : MonoBehaviour,
     public int slotIndex = 0;
     public Vector2Int gridPosition;
 
+    // 다중 칸 점유 — 이 슬롯이 큰 아이템의 일부일 때 주인 슬롯을 가리킴
+    // 주인 슬롯 자신은 ownerSlot == this (또는 null), 점유된 보조 칸은 주인을 참조
+    public InventorySlot ownerSlot = null;
+
+    // 이 슬롯이 아이템의 좌상단(주인)인지 여부
+    public bool IsOwner => isOccupied && (ownerSlot == null || ownerSlot == this);
+
     // 런타임 아이템 인스턴스 (강화 단계, 각인 등 실시간 정보 보유)
     private ItemInstance _currentInstance = null;
 
@@ -297,6 +304,14 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
+        // 컨테이너가 다르면 (인벤토리 <-> 창고) 별도 처리 후 종료
+        if (_draggingSlot.container != this.container)
+        {
+            HandleCrossContainerDrop(draggedInstance);
+            CleanupDrag();
+            return;
+        }
+
         if (isOccupied == true)
         {
             // 두 슬롯 스왑
@@ -335,35 +350,22 @@ public class InventorySlot : MonoBehaviour,
             _draggingSlot.ClearSlot();
         }
 
+        CleanupDrag();
+    }
+
+    // 드래그 종료 후 공통 정리
+    private void CleanupDrag()
+    {
         if (_draggingSlot != null && _draggingSlot.itemIcon != null)
         {
             _draggingSlot.itemIcon.color = Color.white;
         }
-
         _draggingSlot = null;
 
         if (_dragIcon != null)
         {
             Destroy(_dragIcon);
             _dragIcon = null;
-        }
-        // 컨테이너 간 이동 (인벤토리 <-> 창고)
-        if (_draggingSlot.container != this.container)
-        {
-            HandleCrossContainerDrop(draggedInstance);
-
-            // 드래그 정리
-            if (_draggingSlot != null && _draggingSlot.itemIcon != null)
-            {
-                _draggingSlot.itemIcon.color = Color.white;
-            }
-            _draggingSlot = null;
-            if (_dragIcon != null)
-            {
-                Destroy(_dragIcon);
-                _dragIcon = null;
-            }
-            return;
         }
     }
 

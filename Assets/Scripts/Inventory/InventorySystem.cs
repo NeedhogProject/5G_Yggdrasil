@@ -105,11 +105,44 @@ public class InventorySystem : MonoBehaviour
         }
 
         emptySlot.SetItem(instance);
+        OccupyAreaOnly(emptySlot, instance.Data);
         _itemInstances.Add(instance);
         items.Add(instance.Data);
 
         Debug.Log("[InventorySystem] 아이템 추가: " + instance.Data.itemName);
         return true;
+    }
+
+    // SetItem은 호출측에서 이미 한 경우, 영역 점유와 아이콘 크기만 처리
+    private void OccupyAreaOnly(InventorySlot ownerSlot, ItemData item)
+    {
+        ownerSlot.ownerSlot = ownerSlot;
+
+        Vector2Int size = item.itemSize;
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                if (x == 0 && y == 0)
+                {
+                    continue;
+                }
+
+                int idx = (startY + y) * gridWidth + (startX + x);
+                if (idx < 0 || idx >= slots.Count)
+                {
+                    continue;
+                }
+
+                slots[idx].isOccupied = true;
+                slots[idx].ownerSlot = ownerSlot;
+            }
+        }
+
+        ResizeItemIcon(ownerSlot, size);
     }
 
     /// <summary>
@@ -131,11 +164,51 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
 
-        emptySlot.SetItem(item);
+        // 주인 슬롯에 아이템 배치 + 차지하는 모든 칸 점유
+        OccupyArea(emptySlot, item);
         items.Add(item);
 
         Debug.Log("[InventorySystem] 아이템 추가(데이터 전용): " + item.itemName);
         return true;
+    }
+
+    // 아이템 크기만큼 칸을 점유 (주인 슬롯 + 보조 칸)
+    private void OccupyArea(InventorySlot ownerSlot, ItemData item)
+    {
+        ownerSlot.SetItem(item);
+        OccupyAreaOnly(ownerSlot, item);
+    }
+
+    // 주인 슬롯 아이콘을 아이템 크기에 맞게 확장
+    private void ResizeItemIcon(InventorySlot ownerSlot, Vector2Int size)
+    {
+        if (ownerSlot.itemIcon == null)
+        {
+            return;
+        }
+
+        GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
+        if (grid == null)
+        {
+            return;
+        }
+
+        float cellW = grid.cellSize.x;
+        float cellH = grid.cellSize.y;
+        float spaceX = grid.spacing.x;
+        float spaceY = grid.spacing.y;
+
+        // 차지하는 전체 픽셀 크기 = 셀 크기 × 칸수 + 사이 간격
+        float width  = cellW * size.x + spaceX * (size.x - 1);
+        float height = cellH * size.y + spaceY * (size.y - 1);
+
+        RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
+        // 좌상단 고정으로 우하단으로 확장
+        iconRect.anchorMin = new Vector2(0f, 1f);
+        iconRect.anchorMax = new Vector2(0f, 1f);
+        iconRect.pivot     = new Vector2(0f, 1f);
+        iconRect.anchoredPosition = Vector2.zero;
+        iconRect.sizeDelta = new Vector2(width, height);
     }
 
     // ─────────────────────── 아이템 제거 ───────────────────────
@@ -248,12 +321,16 @@ public class InventorySystem : MonoBehaviour
             // 인스턴스 목록에서 해당 데이터의 인스턴스 찾기
             ItemInstance instance = _itemInstances.Find(i => i.Data == item);
 
+            // 착용 전에 인벤토리에서 먼저 제거 (복사 방지)
+            // 교체된 기존 장비는 PlayerEquipment.EquipItem 내부에서 인벤토리로 반환됨
             if (instance is WeaponInstance weaponInstance)
             {
+                RemoveItem(instance);
                 playerEquipment?.EquipItem(weaponInstance);
             }
             else if (instance is ArmorInstance armorInstance)
             {
+                RemoveItem(instance);
                 playerEquipment?.EquipItem(armorInstance);
             }
             else
@@ -262,6 +339,7 @@ public class InventorySystem : MonoBehaviour
                 WeaponData weaponData = item as WeaponData;
                 if (weaponData != null)
                 {
+                    RemoveItem(item);
                     playerEquipment?.EquipItem(new WeaponInstance(weaponData));
                 }
             }
