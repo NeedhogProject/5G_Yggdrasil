@@ -1,46 +1,50 @@
+// ShopSystem.cs
+// 상인 NPC(벨라) 패널
+// 구매: 상점 아이템 우클릭 시 구매 확인 팝업을 열고 수량만큼 구매
+// 판매: 플레이어 인벤토리 아이템을 기본가의 절반에 판매 (드래그 판매는 추후 연결)
+
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// 상인 NPC 패널.
-/// 구매 탭: shopItems 목록에서 아이템 구매.
-/// 판매 탭: 플레이어 인벤토리 아이템을 기본가의 절반에 판매.
-/// </summary>
 public class ShopSystem : MonoBehaviour
 {
     [Header("UI 참조")]
     public GameObject shopPanel;
-    public TMP_Text   dialogueText;
-    public TMP_Text   goldText;
-    public Button     buyTabButton;
-    public Button     sellTabButton;
-    public Button     closeButton;
+    public TMP_Text dialogueText;
+    public TMP_Text goldText;
+    public Button buyTabButton;
+    public Button sellTabButton;
+    public Button closeButton;
 
     [Header("상품 목록")]
-    public Transform  itemListContainer;
+    public Transform itemListContainer;
     public GameObject shopItemPrefab;
 
     [Header("판매 목록")]
     public List<ShopItemData> shopItems = new List<ShopItemData>();
 
     [Header("구매 확인 팝업")]
-public GameObject buyConfirmPopup;
-public TMP_Text confirmItemNameText;
-public TMP_Text quantityText;
-public TMP_Text totalPriceText;
-public TMP_Text balanceAfterText;
-public Button quantityUpButton;
-public Button quantityDownButton;
-public Button confirmBuyButton;
-public Button cancelBuyButton;
+    public GameObject buyConfirmPopup;
+    public TMP_Text confirmItemNameText;
+    public TMP_Text quantityText;
+    public TMP_Text totalPriceText;
+    public TMP_Text balanceAfterText;
+    public Button quantityUpButton;
+    public Button quantityDownButton;
+    public Button confirmBuyButton;
+    public Button cancelBuyButton;
 
-private ShopItemData _pendingShopItem = null;
-private int _pendingQuantity = 1;
+    // 함께 여닫을 인벤토리 UI (지연 탐색)
+    private InventoryUI _inventoryUI = null;
 
-    private bool     isOpen      = false;
-    private ShopTab  currentTab  = ShopTab.Buy;
+    // 구매 확인 팝업 상태
+    private ShopItemData _pendingShopItem = null;
+    private int _pendingQuantity = 1;
+
+    private bool isOpen = false;
+    private ShopTab currentTab = ShopTab.Buy;
 
     private enum ShopTab
     {
@@ -81,10 +85,11 @@ private int _pendingQuantity = 1;
 
     public void OpenShop()
     {
-        if (isOpen)
+        if (isOpen == true)
         {
             return;
         }
+
         shopPanel.SetActive(true);
         isOpen = true;
 
@@ -145,11 +150,11 @@ private int _pendingQuantity = 1;
         foreach (ShopItemData shopItem in shopItems)
         {
             GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
-            ShopItemUI itemUI  = itemObj.GetComponent<ShopItemUI>();
+            ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
             itemUI.SetupBuyItem(shopItem, this);
         }
 
-        dialogueText.text = "무엇을 구매하시겠어요?";
+        dialogueText.text = "구매하시겠습니까?";
     }
 
     private void ShowSellTab()
@@ -161,13 +166,14 @@ private int _pendingQuantity = 1;
         foreach (ItemData item in playerItems)
         {
             GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
-            ShopItemUI itemUI  = itemObj.GetComponent<ShopItemUI>();
+            ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
             itemUI.SetupSellItem(item, this);
         }
 
         dialogueText.text = "무엇을 판매하시겠어요?";
     }
 
+    // 단일 구매 (현재는 팝업 흐름이 대체, 호환용으로 남겨둠)
     public void BuyItem(ShopItemData shopItem)
     {
         if (PlayerStats.Instance.gold < shopItem.buyPrice)
@@ -186,7 +192,7 @@ private int _pendingQuantity = 1;
 
         PlayerStats.Instance.gold -= shopItem.buyPrice;
 
-        dialogueText.text = $"{shopItem.itemData.itemName}을(를) 구매했습니다!";
+        dialogueText.text = shopItem.itemData.itemName + "을(를) 구매했습니다!";
 
         UpdateGoldDisplay();
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
@@ -199,7 +205,7 @@ private int _pendingQuantity = 1;
         PlayerStats.Instance.gold += sellPrice;
         InventorySystem.Instance.RemoveItem(item);
 
-        dialogueText.text = $"{item.itemName}을(를) {sellPrice} 골드에 판매했습니다.";
+        dialogueText.text = item.itemName + "을(를) " + sellPrice + " 골드에 판매했습니다.";
 
         UpdateGoldDisplay();
         ShowSellTab();
@@ -209,7 +215,7 @@ private int _pendingQuantity = 1;
 
     private void UpdateGoldDisplay()
     {
-        goldText.text = $"보유 골드: {PlayerStats.Instance.gold}";
+        goldText.text = "보유 골드: " + PlayerStats.Instance.gold;
     }
 
     private void ClearList()
@@ -220,9 +226,7 @@ private int _pendingQuantity = 1;
         }
     }
 
-    private InventoryUI _inventoryUI = null;
-
-    // 인벤토리 UI 참조 확보
+    // 인벤토리 UI 참조 확보 (InventorySystem 우선, 없으면 씬 탐색)
     private InventoryUI ResolveInventoryUI()
     {
         if (_inventoryUI != null)
@@ -241,6 +245,7 @@ private int _pendingQuantity = 1;
 
         return _inventoryUI;
     }
+
     // 구매 확인 팝업 열기 (우클릭 시 ShopItemUI 가 호출)
     public void OpenBuyConfirm(ShopItemData shopItem)
     {
@@ -352,7 +357,7 @@ private int _pendingQuantity = 1;
         CloseBuyConfirm();
     }
 
-    // 팝업 닫기 + 목록 갱신
+    // 팝업 닫기
     private void CloseBuyConfirm()
     {
         _pendingShopItem = null;
@@ -414,11 +419,10 @@ private int _pendingQuantity = 1;
     }
 }
 
-
 [System.Serializable]
 public class ShopItemData
 {
     public ItemData itemData;
-    public int      buyPrice;
-    public int      stock = -1; // -1 = 무제한
+    public int buyPrice;
+    public int stock = -1; // -1 은 무제한
 }

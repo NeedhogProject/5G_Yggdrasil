@@ -61,6 +61,7 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
     }
 
     // 우클릭: 구매 모드면 구매 확인 팝업 열기
+    // 우클릭: 구매 모드면 구매 팝업, 판매 모드면 즉시 판매
     public void OnPointerClick(PointerEventData eventData)
     {
         if (eventData.button != PointerEventData.InputButton.Right)
@@ -70,9 +71,18 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
 
         if (_isBuyMode == true)
         {
+            // 구매 모드: 우클릭 시 구매 확인 팝업
             if (_shopSystem != null)
             {
                 _shopSystem.OpenBuyConfirm(_shopItemData);
+            }
+        }
+        else
+        {
+            // 판매 모드: 우클릭 시 즉시 판매
+            if (_shopSystem != null && _sellItemData != null)
+            {
+                _shopSystem.SellItem(_sellItemData);
             }
         }
     }
