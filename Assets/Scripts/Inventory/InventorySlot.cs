@@ -28,6 +28,8 @@ public class InventorySlot : MonoBehaviour,
     // 런타임 아이템 인스턴스 (강화 단계, 각인 등 실시간 정보 보유)
     private ItemInstance _currentInstance = null;
 
+    public ItemInstance CurrentInstance => _currentInstance;
+
     // 드래그 상태
     private static InventorySlot _draggingSlot = null;
     private static GameObject _dragIcon = null;
@@ -207,9 +209,15 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData e)
     {
-        // 우클릭: 장착/해제
+        // 우클릭: 판매 모드면 판매창에 담기, 아니면 장착/해제
         if (e.button == PointerEventData.InputButton.Right && isOccupied == true && currentItem != null)
         {
+            if (container == SlotContainer.Inventory && ShopSystem.Instance != null && ShopSystem.Instance.IsOpen == true && ShopSystem.Instance.IsSellMode == true)
+            {
+                ShopSystem.Instance.StageForSale(this);
+                return;
+            }
+
             InventorySystem.Instance?.UseItem(currentItem);
         }
     }

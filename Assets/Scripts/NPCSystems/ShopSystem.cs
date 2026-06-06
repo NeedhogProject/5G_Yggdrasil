@@ -1,11 +1,12 @@
 // ShopSystem.cs
 // 상인 NPC(벨라) 패널
-// 구매: 상점 아이템 우클릭 시 구매 확인 팝업을 열고 수량만큼 구매
-// 판매: 플레이어 인벤토리 아이템을 기본가의 절반에 판매 (드래그 판매는 추후 연결)
+// 시작 메뉴(구매/판매/대화) → 구매 화면(우클릭 확인 팝업) / 판매 화면(판매창 스테이징)
+// ESC: 팝업 닫기 -> 메뉴로 돌아가기 -> 상점 완전히 닫기 순서
 
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class ShopSystem : MonoBehaviour
@@ -36,13 +37,39 @@ public class ShopSystem : MonoBehaviour
     public Button confirmBuyButton;
     public Button cancelBuyButton;
 
-    // 함께 여닫을 인벤토리 UI (지연 탐색)
-    private InventoryUI _inventoryUI = null;
+    [Header("시작 메뉴")]
+    public GameObject menuPanel;
+    public Button menuBuyButton;
+    public Button menuSellButton;
+    public Button menuTalkButton;
 
-    // 구매 확인 팝업 상태
+    [Header("판매 (판매창)")]
+    public GameObject sellControls;
+    public TMP_Text sellTotalText;
+    public TMP_Text sellBalanceText;
+    public Button confirmSellButton;
+    public Button cancelSellButton;
+
+    [Header("판매 설정")]
+    [SerializeField] private float sellPriceRatio = 0.3f;
+
+    [Header("대화하기 대사")]
+    [TextArea(2, 4)]
+    public string[] talkLines = new string[]
+    {
+        "세계수 아래 마을은 늘 분주하답니다.",
+        "필요한 게 있으면 언제든 말해요.",
+        "요즘 던전이 험하다던데... 부디 조심해요.",
+        "단골손님껜 가끔 덤도 챙겨드린답니다. 후훗."
+    };
+
+    public static ShopSystem Instance { get; private set; }
+
+    private InventoryUI _inventoryUI = null;
     private ShopItemData _pendingShopItem = null;
     private int _pendingQuantity = 1;
-
+    private int _talkIndex = 0;
+    private List<StagedSellItem> _stagedItems = new List<StagedSellItem>();
     private bool isOpen = false;
     private ShopTab currentTab = ShopTab.Buy;
 
@@ -52,15 +79,31 @@ public class ShopSystem : MonoBehaviour
         Sell
     }
 
+    // 판매창에 담긴 아이템 한 칸
+    private class StagedSellItem
+    {
+        public ItemData data;
+        public ItemInstance instance; // null 이면 데이터 전용
+    }
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
     private void Start()
     {
         shopPanel.SetActive(false);
+
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
 
         buyTabButton.onClick.AddListener(() => SwitchTab(ShopTab.Buy));
         sellTabButton.onClick.AddListener(() => SwitchTab(ShopTab.Sell));
         closeButton.onClick.AddListener(CloseShop);
 
-        // 구매 확인 팝업 버튼 연결
         if (buyConfirmPopup != null)
         {
             buyConfirmPopup.SetActive(false);
@@ -81,6 +124,28 @@ public class ShopSystem : MonoBehaviour
         {
             cancelBuyButton.onClick.AddListener(CancelBuy);
         }
+
+        if (menuBuyButton != null)
+        {
+            menuBuyButton.onClick.AddListener(OnMenuBuyClicked);
+        }
+        if (menuSellButton != null)
+        {
+            menuSellButton.onClick.AddListener(OnMenuSellClicked);
+        }
+        if (menuTalkButton != null)
+        {
+            menuTalkButton.onClick.AddListener(OnMenuTalkClicked);
+        }
+
+        if (confirmSellButton != null)
+        {
+            confirmSellButton.onClick.AddListener(ConfirmSell);
+        }
+        if (cancelSellButton != null)
+        {
+            cancelSellButton.onClick.AddListener(CancelSell);
+        }
     }
 
     public void OpenShop()
@@ -90,22 +155,12 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        shopPanel.SetActive(true);
         isOpen = true;
 
-        dialogueText.text = "어서오세요! 좋은 물건들이 있답니다.";
-
         UpdateGoldDisplay();
-        SwitchTab(ShopTab.Buy);
-
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
 
-        // 상점을 열면 인벤토리도 오른쪽에 같이 열기 (판매 드래그용)
-        InventoryUI inventoryUI = ResolveInventoryUI();
-        if (inventoryUI != null)
-        {
-            inventoryUI.OpenInventoryForShop();
-        }
+        ShowMenu();
     }
 
     // 상점이 열려있는지 외부 확인용
@@ -114,19 +169,171 @@ public class ShopSystem : MonoBehaviour
         get { return isOpen; }
     }
 
+    // 지금 판매 탭인지 (인벤 우클릭 담기 판단용)
+    public bool IsSellMode
+    {
+        get { return currentTab == ShopTab.Sell; }
+    }
+
     public void CloseShop()
     {
+        // 판매창에 담아둔 것 인벤으로 되돌림 (손실 방지)
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            ReturnStagedToInventory(_stagedItems[i]);
+        }
+        _stagedItems.Clear();
+
         shopPanel.SetActive(false);
+
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
         isOpen = false;
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
 
-        // 같이 열었던 인벤토리도 닫기
         InventoryUI inventoryUI = ResolveInventoryUI();
         if (inventoryUI != null)
         {
             inventoryUI.CloseInventory();
         }
+    }
+
+    // 시작 메뉴 보여주기 (구매/판매/대화 선택 화면)
+    private void ShowMenu()
+    {
+        // 판매창에 담아둔 것 인벤으로 되돌림 (메뉴로 가면 판매 취소)
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            ReturnStagedToInventory(_stagedItems[i]);
+        }
+        _stagedItems.Clear();
+
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(true);
+        }
+        if (shopPanel != null)
+        {
+            shopPanel.SetActive(false);
+        }
+
+        InventoryUI inventoryUI = ResolveInventoryUI();
+        if (inventoryUI != null)
+        {
+            inventoryUI.CloseInventory();
+        }
+    }
+
+    // 구매하기 선택
+    public void OnMenuBuyClicked()
+    {
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+        if (shopPanel != null)
+        {
+            shopPanel.SetActive(true);
+        }
+
+        SetTabsVisible(true);
+        SwitchTab(ShopTab.Buy);
+        OpenInventoryBeside();
+    }
+
+    // 판매하기 선택
+    public void OnMenuSellClicked()
+    {
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+        if (shopPanel != null)
+        {
+            shopPanel.SetActive(true);
+        }
+
+        SetTabsVisible(true);
+        SwitchTab(ShopTab.Sell);
+        OpenInventoryBeside();
+    }
+
+    // 대화하기 선택 (누를 때마다 대사가 바뀜)
+    public void OnMenuTalkClicked()
+    {
+        if (talkLines == null || talkLines.Length == 0)
+        {
+            dialogueText.text = "벨라: ...";
+            return;
+        }
+
+        dialogueText.text = "벨라: " + talkLines[_talkIndex];
+
+        _talkIndex = _talkIndex + 1;
+        if (_talkIndex >= talkLines.Length)
+        {
+            _talkIndex = 0;
+        }
+    }
+
+    // 구매/판매 화면에서 인벤토리 같이 열기
+    private void OpenInventoryBeside()
+    {
+        InventoryUI inventoryUI = ResolveInventoryUI();
+        if (inventoryUI != null)
+        {
+            inventoryUI.OpenInventoryForShop();
+        }
+    }
+
+    // 구매/판매 탭 버튼 표시 (메뉴 화면에선 숨김)
+    private void SetTabsVisible(bool visible)
+    {
+        if (buyTabButton != null)
+        {
+            buyTabButton.gameObject.SetActive(visible);
+        }
+        if (sellTabButton != null)
+        {
+            sellTabButton.gameObject.SetActive(visible);
+        }
+    }
+
+    private void Update()
+    {
+        if (isOpen == false)
+        {
+            return;
+        }
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == false)
+        {
+            return;
+        }
+
+        // 구매 확인 팝업이 떠 있으면 팝업만 닫기
+        if (buyConfirmPopup != null && buyConfirmPopup.activeSelf == true)
+        {
+            CloseBuyConfirm();
+            return;
+        }
+
+        // 구매/판매 창이 떠 있으면 메뉴로 돌아가기
+        if (shopPanel != null && shopPanel.activeSelf == true)
+        {
+            ShowMenu();
+            return;
+        }
+
+        // 메뉴 화면이면 상점 완전히 닫기
+        CloseShop();
     }
 
     private void SwitchTab(ShopTab tab)
@@ -154,26 +361,26 @@ public class ShopSystem : MonoBehaviour
             itemUI.SetupBuyItem(shopItem, this);
         }
 
-        dialogueText.text = "구매하시겠습니까?";
+        if (sellControls != null)
+        {
+            sellControls.SetActive(false);
+        }
+
+        dialogueText.text = "무엇을 구매하시겠어요?";
     }
 
     private void ShowSellTab()
     {
-        ClearList();
-
-        List<ItemData> playerItems = InventorySystem.Instance.items;
-
-        foreach (ItemData item in playerItems)
+        if (sellControls != null)
         {
-            GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
-            ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
-            itemUI.SetupSellItem(item, this);
+            sellControls.SetActive(true);
         }
 
-        dialogueText.text = "무엇을 판매하시겠어요?";
+        RefreshSellStaging();
+        dialogueText.text = "팔 물건을 판매창에 담아주세요.";
     }
 
-    // 단일 구매 (현재는 팝업 흐름이 대체, 호환용으로 남겨둠)
+    // 단일 구매 (현재는 팝업 흐름이 대체, 호환용)
     public void BuyItem(ShopItemData shopItem)
     {
         if (PlayerStats.Instance.gold < shopItem.buyPrice)
@@ -198,24 +405,9 @@ public class ShopSystem : MonoBehaviour
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
     }
 
-    public void SellItem(ItemData item)
-    {
-        int sellPrice = item.basePrice / 2;
-
-        PlayerStats.Instance.gold += sellPrice;
-        InventorySystem.Instance.RemoveItem(item);
-
-        dialogueText.text = item.itemName + "을(를) " + sellPrice + " 골드에 판매했습니다.";
-
-        UpdateGoldDisplay();
-        ShowSellTab();
-
-        AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
-    }
-
     private void UpdateGoldDisplay()
     {
-        goldText.text = "보유 골드: " + PlayerStats.Instance.gold;
+        goldText.text = "달란: " + PlayerStats.Instance.gold;
     }
 
     private void ClearList()
@@ -226,7 +418,7 @@ public class ShopSystem : MonoBehaviour
         }
     }
 
-    // 인벤토리 UI 참조 확보 (InventorySystem 우선, 없으면 씬 탐색)
+    // 인벤토리 UI 참조 확보
     private InventoryUI ResolveInventoryUI()
     {
         if (_inventoryUI != null)
@@ -269,7 +461,7 @@ public class ShopSystem : MonoBehaviour
         RefreshBuyConfirm();
     }
 
-    // 수량 증감 (1 이상, 최대 구매 가능 수량 이하)
+    // 수량 증감
     private void ChangeBuyQuantity(int delta)
     {
         if (_pendingShopItem == null)
@@ -333,11 +525,11 @@ public class ShopSystem : MonoBehaviour
         }
         if (totalPriceText != null)
         {
-            totalPriceText.text = "구매 금액: " + total + " G";
+            totalPriceText.text = "구매 금액: " + total + " 달란";
         }
         if (balanceAfterText != null)
         {
-            balanceAfterText.text = "구매 후 잔액: " + balanceAfter + " G";
+            balanceAfterText.text = "구매 후 잔액: " + balanceAfter + " 달란";
         }
     }
 
@@ -416,6 +608,149 @@ public class ShopSystem : MonoBehaviour
 
         UpdateGoldDisplay();
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+    }
+
+    // 아이템 판매가 (구매가 × 비율)
+    public int GetSellPrice(ItemData item)
+    {
+        if (item == null)
+        {
+            return 0;
+        }
+
+        return Mathf.RoundToInt(item.basePrice * sellPriceRatio);
+    }
+
+    // 인벤 아이템을 판매창에 담기 (인벤 슬롯 우클릭 시 호출됨)
+    public void StageForSale(InventorySlot slot)
+    {
+        if (slot == null || slot.currentItem == null)
+        {
+            return;
+        }
+
+        if (currentTab != ShopTab.Sell)
+        {
+            return;
+        }
+
+        StagedSellItem entry = new StagedSellItem();
+        entry.data = slot.currentItem;
+        entry.instance = slot.CurrentInstance;
+
+        InventorySystem.Instance.RemoveItemAtSlot(slot);
+        _stagedItems.Add(entry);
+
+        RefreshSellStaging();
+    }
+
+    // 판매창에서 빼서 인벤으로 되돌리기 (담긴 카드 우클릭 시)
+    public void UnstageItem(ItemData data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
+        int index = -1;
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            if (_stagedItems[i].data == data)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0)
+        {
+            return;
+        }
+
+        ReturnStagedToInventory(_stagedItems[index]);
+        _stagedItems.RemoveAt(index);
+
+        RefreshSellStaging();
+    }
+
+    // 담긴 아이템 하나를 인벤으로 되돌리기 (내부용)
+    private void ReturnStagedToInventory(StagedSellItem entry)
+    {
+        if (entry.instance != null)
+        {
+            InventorySystem.Instance.AddItem(entry.instance);
+        }
+        else if (entry.data != null)
+        {
+            InventorySystem.Instance.AddItem(entry.data);
+        }
+    }
+
+    // 판매 확정: 담긴 것 모두 판매
+    public void ConfirmSell()
+    {
+        if (_stagedItems.Count == 0)
+        {
+            dialogueText.text = "판매할 물건이 없어요.";
+            return;
+        }
+
+        int total = 0;
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            total = total + GetSellPrice(_stagedItems[i].data);
+        }
+
+        PlayerStats.Instance.gold += total;
+        _stagedItems.Clear();
+
+        dialogueText.text = total + " 달란에 판매했어요!";
+
+        UpdateGoldDisplay();
+        RefreshSellStaging();
+        AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+    }
+
+    // 취소: 담긴 것 모두 인벤으로 되돌리기
+    public void CancelSell()
+    {
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            ReturnStagedToInventory(_stagedItems[i]);
+        }
+        _stagedItems.Clear();
+
+        RefreshSellStaging();
+    }
+
+    // 판매창 표시 갱신 (담긴 카드 + 금액/잔액)
+    private void RefreshSellStaging()
+    {
+        ClearList();
+
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
+            ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
+            itemUI.SetupSellItem(_stagedItems[i].data, this);
+        }
+
+        int total = 0;
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            total = total + GetSellPrice(_stagedItems[i].data);
+        }
+
+        int balanceAfter = PlayerStats.Instance.gold + total;
+
+        if (sellTotalText != null)
+        {
+            sellTotalText.text = "판매 금액: " + total + " 달란";
+        }
+        if (sellBalanceText != null)
+        {
+            sellBalanceText.text = "판매 후 잔액: " + balanceAfter + " 달란";
+        }
     }
 }
 

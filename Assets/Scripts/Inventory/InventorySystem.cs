@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
+using static InventorySlot;
 
 public class InventorySystem : MonoBehaviour
 {
@@ -273,6 +275,28 @@ public class InventorySystem : MonoBehaviour
         }
         _itemInstances.Add(instance);
         items.Add(instance.Data);
+    }
+
+    // 특정 슬롯의 아이템을 데이터 + 슬롯에서 제거 (판매용)
+    public void RemoveItemAtSlot(InventorySlot slot)
+    {
+        if (slot == null || slot.isOccupied == false)
+        {
+            return;
+        }
+
+        ItemInstance instance = slot.CurrentInstance;
+        if (instance != null)
+        {
+            _itemInstances.Remove(instance);
+            items.Remove(instance.Data);
+        }
+        else if (slot.currentItem != null)
+        {
+            items.Remove(slot.currentItem);
+        }
+
+        slot.ClearSlot();
     }
 
     // ─────────────────────── 슬롯 클릭 ───────────────────────

@@ -82,7 +82,7 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
             // 판매 모드: 우클릭 시 즉시 판매
             if (_shopSystem != null && _sellItemData != null)
             {
-                _shopSystem.SellItem(_sellItemData);
+                _shopSystem.UnstageItem(_sellItemData);
             }
         }
     }
