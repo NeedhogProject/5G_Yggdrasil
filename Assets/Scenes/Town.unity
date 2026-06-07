@@ -10127,9 +10127,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -271, y: -68}
+  m_AnchoredPosition: {x: -850, y: -55}
   m_SizeDelta: {x: 850, y: 900}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &497890648
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10439,7 +10439,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &530418770
 RectTransform:
   m_ObjectHideFlags: 0
@@ -10459,10 +10459,10 @@ RectTransform:
   - {fileID: 948870312}
   m_Father: {fileID: 1009216933}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -172.41907, y: 42}
-  m_SizeDelta: {x: 235.96191, y: 522.595}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1100, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &530418771
 MonoBehaviour:
@@ -13455,7 +13455,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.000011531201}
+  m_AnchoredPosition: {x: 0, y: -0.000019049596}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &823715203
@@ -14238,8 +14238,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 522, y: -199.97}
-  m_SizeDelta: {x: 600, y: 80}
+  m_AnchoredPosition: {x: 450, y: -199.97}
+  m_SizeDelta: {x: 550, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &948870313
 MonoBehaviour:
@@ -15992,7 +15992,7 @@ MonoBehaviour:
   menuPanel: {fileID: 530418769}
   menuBuyButton: {fileID: 1951432889}
   menuSellButton: {fileID: 1084467757}
-  menuTalkButton: {fileID: 0}
+  menuTalkButton: {fileID: 948870313}
   sellControls: {fileID: 0}
   sellTotalText: {fileID: 0}
   sellBalanceText: {fileID: 0}
@@ -16712,7 +16712,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.92156863}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -16841,8 +16841,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 522, y: -50}
-  m_SizeDelta: {x: 600, y: 80}
+  m_AnchoredPosition: {x: 450, y: -50}
+  m_SizeDelta: {x: 550, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1084467757
 MonoBehaviour:
@@ -26412,8 +26412,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 522, y: 100}
-  m_SizeDelta: {x: 600, y: 80}
+  m_AnchoredPosition: {x: 450, y: 100}
+  m_SizeDelta: {x: 550, y: 80}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1951432889
 MonoBehaviour:

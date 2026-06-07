@@ -28,6 +28,12 @@ public class InventorySlot : MonoBehaviour,
     // 런타임 아이템 인스턴스 (강화 단계, 각인 등 실시간 정보 보유)
     private ItemInstance _currentInstance = null;
 
+    // 런타임 인스턴스 외부 읽기용 (상점 판매 등)
+    public ItemInstance CurrentInstance
+    {
+        get { return _currentInstance; }
+    }
+
     // 드래그 상태
     private static InventorySlot _draggingSlot = null;
     private static GameObject _dragIcon = null;
@@ -219,13 +225,24 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        // 보조 칸이면 주인 슬롯의 아이템을 사용
+        // 보조 칸이면 주인 슬롯 기준
         InventorySlot source = this;
         if (ownerSlot != null && ownerSlot != this)
         {
             source = ownerSlot;
         }
 
+        // 상점이 판매 모드면 우클릭 = 판매창에 담기 (장착보다 우선)
+        if (container == SlotContainer.Inventory && ShopSystem.Instance != null && ShopSystem.Instance.IsOpen == true && ShopSystem.Instance.IsSellMode == true)
+        {
+            if (source.currentItem != null)
+            {
+                ShopSystem.Instance.StageForSale(source);
+            }
+            return;
+        }
+
+        // 그 외에는 장착/해제
         if (source.currentItem != null)
         {
             InventorySystem.Instance?.UseItem(source.currentItem);

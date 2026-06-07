@@ -24,6 +24,15 @@ public class GameManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }                                    
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += HandleSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
     // ─────────────────────── 게임 상태 ───────────────────────
@@ -59,6 +68,15 @@ public class GameManager : MonoBehaviour
     /// <summary>현재 층 (0=마을, 1~4=던전)</summary>
     public int CurrentFloor { get; private set; } = 0;
 
+    // 마을 진입 종류 (스폰 위치 분기용)
+    public enum TownEntry
+    {
+        NewGame,
+        DungeonReturn
+    }
+
+    private TownEntry _townEntry = TownEntry.NewGame;
+
     /// <summary>일시정지 이전 상태 (Resume 시 복귀용)</summary>
     private GameState _stateBeforePause;
 
@@ -76,6 +94,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartNewGame(int slotIndex)
     {
+        _townEntry = TownEntry.NewGame;
         IsNewGame   = true;
         CurrentSlot = slotIndex;
         CurrentFloor = 0;
@@ -215,12 +234,63 @@ public class GameManager : MonoBehaviour
             _ => townSceneName
         };
         LoadScene(sceneName, CurrentFloor == 0 ? GameState.Town : GameState.Dungeon);
+
+        if (CurrentFloor == 0)
+        {
+            _townEntry = TownEntry.DungeonReturn;
+        }
     }
 
     public void ReturnToTown()
     {
+        _townEntry = TownEntry.DungeonReturn;
         CurrentFloor = 0;
         LoadScene(townSceneName, GameState.Town);
+    }
+
+    // 씬 로드 완료 시 마을이면 스폰 위치 조정
+    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name != townSceneName)
+        {
+            return;
+        }
+
+        // 새 게임은 씬 기본 위치, 던전 복귀만 마을 중앙으로
+        if (_townEntry == TownEntry.NewGame)
+        {
+            return;
+        }
+
+        MovePlayerToTownCenter();
+    }
+
+    // 플레이어를 마을 중앙 스폰 지점으로 이동 (Rigidbody 기반)
+    private void MovePlayerToTownCenter()
+    {
+        GameObject spawn = GameObject.Find("Spawn_TownCenter");
+        if (spawn == null)
+        {
+            Debug.LogWarning("[GameManager] Spawn_TownCenter 를 찾을 수 없습니다.");
+            return;
+        }
+
+        if (PlayerController.Instance == null)
+        {
+            return;
+        }
+
+        // 위치 직접 설정 후 속도 0 으로 (옮긴 뒤 미끄러짐 방지)
+        Rigidbody body = PlayerController.Instance.GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.position = spawn.transform.position;
+            body.linearVelocity = Vector3.zero;
+        }
+        else
+        {
+            PlayerController.Instance.transform.position = spawn.transform.position;
+        }
     }
 
     /// <summary>타이틀로 복귀</summary>
