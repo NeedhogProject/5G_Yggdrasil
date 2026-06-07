@@ -133,6 +133,18 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
   - 하드코딩 키 전부 제거 (마우스 위치값만 직접 사용 — 리바인딩 무관)
   - UIBlocking 플래그로 UI 열림 시 게임플레이 입력 차단
 
+## 다중 칸 인벤토리 (디아블로식) — 5단계 전부 완료
+- 아이템 크기(InventoryWidth/Height)만큼 칸 차지
+- InventorySlot: ownerSlot 참조, IsOwner 프로퍼티
+- InventorySystem:
+  - OccupyArea/OccupyAreaOnly: 크기만큼 칸 점유 + 아이콘 확장(ResizeItemIcon)
+  - ReleaseArea/RestoreItemIcon: 제거 시 점유 해제 + 아이콘 1칸 복원
+  - MoveItem/CanPlaceAt: 드래그 이동 시 다중 칸 충돌 검사, 실패 시 원위치 복원
+  - GetSlot, FindInstanceBySlot, ReleaseAreaSilent 헬퍼
+- InventorySlot 드래그/우클릭/툴팁 모두 보조 칸이면 주인 슬롯(ownerSlot) 기준 처리
+- 우클릭 착용 복사 버그 수정 (착용 전 RemoveItem, 교체 반환은 PlayerEquipment 담당)
+- OnDrop null 참조 순서 버그 수정 (CleanupDrag로 통합)
+
 ## 등급/방어력 시스템 재정비 (신규)
 - 아이템 등급 4단계로 축소: Common / Rare / Epic / Legendary (Uncommon 제거)
   - ItemRarity, WeaponRarity 양쪽에서 제거
@@ -245,5 +257,3 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 - **DungeonCore 프리팹화 완료**: Floor_2~4에서 재사용, DifficultyScaler 수치만 변경
 - FloorKey 4개 ScriptableObject 완성 (North/South/East/West)
 - 1층 적 프리팹 전부 완성
-- **인벤토리 캔버스 크기**: Inventory_Canvas 는 부모 Canvas(Overlay) 아래 중첩되어 자체 CanvasScaler 가 아닌 부모 스케일에 자기 localScale 이 곱해진다. 따라서 RectTransform scale 은 반드시 1 유지. Town 씬에서 실수로 0.48 로 축소되어 인벤토리가 작게 보이던 버그 수정 (Floor_1 기준값 scale 1 / anchoredPos 960,540 / sizeDelta 1920x1080 으로 통일)
-- Town 씬에 Inventory_Canvas 가 2개 존재 (활성 1개 + scale 0 비활성 죽은 중복본 1개). 비활성이라 무해하나 정리 권장

@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using static InventorySlot;
+using UnityEngine.InputSystem;
 
 public class InventorySystem : MonoBehaviour
 {
@@ -213,6 +211,168 @@ public class InventorySystem : MonoBehaviour
         iconRect.sizeDelta = new Vector2(width, height);
     }
 
+    // 슬롯 인덱스로 슬롯 가져오기
+    public InventorySlot GetSlot(int index)
+    {
+        if (index < 0 || index >= slots.Count)
+        {
+            return null;
+        }
+        return slots[index];
+    }
+
+    // 외부(컨테이너 이동 등)에서 특정 슬롯의 점유 영역을 해제할 때 사용
+    public void ReleaseSlotArea(InventorySlot ownerSlot)
+    {
+        if (ownerSlot == null)
+        {
+            return;
+        }
+
+        // 보조 칸이면 주인 슬롯으로 보정
+        if (ownerSlot.ownerSlot != null && ownerSlot.ownerSlot != ownerSlot)
+        {
+            ownerSlot = ownerSlot.ownerSlot;
+        }
+        ReleaseArea(ownerSlot);
+    }
+
+    // 드래그한 아이템을 목표 슬롯으로 이동 (다중 칸 충돌 검사 포함)
+    // 성공하면 true, 공간 부족이면 false (원위치 유지)
+    public bool MoveItem(InventorySlot fromOwner, InventorySlot toSlot)
+    {
+        if (fromOwner == null || toSlot == null)
+        {
+            return false;
+        }
+        if (fromOwner == toSlot)
+        {
+            return false;
+        }
+
+        ItemData item = fromOwner.currentItem;
+        if (item == null)
+        {
+            return false;
+        }
+
+        // 목표 위치가 자기 자신이 차지한 칸이면 무시
+        Vector2Int size = item.itemSize;
+        int toX = toSlot.slotIndex % gridWidth;
+        int toY = toSlot.slotIndex / gridWidth;
+
+        // 먼저 출발지 점유를 임시 해제해야 자기 영역과 겹쳐도 배치 가능
+        ItemInstance movingInstance = FindInstanceBySlot(fromOwner);
+        ReleaseAreaSilent(fromOwner);
+
+        // 목표 영역이 비었는지 검사
+        if (CanPlaceAt(toX, toY, size) == false)
+        {
+            // 실패 — 원위치 복원
+            OccupyAreaWithInstance(fromOwner, item, movingInstance);
+            return false;
+        }
+
+        // 출발지 데이터 비우고 목표지에 배치
+        ItemData itemData = fromOwner.currentItem;
+        fromOwner.ClearSlot();
+        RestoreItemIcon(fromOwner);
+
+        if (movingInstance != null)
+        {
+            toSlot.SetItem(movingInstance);
+        }
+        else
+        {
+            toSlot.SetItem(itemData);
+        }
+        OccupyAreaOnly(toSlot, item);
+
+        return true;
+    }
+
+    // 인스턴스 찾기 (주인 슬롯 기준)
+    private ItemInstance FindInstanceBySlot(InventorySlot ownerSlot)
+    {
+        if (ownerSlot.currentItem == null)
+        {
+            return null;
+        }
+        return _itemInstances.Find(i => i.Data == ownerSlot.currentItem);
+    }
+
+    // 특정 좌표에 크기만큼 배치 가능한지 (점유/경계 검사)
+    private bool CanPlaceAt(int startX, int startY, Vector2Int size)
+    {
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                int checkX = startX + x;
+                int checkY = startY + y;
+
+                if (checkX >= gridWidth || checkY >= gridHeight)
+                {
+                    return false;
+                }
+
+                int idx = checkY * gridWidth + checkX;
+                if (idx < 0 || idx >= slots.Count)
+                {
+                    return false;
+                }
+
+                if (slots[idx].isOccupied == true)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    // 점유만 해제 (아이콘/데이터는 호출측에서 처리)
+    private void ReleaseAreaSilent(InventorySlot ownerSlot)
+    {
+        ItemData item = ownerSlot.currentItem;
+        if (item == null)
+        {
+            return;
+        }
+
+        Vector2Int size = item.itemSize;
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                int idx = (startY + y) * gridWidth + (startX + x);
+                if (idx < 0 || idx >= slots.Count)
+                {
+                    continue;
+                }
+                slots[idx].isOccupied = false;
+                slots[idx].ownerSlot = null;
+            }
+        }
+    }
+
+    // 인스턴스 유무에 따라 영역 점유 (이동 실패 복원용)
+    private void OccupyAreaWithInstance(InventorySlot ownerSlot, ItemData item, ItemInstance instance)
+    {
+        if (instance != null)
+        {
+            ownerSlot.SetItem(instance);
+        }
+        else
+        {
+            ownerSlot.SetItem(item);
+        }
+        OccupyAreaOnly(ownerSlot, item);
+    }
+
     // ─────────────────────── 아이템 제거 ───────────────────────
 
     /// <summary>인스턴스 기반 제거</summary>
@@ -223,17 +383,79 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        InventorySlot slot = slots.Find(s => s.currentItem == instance.Data);
+        InventorySlot slot = slots.Find(s => s.currentItem == instance.Data && s.IsOwner);
+        if (slot == null)
+        {
+            slot = slots.Find(s => s.currentItem == instance.Data);
+        }
 
         if (slot != null)
         {
-            slot.ClearSlot();
+            ReleaseArea(slot);
         }
 
         _itemInstances.Remove(instance);
         items.Remove(instance.Data);
 
         Debug.Log("[InventorySystem] 아이템 제거: " + instance.Data.itemName);
+    }
+
+    // 주인 슬롯이 차지한 모든 칸을 해제하고 아이콘 크기 복원
+    private void ReleaseArea(InventorySlot ownerSlot)
+    {
+        ItemData item = ownerSlot.currentItem;
+        if (item == null)
+        {
+            ownerSlot.ClearSlot();
+            return;
+        }
+
+        Vector2Int size = item.itemSize;
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                int idx = (startY + y) * gridWidth + (startX + x);
+                if (idx < 0 || idx >= slots.Count)
+                {
+                    continue;
+                }
+
+                // 보조 칸 점유 해제
+                slots[idx].isOccupied = false;
+                slots[idx].ownerSlot = null;
+            }
+        }
+
+        // 아이콘 크기 원래대로 복원 후 주인 슬롯 비우기
+        RestoreItemIcon(ownerSlot);
+        ownerSlot.ClearSlot();
+    }
+
+    // 아이콘을 1칸 크기로 복원
+    private void RestoreItemIcon(InventorySlot ownerSlot)
+    {
+        if (ownerSlot.itemIcon == null)
+        {
+            return;
+        }
+
+        GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
+        if (grid == null)
+        {
+            return;
+        }
+
+        RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
+        // 슬롯을 꽉 채우는 기본 형태로 복원 (stretch)
+        iconRect.anchorMin = Vector2.zero;
+        iconRect.anchorMax = Vector2.one;
+        iconRect.pivot     = new Vector2(0.5f, 0.5f);
+        iconRect.anchoredPosition = Vector2.zero;
+        iconRect.sizeDelta = Vector2.zero;
     }
 
     /// <summary>ItemData 기반 제거 (하위 호환용)</summary>
@@ -244,11 +466,15 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        InventorySlot slot = slots.Find(s => s.currentItem == item);
+        InventorySlot slot = slots.Find(s => s.currentItem == item && s.IsOwner);
+        if (slot == null)
+        {
+            slot = slots.Find(s => s.currentItem == item);
+        }
 
         if (slot != null)
         {
-            slot.ClearSlot();
+            ReleaseArea(slot);
         }
 
         items.Remove(item);
@@ -275,28 +501,6 @@ public class InventorySystem : MonoBehaviour
         }
         _itemInstances.Add(instance);
         items.Add(instance.Data);
-    }
-
-    // 특정 슬롯의 아이템을 데이터 + 슬롯에서 제거 (판매용)
-    public void RemoveItemAtSlot(InventorySlot slot)
-    {
-        if (slot == null || slot.isOccupied == false)
-        {
-            return;
-        }
-
-        ItemInstance instance = slot.CurrentInstance;
-        if (instance != null)
-        {
-            _itemInstances.Remove(instance);
-            items.Remove(instance.Data);
-        }
-        else if (slot.currentItem != null)
-        {
-            items.Remove(slot.currentItem);
-        }
-
-        slot.ClearSlot();
     }
 
     // ─────────────────────── 슬롯 클릭 ───────────────────────

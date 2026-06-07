@@ -28,8 +28,6 @@ public class InventorySlot : MonoBehaviour,
     // 런타임 아이템 인스턴스 (강화 단계, 각인 등 실시간 정보 보유)
     private ItemInstance _currentInstance = null;
 
-    public ItemInstance CurrentInstance => _currentInstance;
-
     // 드래그 상태
     private static InventorySlot _draggingSlot = null;
     private static GameObject _dragIcon = null;
@@ -72,7 +70,8 @@ public class InventorySlot : MonoBehaviour,
             if (added == true)
             {
                 InventorySystem.Instance?.RemoveInstanceData(draggedInstance);
-                _draggingSlot.ClearSlot();
+                // 인벤토리 출발 슬롯의 다중 칸 점유 해제
+                InventorySystem.Instance?.ReleaseSlotArea(_draggingSlot);
             }
         }
         else
@@ -82,9 +81,10 @@ public class InventorySlot : MonoBehaviour,
             {
                 StorageUI.Instance.RemoveFromStorageData(draggedInstance);
             }
-            InventorySystem.Instance?.AddInstanceData(draggedInstance);
+            // 창고 출발 슬롯 비우기 (창고는 단일 칸 관리)
             _draggingSlot.ClearSlot();
-            SetItem(draggedInstance);
+            // 인벤토리에 추가 — 다중 칸 점유 자동 처리
+            InventorySystem.Instance?.AddItem(draggedInstance);
         }
     }
 
@@ -186,15 +186,20 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        // 인스턴스가 있으면 런타임 정보(강화/각인) 포함 툴팁 표시
-        // 인스턴스가 없으면 ItemData 기반 툴팁 표시
-        if (_currentInstance != null)
+        // 보조 칸이면 주인 슬롯 기준으로 툴팁 표시
+        InventorySlot source = this;
+        if (ownerSlot != null && ownerSlot != this)
         {
-            UIItemTooltip.Instance?.ShowTooltip(_currentInstance, transform.position);
+            source = ownerSlot;
         }
-        else if (currentItem != null)
+
+        if (source._currentInstance != null)
         {
-            UIItemTooltip.Instance?.ShowTooltip(currentItem, transform.position);
+            UIItemTooltip.Instance?.ShowTooltip(source._currentInstance, transform.position);
+        }
+        else if (source.currentItem != null)
+        {
+            UIItemTooltip.Instance?.ShowTooltip(source.currentItem, transform.position);
         }
     }
 
@@ -209,16 +214,21 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData e)
     {
-        // 우클릭: 판매 모드면 판매창에 담기, 아니면 장착/해제
-        if (e.button == PointerEventData.InputButton.Right && isOccupied == true && currentItem != null)
+        if (e.button != PointerEventData.InputButton.Right || isOccupied == false)
         {
-            if (container == SlotContainer.Inventory && ShopSystem.Instance != null && ShopSystem.Instance.IsOpen == true && ShopSystem.Instance.IsSellMode == true)
-            {
-                ShopSystem.Instance.StageForSale(this);
-                return;
-            }
+            return;
+        }
 
-            InventorySystem.Instance?.UseItem(currentItem);
+        // 보조 칸이면 주인 슬롯의 아이템을 사용
+        InventorySlot source = this;
+        if (ownerSlot != null && ownerSlot != this)
+        {
+            source = ownerSlot;
+        }
+
+        if (source.currentItem != null)
+        {
+            InventorySystem.Instance?.UseItem(source.currentItem);
         }
     }
 
@@ -226,12 +236,24 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnBeginDrag(PointerEventData e)
     {
-        if (isOccupied == false || currentItem == null)
+        if (isOccupied == false)
         {
             return;
         }
 
-        _draggingSlot = this;
+        // 점유된 보조 칸에서 드래그 시작하면 주인 슬롯을 드래그 대상으로
+        InventorySlot dragSource = this;
+        if (ownerSlot != null && ownerSlot != this)
+        {
+            dragSource = ownerSlot;
+        }
+
+        if (dragSource.currentItem == null)
+        {
+            return;
+        }
+
+        _draggingSlot = dragSource;
         UIItemTooltip.Instance?.HideTooltip();
 
         // 드래그 중 아이콘 생성
@@ -240,7 +262,7 @@ public class InventorySlot : MonoBehaviour,
         _dragIcon.transform.SetAsLastSibling();
 
         Image img = _dragIcon.AddComponent<Image>();
-        img.sprite = currentItem.itemIcon;
+        img.sprite = dragSource.currentItem.itemIcon;
         img.raycastTarget = false;
 
         RectTransform rect = _dragIcon.GetComponent<RectTransform>();
@@ -249,10 +271,10 @@ public class InventorySlot : MonoBehaviour,
         rect.anchorMax = Vector2.zero;
         rect.pivot = new Vector2(0.5f, 0.5f);
 
-        // 원본 슬롯 아이콘 반투명
-        if (itemIcon != null)
+        // 원본(주인) 슬롯 아이콘 반투명
+        if (dragSource.itemIcon != null)
         {
-            itemIcon.color = new Color(1, 1, 1, 0.4f);
+            dragSource.itemIcon.color = new Color(1, 1, 1, 0.4f);
         }
     }
 
@@ -303,7 +325,6 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        // 인스턴스 기반으로 스왑 (인스턴스 없으면 ItemData로 폴백)
         ItemInstance draggedInstance = _draggingSlot._currentInstance;
         ItemData draggedItem = _draggingSlot.currentItem;
 
@@ -320,42 +341,19 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        if (isOccupied == true)
+        // 드롭 목표 슬롯 — 점유된 보조 칸이면 그 주인 슬롯 기준
+        InventorySlot targetSlot = this;
+        if (ownerSlot != null && ownerSlot != this)
         {
-            // 두 슬롯 스왑
-            ItemInstance tempInstance = _currentInstance;
-            ItemData tempItem = currentItem;
-
-            if (draggedInstance != null)
-            {
-                SetItem(draggedInstance);
-            }
-            else
-            {
-                SetItem(draggedItem);
-            }
-
-            if (tempInstance != null)
-            {
-                _draggingSlot.SetItem(tempInstance);
-            }
-            else
-            {
-                _draggingSlot.SetItem(tempItem);
-            }
+            targetSlot = ownerSlot;
         }
-        else
+
+        // 다중 칸 이동은 InventorySystem이 충돌 검사까지 처리
+        InventorySystem inventory = InventorySystem.Instance;
+        if (inventory != null)
         {
-            // 빈 슬롯으로 이동
-            if (draggedInstance != null)
-            {
-                SetItem(draggedInstance);
-            }
-            else
-            {
-                SetItem(draggedItem);
-            }
-            _draggingSlot.ClearSlot();
+            bool moved = inventory.MoveItem(_draggingSlot, targetSlot);
+            // 실패 시 원위치 유지 (MoveItem 내부에서 복원)
         }
 
         CleanupDrag();
