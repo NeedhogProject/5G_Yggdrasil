@@ -14,6 +14,13 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public Image inscriptionIcon;
     public TMP_Text equipmentLevelText;
 
+    [Header("빈 슬롯 표시")]
+    [Tooltip("이 부위가 비었을 때 흐리게 표시할 실루엣 스프라이트 (부위별로 지정)")]
+    public Sprite emptySlotIcon;
+    [Tooltip("빈 슬롯 실루엣의 흐림 정도 (0=투명, 1=불투명)")]
+    [Range(0f, 1f)]
+    public float emptySlotAlpha = 0.3f;
+
     [Header("슬롯 데이터")]
     public ItemData currentEquipment;
     public bool isEquipped = false;
@@ -27,6 +34,28 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             playerEquipment = FindFirstObjectByType<PlayerEquipment>();
         }
         UpdateSlotUI();
+    }
+
+    private void OnEnable()
+    {
+        if (playerEquipment == null)
+        {
+            playerEquipment = FindFirstObjectByType<PlayerEquipment>();
+        }
+        if (playerEquipment != null)
+        {
+            // 장착/해제 시 이 슬롯을 자동 갱신
+            playerEquipment.OnEquipmentChanged += RefreshFromEquipment;
+            RefreshFromEquipment();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (playerEquipment != null)
+        {
+            playerEquipment.OnEquipmentChanged -= RefreshFromEquipment;
+        }
     }
 
     // ItemData 베이스 타입으로 받아 WeaponData / ArmorData 모두 수용
@@ -44,6 +73,39 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         UpdateSlotUI();
     }
 
+    // PlayerEquipment 의 현재 장착 상태를 읽어 이 슬롯에 반영
+    private void RefreshFromEquipment()
+    {
+        if (playerEquipment == null)
+        {
+            return;
+        }
+
+        ItemData equipped = GetEquippedDataForThisSlot();
+        if (equipped != null)
+        {
+            SetEquipment(equipped);
+        }
+        else
+        {
+            ClearSlot();
+        }
+    }
+
+    // 이 슬롯 부위에 장착된 아이템 데이터 반환 (없으면 null)
+    private ItemData GetEquippedDataForThisSlot()
+    {
+        if (slotType == EquipmentType.Weapon)
+        {
+            WeaponInstance weapon = playerEquipment.EquippedWeapon;
+            return weapon?.Data;
+        }
+
+        ArmorSlot armorSlot = SlotTypeToArmorSlot(slotType);
+        ArmorInstance armor = playerEquipment.GetArmor(armorSlot);
+        return armor?.Data;
+    }
+
     private void UpdateSlotUI()
     {
         if (equipmentIcon == null)
@@ -51,10 +113,20 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             return;
         }
 
-        equipmentIcon.gameObject.SetActive(isEquipped);
-
         if (isEquipped == false || currentEquipment == null)
         {
+            // 빈 슬롯: 부위 실루엣을 흐리게 표시 (실루엣이 없으면 아이콘 숨김)
+            if (emptySlotIcon != null)
+            {
+                equipmentIcon.gameObject.SetActive(true);
+                equipmentIcon.sprite = emptySlotIcon;
+                equipmentIcon.color = new Color(1f, 1f, 1f, emptySlotAlpha);
+            }
+            else
+            {
+                equipmentIcon.gameObject.SetActive(false);
+            }
+
             if (equipmentLevelText != null)
             {
                 equipmentLevelText.gameObject.SetActive(false);
@@ -70,6 +142,8 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             return;
         }
 
+        // 장착됨: 풀컬러 아이템 아이콘
+        equipmentIcon.gameObject.SetActive(true);
         equipmentIcon.sprite = currentEquipment.itemIcon;
         equipmentIcon.color = Color.white;
 

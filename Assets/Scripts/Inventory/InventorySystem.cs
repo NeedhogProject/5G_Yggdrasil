@@ -187,6 +187,9 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
+        // 아이콘이 칸 전체를 채우도록 비율 유지 해제 (여백/격자처럼 보이는 현상 제거)
+        ownerSlot.itemIcon.preserveAspect = false;
+
         GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
         if (grid == null)
         {
@@ -289,6 +292,21 @@ public class InventorySystem : MonoBehaviour
         OccupyAreaOnly(toSlot, item);
 
         return true;
+    }
+
+    // 그리드 좌표로 슬롯 반환 (드롭 시 잡은 위치 보정용). 범위 밖이면 null
+    public InventorySlot GetSlotAt(Vector2Int grid)
+    {
+        if (grid.x < 0 || grid.y < 0 || grid.x >= gridWidth || grid.y >= gridHeight)
+        {
+            return null;
+        }
+        int idx = grid.y * gridWidth + grid.x;
+        if (idx < 0 || idx >= slots.Count)
+        {
+            return null;
+        }
+        return slots[idx];
     }
 
     // 인스턴스 찾기 (주인 슬롯 기준)
@@ -481,41 +499,6 @@ public class InventorySystem : MonoBehaviour
 
         Debug.Log("[InventorySystem] 아이템 제거: " + item.itemName);
     }
-    // 특정 슬롯의 아이템만 정확히 제거 (데이터 리스트 + 점유 영역 정리)
-// 같은 종류 아이템이 여러 개일 때 우클릭한 슬롯만 제거하기 위함 (상점 판매 등)
-public void RemoveItemAtSlot(InventorySlot slot)
-{
-    if (slot == null)
-    {
-        return;
-    }
-
-    // 보조 칸이면 주인 슬롯으로 보정
-    InventorySlot ownerSlot = slot;
-    if (slot.ownerSlot != null && slot.ownerSlot != slot)
-    {
-        ownerSlot = slot.ownerSlot;
-    }
-
-    ItemData item = ownerSlot.currentItem;
-    if (item == null)
-    {
-        return;
-    }
-
-    // 데이터 리스트에서 제거 (인스턴스 우선)
-    ItemInstance instance = FindInstanceBySlot(ownerSlot);
-    if (instance != null)
-    {
-        _itemInstances.Remove(instance);
-    }
-    items.Remove(item);
-
-    // 점유 영역 해제 + 슬롯 비우기
-    ReleaseArea(ownerSlot);
-
-    Debug.Log("[InventorySystem] 슬롯 아이템 제거: " + item.itemName);
-}
     // 슬롯은 건드리지 않고 데이터 리스트에서만 제거 (컨테이너 간 이동용)
     public void RemoveInstanceData(ItemInstance instance)
     {
@@ -525,6 +508,44 @@ public void RemoveItemAtSlot(InventorySlot slot)
         }
         _itemInstances.Remove(instance);
         items.Remove(instance.Data);
+    }
+
+    // 지정한 슬롯의 아이템을 제거 (멀티셀 영역 해제 + 데이터 제거)
+    // 상점 판매창 담기처럼 슬롯 단위로 정확히 제거할 때 사용
+    public void RemoveItemAtSlot(InventorySlot slot)
+    {
+        if (slot == null)
+        {
+            return;
+        }
+
+        // 보조 칸이면 주인 슬롯으로 보정
+        InventorySlot ownerSlot = slot;
+        if (ownerSlot.ownerSlot != null && ownerSlot.ownerSlot != ownerSlot)
+        {
+            ownerSlot = ownerSlot.ownerSlot;
+        }
+
+        if (ownerSlot.currentItem == null)
+        {
+            return;
+        }
+
+        // 슬롯을 비우기 전에 데이터 참조를 먼저 확보
+        ItemData removedItem = ownerSlot.currentItem;
+        ItemInstance removedInstance = ownerSlot.CurrentInstance;
+
+        // 멀티셀 점유 해제 + 아이콘 복원 + 슬롯 비우기
+        ReleaseArea(ownerSlot);
+
+        // 데이터 리스트에서 제거 (인스턴스 우선, 없으면 데이터 기준)
+        if (removedInstance != null)
+        {
+            _itemInstances.Remove(removedInstance);
+        }
+        items.Remove(removedItem);
+
+        Debug.Log("[InventorySystem] 슬롯 아이템 제거: " + removedItem.itemName);
     }
 
     // 데이터 리스트에만 추가 (슬롯 배치는 호출측에서) (컨테이너 간 이동용)

@@ -2081,6 +2081,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -8541,6 +8543,8 @@ MonoBehaviour:
   outsideCloseButton: {fileID: 0}
   inventoryInfoText: {fileID: 0}
   weightText: {fileID: 0}
+  storageModePosition: {x: -370, y: 0}
+  shopModePosition: {x: 370, y: 0}
 --- !u!1 &595686652 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8009987137999418058, guid: e69288704008d2144abfd701234ba3ee, type: 3}
@@ -12472,6 +12476,8 @@ MonoBehaviour:
   highlightImage: {fileID: 149063802}
   inscriptionIcon: {fileID: 1297085603}
   equipmentLevelText: {fileID: 657968210}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -12747,6 +12753,8 @@ MonoBehaviour:
   highlightImage: {fileID: 952604470}
   inscriptionIcon: {fileID: 1013106320}
   equipmentLevelText: {fileID: 445263686}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -13111,6 +13119,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -13209,6 +13219,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1428682411}
   inscriptionIcon: {fileID: 1911701218}
   equipmentLevelText: {fileID: 801556954}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -17396,6 +17408,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -18104,6 +18118,8 @@ MonoBehaviour:
   outsideCloseButton: {fileID: 1226002852}
   inventoryInfoText: {fileID: 1213442019}
   weightText: {fileID: 0}
+  storageModePosition: {x: -370, y: 0}
+  shopModePosition: {x: 370, y: 0}
 --- !u!114 &1694188612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18410,6 +18426,8 @@ MonoBehaviour:
   highlightImage: {fileID: 2091601073}
   inscriptionIcon: {fileID: 1142365031}
   equipmentLevelText: {fileID: 1413068993}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -20355,6 +20373,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: -6562731376012331522, guid: 295fb08666701e64386510f9bb00425f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.78
+      objectReference: {fileID: 0}
+    - target: {fileID: -5843695826044790269, guid: 295fb08666701e64386510f9bb00425f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.95
+      objectReference: {fileID: 0}
     - target: {fileID: -4990125288211002990, guid: 295fb08666701e64386510f9bb00425f, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
@@ -20881,6 +20907,8 @@ MonoBehaviour:
   highlightImage: {fileID: 942463194}
   inscriptionIcon: {fileID: 1838607017}
   equipmentLevelText: {fileID: 1768734347}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -21426,6 +21454,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1917076477}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 243603069}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -22190,6 +22220,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
