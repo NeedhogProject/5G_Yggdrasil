@@ -481,6 +481,41 @@ public class InventorySystem : MonoBehaviour
 
         Debug.Log("[InventorySystem] 아이템 제거: " + item.itemName);
     }
+    // 특정 슬롯의 아이템만 정확히 제거 (데이터 리스트 + 점유 영역 정리)
+// 같은 종류 아이템이 여러 개일 때 우클릭한 슬롯만 제거하기 위함 (상점 판매 등)
+public void RemoveItemAtSlot(InventorySlot slot)
+{
+    if (slot == null)
+    {
+        return;
+    }
+
+    // 보조 칸이면 주인 슬롯으로 보정
+    InventorySlot ownerSlot = slot;
+    if (slot.ownerSlot != null && slot.ownerSlot != slot)
+    {
+        ownerSlot = slot.ownerSlot;
+    }
+
+    ItemData item = ownerSlot.currentItem;
+    if (item == null)
+    {
+        return;
+    }
+
+    // 데이터 리스트에서 제거 (인스턴스 우선)
+    ItemInstance instance = FindInstanceBySlot(ownerSlot);
+    if (instance != null)
+    {
+        _itemInstances.Remove(instance);
+    }
+    items.Remove(item);
+
+    // 점유 영역 해제 + 슬롯 비우기
+    ReleaseArea(ownerSlot);
+
+    Debug.Log("[InventorySystem] 슬롯 아이템 제거: " + item.itemName);
+}
     // 슬롯은 건드리지 않고 데이터 리스트에서만 제거 (컨테이너 간 이동용)
     public void RemoveInstanceData(ItemInstance instance)
     {
