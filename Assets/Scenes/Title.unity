@@ -8056,6 +8056,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 113282000785982979, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
+      propertyPath: sfxEntries.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4252504774960479583, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
       propertyPath: far clip plane
       value: 50

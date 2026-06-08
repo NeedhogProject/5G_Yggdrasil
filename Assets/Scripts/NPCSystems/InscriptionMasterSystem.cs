@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 /// <summary>
@@ -29,20 +30,55 @@ public class InscriptionMasterSystem : MonoBehaviour
     public TMP_Text earthResourceText;
     public TMP_Text darknessResourceText;
 
+    [Header("시작 메뉴")]
+    public GameObject menuPanel;
+    public Button     menuInscribeButton;
+    public Button     menuResetButton;
+    public Button     menuTalkButton;
+
+    [Header("대화하기 대사")]
+    [TextArea(2, 4)]
+    public string[] talkLines = new string[]
+    {
+        "각인이란 세계수의 속삭임을 방어구에 새기는 일이지.",
+        "같은 속성을 모을수록 그 힘은 깊어진다네.",
+        "마음에 들지 않는 각인은 초기화권으로 지울 수 있네.",
+        "속성의 조화를 잊지 말게. 그것이 곧 생존의 열쇠야."
+    };
+
     // 초기화권 아이템 이름 상수 (문자열 직접 비교 대신 한 곳에서 관리)
     private const string RESET_SCROLL_NAME = "각인 초기화권";
 
     private ArmorData       selectedArmor;
     private InscriptionType selectedInscriptionType;
     private bool            isOpen = false;
+    private int             _talkIndex = 0;
 
     private void Start()
     {
         inscriptionPanel.SetActive(false);
 
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
         inscribeButton.onClick.AddListener(OnInscribeClicked);
         resetButton.onClick.AddListener(OnResetClicked);
         closeButton.onClick.AddListener(CloseInscriptionMaster);
+
+        if (menuInscribeButton != null)
+        {
+            menuInscribeButton.onClick.AddListener(OnMenuInscribeClicked);
+        }
+        if (menuResetButton != null)
+        {
+            menuResetButton.onClick.AddListener(OnMenuResetClicked);
+        }
+        if (menuTalkButton != null)
+        {
+            menuTalkButton.onClick.AddListener(OnMenuTalkClicked);
+        }
 
         if (inscriptionTypeDropdown == null == false)
         {
@@ -74,23 +110,120 @@ public class InscriptionMasterSystem : MonoBehaviour
         {
             return;
         }
-        inscriptionPanel.SetActive(true);
         isOpen = true;
 
-        dialogueText.text = "각인을 원하시오? 자원만 있다면 문제없지.";
-
-        UpdateResourceDisplay();
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+
+        ShowMenu();
     }
 
     public void CloseInscriptionMaster()
     {
         inscriptionPanel.SetActive(false);
-        isOpen = false;
 
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
+        isOpen = false;
         selectedArmor = null;
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
+    }
+
+    // ─────────────────────── 시작 메뉴 ───────────────────────
+
+    // 시작 메뉴 보여주기 (각인/초기화/대화 선택 화면)
+    private void ShowMenu()
+    {
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(true);
+        }
+
+        inscriptionPanel.SetActive(false);
+
+        dialogueText.text = "각인을 원하시오? 자원만 있다면 문제없지.";
+    }
+
+    // 각인하기 선택
+    private void OnMenuInscribeClicked()
+    {
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
+        inscriptionPanel.SetActive(true);
+
+        dialogueText.text = "각인할 방어구를 골라보게.";
+
+        UpdateResourceDisplay();
+    }
+
+    // 각인 초기화 선택
+    private void OnMenuResetClicked()
+    {
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
+        inscriptionPanel.SetActive(true);
+
+        dialogueText.text = "초기화할 방어구를 골라보게. 초기화권이 필요하다네.";
+
+        UpdateResourceDisplay();
+    }
+
+    // 대화하기 선택 (누를 때마다 대사가 바뀜)
+    private void OnMenuTalkClicked()
+    {
+        if (talkLines == null || talkLines.Length == 0)
+        {
+            dialogueText.text = "각인술사: ...";
+            return;
+        }
+
+        dialogueText.text = "각인술사: " + talkLines[_talkIndex];
+
+        _talkIndex = _talkIndex + 1;
+        if (_talkIndex >= talkLines.Length)
+        {
+            _talkIndex = 0;
+        }
+    }
+
+    // ESC: 각인 화면이면 메뉴로 복귀, 메뉴 화면이면 완전히 닫기
+    private void Update()
+    {
+        if (isOpen == false)
+        {
+            return;
+        }
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == false)
+        {
+            return;
+        }
+
+        // 각인 패널이 떠 있으면 메뉴로 복귀
+        if (inscriptionPanel.activeSelf == true)
+        {
+            selectedArmor = null;
+            ShowMenu();
+            return;
+        }
+
+        // 메뉴 화면이면 완전히 닫기
+        if (menuPanel != null && menuPanel.activeSelf == true)
+        {
+            CloseInscriptionMaster();
+        }
     }
 
     // 인벤토리 슬롯 클릭 시 외부에서 호출
