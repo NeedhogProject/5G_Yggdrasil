@@ -645,7 +645,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -157, y: -232.49994}
+  m_AnchoredPosition: {x: -157, y: -232.49944}
   m_SizeDelta: {x: 316, y: 256.71}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &42188592
@@ -8681,6 +8681,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -11697,7 +11699,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1014353130}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9743422
+  m_Size: 0.99999785
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -13728,7 +13730,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000060662096}
+  m_AnchoredPosition: {x: 0, y: 0.0006787052}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &823715203
@@ -16067,6 +16069,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -16889,6 +16893,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -17513,6 +17519,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1825053364}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 1485936223}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 441214089}
@@ -18830,6 +18838,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -18936,7 +18946,7 @@ MonoBehaviour:
   itemPriceText: {fileID: 0}
   itemIconImage: {fileID: 0}
   rarityBorder: {fileID: 0}
-  offset: {x: 65, y: -50}
+  offset: {x: 15, y: -15}
 --- !u!114 &1211363644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18950,7 +18960,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 0.38364768, g: 0.3414223, b: 0.3414223, a: 0.88235295}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -21716,7 +21726,7 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -22486,6 +22496,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -22997,7 +23009,7 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -24380,6 +24392,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1362432275}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 1832303223}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -24590,7 +24604,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1633368385}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9615132
+  m_Size: 0.99999696
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -25252,6 +25266,42 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 79.08646
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 99.79639
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 9.357987
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 4516647793904684497, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 90
+      objectReference: {fileID: 0}
     - target: {fileID: 6944656104360116776, guid: 264acb0c40f3130498b45672ca2045dd, type: 3}
       propertyPath: m_CastShadows
       value: 0
@@ -25716,6 +25766,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -26558,6 +26610,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -28379,6 +28433,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}

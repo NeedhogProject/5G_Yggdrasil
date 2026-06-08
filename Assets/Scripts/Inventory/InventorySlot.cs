@@ -39,6 +39,9 @@ public class InventorySlot : MonoBehaviour,
     private static GameObject _dragIcon = null;
     private static Canvas _canvas;
 
+    // 멀티셀 아이템에서 잡은 칸이 주인 칸으로부터 떨어진 정도 (드롭 위치 보정용)
+    private static Vector2Int _grabOffset = Vector2Int.zero;
+
     private void Awake()
     {
         if (_canvas == null)
@@ -271,6 +274,10 @@ public class InventorySlot : MonoBehaviour,
         }
 
         _draggingSlot = dragSource;
+
+        // 잡은 칸이 주인 칸에서 얼마나 떨어졌는지 기록 (드롭 시 역산용)
+        _grabOffset = gridPosition - dragSource.gridPosition;
+
         UIItemTooltip.Instance?.HideTooltip();
 
         // 드래그 중 아이콘 생성
@@ -284,8 +291,9 @@ public class InventorySlot : MonoBehaviour,
 
         RectTransform rect = _dragIcon.GetComponent<RectTransform>();
         rect.sizeDelta = new Vector2(50, 50);
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.zero;
+        // 위치를 캔버스 중앙 기준 좌표로 넣으므로 앵커도 중앙이어야 마우스와 일치함
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
 
         // 원본(주인) 슬롯 아이콘 반투명
@@ -358,20 +366,24 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        // 드롭 목표 슬롯 — 점유된 보조 칸이면 그 주인 슬롯 기준
-        InventorySlot targetSlot = this;
-        if (ownerSlot != null && ownerSlot != this)
+        // 잡은 위치 보정 — 아이템 좌상단(주인)이 들어갈 칸을 역산해서 목표로 삼음
+        InventorySystem inventory = InventorySystem.Instance;
+        if (inventory == null)
         {
-            targetSlot = ownerSlot;
+            CleanupDrag();
+            return;
         }
 
-        // 다중 칸 이동은 InventorySystem이 충돌 검사까지 처리
-        InventorySystem inventory = InventorySystem.Instance;
-        if (inventory != null)
+        Vector2Int targetOwnerGrid = gridPosition - _grabOffset;
+        InventorySlot targetSlot = inventory.GetSlotAt(targetOwnerGrid);
+        if (targetSlot == null)
         {
-            bool moved = inventory.MoveItem(_draggingSlot, targetSlot);
-            // 실패 시 원위치 유지 (MoveItem 내부에서 복원)
+            CleanupDrag();
+            return;
         }
+
+        // 다중 칸 이동은 InventorySystem이 충돌 검사까지 처리 (실패 시 내부에서 원위치 복원)
+        inventory.MoveItem(_draggingSlot, targetSlot);
 
         CleanupDrag();
     }
@@ -384,6 +396,7 @@ public class InventorySlot : MonoBehaviour,
             _draggingSlot.itemIcon.color = Color.white;
         }
         _draggingSlot = null;
+        _grabOffset = Vector2Int.zero;
 
         if (_dragIcon != null)
         {

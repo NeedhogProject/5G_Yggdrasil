@@ -196,6 +196,27 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ---
 
+## 마을/UI/인벤토리 추가 작업 완료 (이번 세션)
+- **NPCInteractable**: 마을 NPC 상호작용 단일 컴포넌트 (상인/대장장이/각인술사 타입 라우팅 + 힌트 표시). 기존 ShopNPCInteractable 대체 (삭제 가능)
+- **BlacksmithSystem / InscriptionMasterSystem**: ShopSystem 스타일 시작 메뉴 이식
+  - 대장장이: 강화하기 / 대화하기
+  - 각인술사: 각인하기 / 각인 초기화 / 대화하기
+  - 공통: talkLines 순환 대사 + ESC 단계 처리(작업창→메뉴→닫기)
+- **HouseDoorInteractable**: 같은 씬 내 집 입구↔실내 텔레포트 (targetPoint 로 플레이어 위치 이동, 씬 전환 아님)
+- **인벤토리 드래그 버그 수정 (InventorySlot/InventorySystem)**
+  - 드래그 아이콘 앵커를 중앙(0.5,0.5)으로 → 마우스 위치 일치
+  - 드롭 시 잡은 위치 보정: _grabOffset 기록 후 (드롭칸 - offset)으로 주인 칸 역산 (GetSlotAt 헬퍼 추가)
+- **ShopSystem 컴파일 에러 수정**: InventorySystem 에 RemoveItemAtSlot(InventorySlot) 추가 (슬롯 단위 정확 제거)
+- **UIItemTooltip**
+  - 깜빡임 해결: Awake 에서 CanvasGroup.blocksRaycasts=false 강제 (자식 텍스트/아이콘까지 한 번에)
+  - 위치를 커서 우측 하단으로: 피벗 좌상단(0,1) 고정 + ClampToScreen 그에 맞춤 + offset (15,-15)
+- **EquipmentSlotUI**
+  - 빈 슬롯 실루엣 플레이스홀더(emptySlotIcon, emptySlotAlpha) / 장착 시 풀컬러 아이콘
+  - PlayerEquipment.OnEquipmentChanged 구독 → 장착/해제 시 슬롯 UI 자동 갱신 (장착 표시 + 호버 툴팁 정상 동작)
+- **인벤토리 아이콘 칸 채움**: ResizeItemIcon 에서 preserveAspect=false (여백/격자처럼 보이던 현상 제거, 멀티셀 격자선과는 별개)
+
+---
+
 ## 씬 구성 완료
 - Town 씬
   - GameCore (Main Camera 자식으로 포함, DontDestroyOnLoad)
@@ -227,6 +248,15 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 ---
 
 ## 아직 미완성 (다음 작업)
+
+### 인벤토리 멀티셀 표시 — 방식 A 확정 (추후 구현)
+- 문제: 멀티셀 아이템 아이콘이 보조 칸 배경/테두리 뒤로 깔려 내부 격자선이 비침 (GridLayoutGroup 렌더 순서)
+- **결정: 오버레이 레이어 방식(A)** 으로 진행
+  - 그리드 위에 별도 IconOverlay RectTransform 배치 (그리드 다음 형제, GridLayoutGroup 없음)
+  - 아이템 아이콘을 칸의 자식이 아니라 오버레이에서 그림 → 항상 모든 칸 위에 렌더
+  - 위치: 주인 칸 그리드 좌표 → 셀 크기/간격으로 환산 (ResizeItemIcon 계산 재활용)
+  - InventorySystem 배치/이동/제거 경로 + InventorySlot 일부 수정 필요 (중간 규모)
+- 임시 조치만 적용됨: preserveAspect=false (단일 칸 채움). 격자선 자체는 오버레이 구현 시 해결 예정
 
 ### 다음 우선순위 작업
 1. **Floor_2 ~ Floor_4_Boss 씬** — Floor_1 복제 후 수치 변경

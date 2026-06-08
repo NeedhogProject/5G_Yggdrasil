@@ -42,6 +42,20 @@ public class UIItemTooltip : MonoBehaviour
         }
 
         _tooltipRect = tooltipPanel.GetComponent<RectTransform>();
+
+        // 툴팁을 커서 우측 하단에 띄우기 위해 피벗을 좌상단으로 고정 (ClampToScreen 도 이 피벗 기준)
+        _tooltipRect.pivot = new Vector2(0f, 1f);
+
+        // 툴팁이 커서 위에서 레이캐스트를 가로채면 슬롯 Enter/Exit 가 반복돼 깜빡임 발생
+        // CanvasGroup 으로 패널과 모든 자식(텍스트/아이콘 포함)의 레이캐스트를 한 번에 차단 해제
+        CanvasGroup raycastBlocker = tooltipPanel.GetComponent<CanvasGroup>();
+        if (raycastBlocker == null)
+        {
+            raycastBlocker = tooltipPanel.AddComponent<CanvasGroup>();
+        }
+        raycastBlocker.blocksRaycasts = false;
+        raycastBlocker.interactable = false;
+
         tooltipPanel.SetActive(false);
     }
 
@@ -397,7 +411,8 @@ public class UIItemTooltip : MonoBehaviour
     {
         Vector2 screen = new Vector2(Screen.width, Screen.height);
         Vector2 tipSize = _tooltipRect.sizeDelta;
-        pos.x = Mathf.Clamp(pos.x, 0, screen.x - tipSize.x);
+        // 좌상단 피벗 기준: 패널은 pos 에서 오른쪽/아래쪽으로 차지하므로 그에 맞게 클램프
+        pos.x = Mathf.Clamp(pos.x, 0f, screen.x - tipSize.x);
         pos.y = Mathf.Clamp(pos.y, tipSize.y, screen.y);
         return pos;
     }
