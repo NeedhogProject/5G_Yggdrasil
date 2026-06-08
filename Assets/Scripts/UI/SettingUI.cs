@@ -2,6 +2,7 @@
 // 오디오 설정 패널 (마스터/BGM/효과음 볼륨)
 // 슬라이더 변경 시 AudioManager/AudioListener 에 반영, 라벨과 수치를 별도 텍스트로 표시
 // 탭 모드(부모가 SetActive 토글) 와 팝업 모드(Open/Close) 둘 다 지원
+// 게임 저장 버튼 추가 — SaveSlotPanel 을 열어줌 (마을에서만 활성화)
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,6 +39,10 @@ public class SettingsUI : MonoBehaviour
     [Header("팝업 전체 루트 (있으면 그걸 닫고 없으면 자기 자신)")]
     [SerializeField] private GameObject popupRoot;
 
+    [Header("게임 저장 버튼 (마을에서만 활성화)")]
+    [SerializeField] private Button saveGameButton;
+    [SerializeField] private SaveSlotPanelUI saveSlotPanel;
+
     private bool isOpen = false;
 
     private void Start()
@@ -52,12 +57,14 @@ public class SettingsUI : MonoBehaviour
             masterSlider.maxValue = 1f;
             masterSlider.onValueChanged.AddListener(OnMasterSliderChanged);
         }
+
         if (bgmSlider != null)
         {
             bgmSlider.minValue = 0f;
             bgmSlider.maxValue = 1f;
             bgmSlider.onValueChanged.AddListener(OnBGMSliderChanged);
         }
+
         if (sfxSlider != null)
         {
             sfxSlider.minValue = 0f;
@@ -70,22 +77,61 @@ public class SettingsUI : MonoBehaviour
         {
             closeButton.onClick.AddListener(Close);
         }
+
+        // 게임 저장 버튼 — SaveSlotPanel 열기
+        if (saveGameButton != null)
+        {
+            saveGameButton.onClick.AddListener(OnSaveGameClicked);
+        }
+    }
+
+    // 게임 저장 버튼 클릭 — 저장 슬롯 패널 열기
+    private void OnSaveGameClicked()
+    {
+        // 마을에서만 저장 가능
+        if (GameManager.Instance != null && GameManager.Instance.IsInTown == false)
+        {
+            Debug.Log("[SettingsUI] 마을에서만 저장할 수 있습니다.");
+            return;
+        }
+
+        if (saveSlotPanel != null)
+        {
+            saveSlotPanel.Open();
+        }
+        else
+        {
+            Debug.LogWarning("[SettingsUI] SaveSlotPanel 이 연결되지 않음");
+        }
+    }
+
+    // 게임 저장 버튼 활성화 상태 갱신 (마을에서만 활성화)
+    private void UpdateSaveButtonState()
+    {
+        if (saveGameButton == null)
+        {
+            return;
+        }
+
+        bool isInTown = GameManager.Instance != null && GameManager.Instance.IsInTown;
+        saveGameButton.interactable = isInTown;
     }
 
     // 오디오 설정을 기본값(100%) 으로 초기화
     // 슬라이더 값을 바꾸면 onValueChanged 가 자동으로 호출돼서
     // AudioManager / AudioListener / 수치 텍스트가 같이 갱신됨
-    // 오디오 설정을 100% 로 초기화 (미리보기만)
     public void ResetAudio()
     {
         if (masterSlider != null)
         {
             masterSlider.value = 1f;
         }
+
         if (bgmSlider != null)
         {
             bgmSlider.value = 1f;
         }
+
         if (sfxSlider != null)
         {
             sfxSlider.value = 1f;
@@ -103,6 +149,7 @@ public class SettingsUI : MonoBehaviour
     public void TakeAudioSnapshot()
     {
         _snapMaster = AudioListener.volume;
+
         if (AudioManager.Instance != null)
         {
             _snapBGM = AudioManager.Instance.BGMVolume;
@@ -122,26 +169,29 @@ public class SettingsUI : MonoBehaviour
     // 되돌리기 — 확인 안 누르고 나갈 때, 찍어둔 사진으로 복원
     public void RestoreAudioSnapshot()
     {
-        Debug.Log("[ResetAudio] 초기화 버튼 눌림!");   // ← 임시 추가
+        Debug.Log("[ResetAudio] 초기화 버튼 눌림!");
 
         if (masterSlider != null)
         {
             masterSlider.value = 1f;
         }
+
         if (bgmSlider != null)
         {
             bgmSlider.value = 1f;
         }
+
         if (sfxSlider != null)
         {
             sfxSlider.value = 1f;
         }
     }
 
-    // 탭이 켜질 때마다 현재 볼륨으로 슬라이더 동기화
+    // 탭이 켜질 때마다 현재 볼륨으로 슬라이더 동기화 + 저장 버튼 상태 갱신
     private void OnEnable()
     {
         SyncSlidersToCurrentVolume();
+        UpdateSaveButtonState();
     }
 
     // 팝업 모드용 열기
@@ -151,8 +201,10 @@ public class SettingsUI : MonoBehaviour
         {
             panelRoot.SetActive(true);
         }
+
         isOpen = true;
         SyncSlidersToCurrentVolume();
+        UpdateSaveButtonState();
     }
 
     // 팝업 모드용 닫기
@@ -166,6 +218,7 @@ public class SettingsUI : MonoBehaviour
         {
             panelRoot.SetActive(false);
         }
+
         isOpen = false;
 
         if (AudioManager.Instance != null)
@@ -186,10 +239,12 @@ public class SettingsUI : MonoBehaviour
         {
             masterLabelText.text = masterLabel;
         }
+
         if (bgmLabelText != null)
         {
             bgmLabelText.text = bgmLabel;
         }
+
         if (sfxLabelText != null)
         {
             sfxLabelText.text = sfxLabel;
@@ -203,17 +258,20 @@ public class SettingsUI : MonoBehaviour
         {
             masterSlider.SetValueWithoutNotify(AudioListener.volume);
         }
+
         if (AudioManager.Instance != null)
         {
             if (bgmSlider != null)
             {
                 bgmSlider.SetValueWithoutNotify(AudioManager.Instance.BGMVolume);
             }
+
             if (sfxSlider != null)
             {
                 sfxSlider.SetValueWithoutNotify(AudioManager.Instance.SFXVolume);
             }
         }
+
         RefreshValueText();
     }
 
@@ -231,6 +289,7 @@ public class SettingsUI : MonoBehaviour
         {
             AudioManager.Instance.SetBGMVolume(value);
         }
+
         RefreshValueText();
     }
 
@@ -241,6 +300,7 @@ public class SettingsUI : MonoBehaviour
         {
             AudioManager.Instance.SetSFXVolume(value);
         }
+
         RefreshValueText();
     }
 
@@ -252,16 +312,17 @@ public class SettingsUI : MonoBehaviour
             int percent = Mathf.RoundToInt(masterSlider.value * 100f);
             masterValueText.text = percent.ToString() + "%";
         }
+
         if (bgmValueText != null && bgmSlider != null)
         {
             int percent = Mathf.RoundToInt(bgmSlider.value * 100f);
             bgmValueText.text = percent.ToString() + "%";
         }
+
         if (sfxValueText != null && sfxSlider != null)
         {
             int percent = Mathf.RoundToInt(sfxSlider.value * 100f);
             sfxValueText.text = percent.ToString() + "%";
         }
     }
-
 }
