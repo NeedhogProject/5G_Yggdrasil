@@ -15,16 +15,22 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    // ─────────────────────── 싱글턴 ───────────────────────
+    // 싱글턴
 
     public static GameManager Instance { get; private set; }
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }                                    
+    }
+
     private void OnEnable()
     {
         SceneManager.sceneLoaded += HandleSceneLoaded;
@@ -35,7 +41,7 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded -= HandleSceneLoaded;
     }
 
-    // ─────────────────────── 게임 상태 ───────────────────────
+    // 게임 상태
 
     public enum GameState
     {
@@ -52,18 +58,18 @@ public class GameManager : MonoBehaviour
     /// <summary>게임 상태 변경 이벤트 (UI 등에서 구독)</summary>
     public event System.Action<GameState> OnGameStateChanged;
 
-    // ─────────────────────── 씬 이름 ───────────────────────
+    // 씬 이름
 
     [Header("씬 이름 설정")]
-    [SerializeField] private string titleSceneName  = "Title";
-    [SerializeField] private string townSceneName   = "Town";
+    [SerializeField] private string titleSceneName = "Title";
+    [SerializeField] private string townSceneName = "Town";
     [SerializeField] private string floor1SceneName = "Floor_1";
     [SerializeField] private string floor2SceneName = "Floor_2";
     [SerializeField] private string floor3SceneName = "Floor_3";
     [SerializeField] private string floor4SceneName = "Floor_4_Boss";
     [SerializeField] private string endingSceneName = "Ending";
 
-    // ─────────────────────── 런타임 상태 ───────────────────────
+    // 런타임 상태
 
     /// <summary>현재 층 (0=마을, 1~4=던전)</summary>
     public int CurrentFloor { get; private set; } = 0;
@@ -80,7 +86,7 @@ public class GameManager : MonoBehaviour
     /// <summary>일시정지 이전 상태 (Resume 시 복귀용)</summary>
     private GameState _stateBeforePause;
 
-    // ─────────────────────── 게임 시작 흐름 ───────────────────────
+    // 게임 시작 흐름
 
     /// <summary>새 게임 여부 — StartingEquipment 가 참조</summary>
     public bool IsNewGame { get; private set; }
@@ -95,13 +101,15 @@ public class GameManager : MonoBehaviour
     public void StartNewGame(int slotIndex)
     {
         _townEntry = TownEntry.NewGame;
-        IsNewGame   = true;
+        IsNewGame = true;
         CurrentSlot = slotIndex;
         CurrentFloor = 0;
 
         // 해당 슬롯에 기존 세이브가 있으면 삭제
         if (SaveSystem.Instance != null && SaveSystem.Instance.HasSave(slotIndex))
+        {
             SaveSystem.Instance.DeleteSave(slotIndex);
+        }
 
         LoadScene(townSceneName, GameState.Town);
     }
@@ -114,11 +122,11 @@ public class GameManager : MonoBehaviour
     {
         if (SaveSystem.Instance == null || SaveSystem.Instance.HasSave(slotIndex) == false)
         {
-            Debug.LogWarning($"[GameManager] 슬롯 {slotIndex} 에 세이브 없음");
+            Debug.LogWarning("[GameManager] 슬롯 " + slotIndex + " 에 세이브 없음");
             return;
         }
 
-        IsNewGame   = false;
+        IsNewGame = false;
         CurrentSlot = slotIndex;
 
         // 저장된 층 정보 읽기
@@ -126,15 +134,28 @@ public class GameManager : MonoBehaviour
         int savedFloor = meta != null ? meta.currentFloor : 0;
         CurrentFloor = savedFloor;
 
-        string sceneName = savedFloor switch
+        string sceneName;
+
+        if (savedFloor == 1)
         {
-            0 => townSceneName,
-            1 => floor1SceneName,
-            2 => floor2SceneName,
-            3 => floor3SceneName,
-            4 => floor4SceneName,
-            _ => townSceneName
-        };
+            sceneName = floor1SceneName;
+        }
+        else if (savedFloor == 2)
+        {
+            sceneName = floor2SceneName;
+        }
+        else if (savedFloor == 3)
+        {
+            sceneName = floor3SceneName;
+        }
+        else if (savedFloor == 4)
+        {
+            sceneName = floor4SceneName;
+        }
+        else
+        {
+            sceneName = townSceneName;
+        }
 
         // 씬 로드 완료 후 데이터 복원하도록 예약
         _pendingLoadSlot = slotIndex;
@@ -160,10 +181,14 @@ public class GameManager : MonoBehaviour
     private System.Collections.IEnumerator LoadDataNextFrame(int slotIndex)
     {
         yield return null;
-        SaveSystem.Instance?.Load(slotIndex);
+
+        if (SaveSystem.Instance != null)
+        {
+            SaveSystem.Instance.Load(slotIndex);
+        }
     }
 
-    /// <summary>현재 슬롯에 수동 저장 (집/특정 NPC 에서 호출)</summary>
+    /// <summary>현재 슬롯에 수동 저장 (PauseMenu 에서 호출)</summary>
     public void SaveCurrentGame()
     {
         if (CurrentSlot < 0)
@@ -171,7 +196,11 @@ public class GameManager : MonoBehaviour
             Debug.LogWarning("[GameManager] 저장할 슬롯이 지정되지 않음");
             return;
         }
-        SaveSystem.Instance?.Save(CurrentSlot);
+
+        if (SaveSystem.Instance != null)
+        {
+            SaveSystem.Instance.Save(CurrentSlot);
+        }
     }
 
     /// <summary>타이틀 → 마을 (새 게임 시작, 기본 슬롯 0) — 하위호환</summary>
@@ -191,27 +220,56 @@ public class GameManager : MonoBehaviour
     public void GoToNextFloor()
     {
         CurrentFloor++;
-        string sceneName = CurrentFloor switch
+
+        string sceneName;
+
+        if (CurrentFloor == 1)
         {
-            1 => floor1SceneName,
-            2 => floor2SceneName,
-            3 => floor3SceneName,
-            4 => floor4SceneName,
-            _ => townSceneName
-        };
+            sceneName = floor1SceneName;
+        }
+        else if (CurrentFloor == 2)
+        {
+            sceneName = floor2SceneName;
+        }
+        else if (CurrentFloor == 3)
+        {
+            sceneName = floor3SceneName;
+        }
+        else if (CurrentFloor == 4)
+        {
+            sceneName = floor4SceneName;
+        }
+        else
+        {
+            sceneName = townSceneName;
+        }
+
         LoadScene(sceneName, GameState.Dungeon);
     }
 
-    /// <summary>
-    /// 씬 이름으로 현재 층 동기화 — YggdrasilPortal 에서 호출
-    /// </summary>
+    /// <summary>씬 이름으로 현재 층 동기화 — YggdrasilPortal 에서 호출</summary>
     public void SyncFloor(string sceneName)
     {
-        if      (sceneName == floor1SceneName) CurrentFloor = 1;
-        else if (sceneName == floor2SceneName) CurrentFloor = 2;
-        else if (sceneName == floor3SceneName) CurrentFloor = 3;
-        else if (sceneName == floor4SceneName) CurrentFloor = 4;
-        else                                   CurrentFloor = 0;
+        if (sceneName == floor1SceneName)
+        {
+            CurrentFloor = 1;
+        }
+        else if (sceneName == floor2SceneName)
+        {
+            CurrentFloor = 2;
+        }
+        else if (sceneName == floor3SceneName)
+        {
+            CurrentFloor = 3;
+        }
+        else if (sceneName == floor4SceneName)
+        {
+            CurrentFloor = 4;
+        }
+        else
+        {
+            CurrentFloor = 0;
+        }
     }
 
     /// <summary>층 번호로 동기화 — YggdrasilPortal int 호출 호환용</summary>
@@ -224,15 +282,34 @@ public class GameManager : MonoBehaviour
     public void GoToFloor(int floor)
     {
         CurrentFloor = Mathf.Clamp(floor, 0, 4);
-        string sceneName = CurrentFloor switch
+
+        string sceneName;
+
+        if (CurrentFloor == 0)
         {
-            0 => townSceneName,
-            1 => floor1SceneName,
-            2 => floor2SceneName,
-            3 => floor3SceneName,
-            4 => floor4SceneName,
-            _ => townSceneName
-        };
+            sceneName = townSceneName;
+        }
+        else if (CurrentFloor == 1)
+        {
+            sceneName = floor1SceneName;
+        }
+        else if (CurrentFloor == 2)
+        {
+            sceneName = floor2SceneName;
+        }
+        else if (CurrentFloor == 3)
+        {
+            sceneName = floor3SceneName;
+        }
+        else if (CurrentFloor == 4)
+        {
+            sceneName = floor4SceneName;
+        }
+        else
+        {
+            sceneName = townSceneName;
+        }
+
         LoadScene(sceneName, CurrentFloor == 0 ? GameState.Town : GameState.Dungeon);
 
         if (CurrentFloor == 0)
@@ -248,7 +325,7 @@ public class GameManager : MonoBehaviour
         LoadScene(townSceneName, GameState.Town);
     }
 
-    // 씬 로드 완료 시 마을이면 스폰 위치 조정
+    // 씬 로드 완료 시 마을이면 스폰 위치 조정 + 자동 저장
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != townSceneName)
@@ -256,19 +333,36 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // 새 게임은 씬 기본 위치, 던전 복귀만 마을 중앙으로
-        if (_townEntry == TownEntry.NewGame)
+        // 던전 복귀 시 마을 중앙으로 이동
+        if (_townEntry == TownEntry.DungeonReturn)
         {
-            return;
+            MovePlayerToTownCenter();
         }
 
-        MovePlayerToTownCenter();
+        // 마을 도착 시 자동 저장 (던전 복귀 + 슬롯 지정된 경우)
+        if (_townEntry == TownEntry.DungeonReturn && CurrentSlot >= 0)
+        {
+            StartCoroutine(AutoSaveNextFrame());
+        }
+    }
+
+    // 한 프레임 뒤 저장 (씬 완전히 로드된 후)
+    private System.Collections.IEnumerator AutoSaveNextFrame()
+    {
+        yield return null;
+
+        if (SaveSystem.Instance != null)
+        {
+            SaveSystem.Instance.Save(CurrentSlot);
+            Debug.Log("[GameManager] 마을 도착 자동 저장 완료");
+        }
     }
 
     // 플레이어를 마을 중앙 스폰 지점으로 이동 (Rigidbody 기반)
     private void MovePlayerToTownCenter()
     {
         GameObject spawn = GameObject.Find("Spawn_TownCenter");
+
         if (spawn == null)
         {
             Debug.LogWarning("[GameManager] Spawn_TownCenter 를 찾을 수 없습니다.");
@@ -282,6 +376,7 @@ public class GameManager : MonoBehaviour
 
         // 위치 직접 설정 후 속도 0 으로 (옮긴 뒤 미끄러짐 방지)
         Rigidbody body = PlayerController.Instance.GetComponent<Rigidbody>();
+
         if (body != null)
         {
             body.position = spawn.transform.position;
@@ -300,31 +395,45 @@ public class GameManager : MonoBehaviour
         LoadScene(titleSceneName, GameState.Title);
     }
 
-    // ─────────────────────── 일시정지 ───────────────────────
+    // 일시정지
 
     /// <summary>일시정지 토글</summary>
     public void TogglePause()
     {
-        if (CurrentState == GameState.Paused) Resume();
-        else Pause();
+        if (CurrentState == GameState.Paused)
+        {
+            Resume();
+        }
+        else
+        {
+            Pause();
+        }
     }
 
     public void Pause()
     {
-        if (CurrentState == GameState.Paused) return;
+        if (CurrentState == GameState.Paused)
+        {
+            return;
+        }
+
         _stateBeforePause = CurrentState;
-        Time.timeScale    = 0f;
+        Time.timeScale = 0f;
         ChangeState(GameState.Paused);
     }
 
     public void Resume()
     {
-        if (CurrentState != GameState.Paused) return;
+        if (CurrentState != GameState.Paused)
+        {
+            return;
+        }
+
         Time.timeScale = 1f;
         ChangeState(_stateBeforePause);
     }
 
-    // ─────────────────────── 플레이어 사망 ───────────────────────
+    // 플레이어 사망
 
     /// <summary>
     /// 플레이어 사망 처리 — PlayerDeath 에서 호출
@@ -332,14 +441,16 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void OnPlayerDeath()
     {
-        if (CurrentState == GameState.GameOver) return;
+        if (CurrentState == GameState.GameOver)
+        {
+            return;
+        }
 
         ChangeState(GameState.GameOver);
         Time.timeScale = 0f;
 
         Debug.Log("[GameManager] 플레이어 사망 → GameOver");
 
-        // TODO: GameOver UI 표시 후 플레이어 입력으로 마을 복귀
         // 임시: 3초 후 자동 복귀
         Invoke(nameof(GameOverToTown), 3f);
     }
@@ -350,34 +461,35 @@ public class GameManager : MonoBehaviour
         ReturnToTown();
     }
 
-    // ─────────────────────── 엔딩 ───────────────────────
+    // 엔딩
 
-    /// <summary>
-    /// 니드호그 처치 → 엔딩
-    /// BossNidhogg 에서 호출
-    /// </summary>
+    /// <summary>니드호그 처치 → 엔딩. BossNidhogg 에서 호출</summary>
     public void TriggerEnding()
     {
         ChangeState(GameState.Ending);
         LoadScene(endingSceneName, GameState.Ending);
     }
 
-    // ─────────────────────── 씬 전환 ───────────────────────
+    // 씬 전환
 
     private void LoadScene(string sceneName, GameState nextState)
     {
         ChangeState(nextState);
         SceneManager.LoadScene(sceneName);
-        Debug.Log($"[GameManager] 씬 전환 → {sceneName} ({nextState})");
+        Debug.Log("[GameManager] 씬 전환 → " + sceneName + " (" + nextState + ")");
     }
 
     private void ChangeState(GameState newState)
     {
         CurrentState = newState;
-        OnGameStateChanged?.Invoke(newState);
+
+        if (OnGameStateChanged != null)
+        {
+            OnGameStateChanged.Invoke(newState);
+        }
     }
 
-    // ─────────────────────── 유틸 ───────────────────────
+    // 유틸
 
     /// <summary>현재 던전 안인지</summary>
     public bool IsInDungeon => CurrentState == GameState.Dungeon;
@@ -395,8 +507,8 @@ public class GameManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [ContextMenu("테스트: 마을로")] private void TestTown()   => ReturnToTown();
-    [ContextMenu("테스트: 던전으로")] private void TestDungeon() => EnterDungeon();
-    [ContextMenu("테스트: 사망")] private void TestDeath()  => OnPlayerDeath();
+    [ContextMenu("테스트: 마을로")]   private void TestTown()    { ReturnToTown(); }
+    [ContextMenu("테스트: 던전으로")] private void TestDungeon() { EnterDungeon(); }
+    [ContextMenu("테스트: 사망")]     private void TestDeath()   { OnPlayerDeath(); }
 #endif
 }

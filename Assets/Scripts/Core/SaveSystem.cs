@@ -28,7 +28,7 @@ public class SavedItemInstance
     public int enhancementLevel;
 
     // 방어구 전용
-    public int runeSlot1;       // RuneElement 정수값
+    public int runeSlot1;          // RuneElement 정수값
     public int runeSlot2;
 }
 
@@ -38,6 +38,7 @@ public class SaveData
 {
     [Header("메타 정보")]
     public int slotIndex;
+    public string saveName;        // 플레이어가 직접 지은 저장 파일 이름
     public string saveDateTime;    // 저장 일시 (표시용)
     public float playTime;        // 총 플레이 시간 (초)
 
@@ -72,10 +73,13 @@ public class SaveData
 /// [기획 반영]
 /// - 슬롯 3개 (slot_0.json ~ slot_2.json)
 /// - 저장 항목: 플레이어 스탯, 인벤토리, 장착 장비, 창고, 층/위치, 강화/각인 상태
+/// - 슬롯마다 플레이어가 직접 이름 지정 가능 (saveName)
 /// - Application.persistentDataPath 에 저장 (플랫폼별 자동 경로)
 ///
 /// [사용법]
 /// SaveSystem.Instance.Save(slotIndex)
+/// SaveSystem.Instance.Save(slotIndex, saveName)
+/// SaveSystem.Instance.RenameSave(slotIndex, newName)
 /// SaveSystem.Instance.Load(slotIndex)
 /// SaveSystem.Instance.DeleteSave(slotIndex)
 /// SaveSystem.Instance.HasSave(slotIndex)
@@ -128,8 +132,61 @@ public class SaveSystem : MonoBehaviour
 
     // 저장
 
-    /// <summary>현재 게임 상태를 슬롯에 저장</summary>
+    /// <summary>현재 게임 상태를 슬롯에 저장 (이름 없이)</summary>
     public bool Save(int slotIndex)
+    {
+        // 기존 이름 유지 (있으면), 없으면 기본 이름
+        string existingName = "";
+
+        if (HasSave(slotIndex) == true)
+        {
+            SaveData existing = GetSaveMeta(slotIndex);
+
+            if (existing != null && string.IsNullOrEmpty(existing.saveName) == false)
+            {
+                existingName = existing.saveName;
+            }
+        }
+
+        return SaveInternal(slotIndex, existingName);
+    }
+
+    /// <summary>현재 게임 상태를 슬롯에 저장 (이름 지정)</summary>
+    public bool Save(int slotIndex, string saveName)
+    {
+        return SaveInternal(slotIndex, saveName);
+    }
+
+    /// <summary>저장 파일 이름만 변경 (게임 데이터는 유지)</summary>
+    public bool RenameSave(int slotIndex, string newName)
+    {
+        if (HasSave(slotIndex) == false)
+        {
+            Debug.LogWarning("[SaveSystem] 이름 변경 실패 - 슬롯 " + slotIndex + " 에 저장 데이터 없음");
+            return false;
+        }
+
+        try
+        {
+            string json = File.ReadAllText(GetSavePath(slotIndex));
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            data.saveName = newName;
+
+            string newJson = JsonUtility.ToJson(data, true);
+            File.WriteAllText(GetSavePath(slotIndex), newJson);
+
+            Debug.Log("[SaveSystem] 슬롯 " + slotIndex + " 이름 변경: " + newName);
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[SaveSystem] 이름 변경 실패: " + e.Message);
+            return false;
+        }
+    }
+
+    /// <summary>실제 저장 처리 내부 메서드</summary>
+    private bool SaveInternal(int slotIndex, string saveName)
     {
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT)
         {
@@ -141,7 +198,8 @@ public class SaveSystem : MonoBehaviour
 
         SaveData data = new SaveData();
         data.slotIndex = slotIndex;
-        data.saveDateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+        data.saveName = saveName;
+        data.saveDateTime = System.DateTime.Now.ToString("yyyy.MM.dd  HH:mm");
         data.playTime = _playTime;
 
         if (GameManager.Instance != null)
@@ -151,6 +209,7 @@ public class SaveSystem : MonoBehaviour
 
         // 플레이어 위치
         GameObject player = GameObject.FindWithTag("Player");
+
         if (player != null)
         {
             data.playerX = player.transform.position.x;
@@ -196,6 +255,7 @@ public class SaveSystem : MonoBehaviour
         if (inventorySystem != null)
         {
             List<ItemInstance> allInstances = inventorySystem.GetAllInstances();
+
             for (int i = 0; i < allInstances.Count; i++)
             {
                 data.inventoryItems.Add(SerializeItem(allInstances[i]));
@@ -207,7 +267,7 @@ public class SaveSystem : MonoBehaviour
         {
             string json = JsonUtility.ToJson(data, true);
             File.WriteAllText(GetSavePath(slotIndex), json);
-            Debug.Log("[SaveSystem] 슬롯 " + slotIndex + " 저장 완료");
+            Debug.Log("[SaveSystem] 슬롯 " + slotIndex + " 저장 완료 (" + saveName + ")");
             return true;
         }
         catch (System.Exception e)
@@ -257,25 +317,13 @@ public class SaveSystem : MonoBehaviour
             float mentalDiff = data.playerStats.mental - playerStats.Mental;
             float defenseDiff = data.playerStats.baseDefense - playerStats.BaseDefense;
 
-            if (healthDiff != 0f)
-            {
-                playerStats.ModifyHealth(healthDiff);
-            }
-
-            if (mentalDiff != 0f)
-            {
-                playerStats.ModifyMental(mentalDiff);
-            }
-
-            if (defenseDiff != 0f)
-            {
-                playerStats.ModifyBaseDefense(defenseDiff);
-            }
+            if (healthDiff != 0f) { playerStats.ModifyHealth(healthDiff); }
+            if (mentalDiff != 0f) { playerStats.ModifyMental(mentalDiff); }
+            if (defenseDiff != 0f) { playerStats.ModifyBaseDefense(defenseDiff); }
 
             playerStats.SetEquipmentDefense(data.playerStats.equipmentDefense);
         }
 
-        // 층 복원 로그 (실제 씬 전환은 GameManager 담당)
         Debug.Log("[SaveSystem] 복원 층: " + data.currentFloor);
 
         // 인벤토리 복원
@@ -304,17 +352,22 @@ public class SaveSystem : MonoBehaviour
             return;
         }
 
+        // 기존 인벤토리 비우기 (이어하기 시 중복 방지)
+        List<ItemInstance> existing = inventorySystem.GetAllInstances();
+        List<ItemInstance> toRemove = new List<ItemInstance>(existing);
+
+        for (int i = 0; i < toRemove.Count; i++)
+        {
+            inventorySystem.RemoveItem(toRemove[i]);
+        }
+
         for (int i = 0; i < savedList.Count; i++)
         {
             SavedItemInstance saved = savedList[i];
             ItemInstance instance = DeserializeItem(saved);
 
-            if (instance == null)
-            {
-                continue;
-            }
+            if (instance == null) { continue; }
 
-            // AddItem 으로 빈 자리에 자동 배치
             bool placed = inventorySystem.AddItem(instance);
 
             if (placed == false)
@@ -347,24 +400,12 @@ public class SaveSystem : MonoBehaviour
     /// <summary>무기 복원 후 장착</summary>
     private void RestoreWeapon(SavedItemInstance saved)
     {
-        if (saved == null || string.IsNullOrEmpty(saved.itemDataName) == true)
-        {
-            return;
-        }
+        if (saved == null || string.IsNullOrEmpty(saved.itemDataName) == true) { return; }
 
         ItemInstance instance = DeserializeItem(saved);
-
-        if (instance == null)
-        {
-            return;
-        }
-
         WeaponInstance weapon = instance as WeaponInstance;
 
-        if (weapon == null)
-        {
-            return;
-        }
+        if (weapon == null) { return; }
 
         playerEquipment.EquipItem(weapon);
         Debug.Log("[SaveSystem] 무기 복원: " + saved.itemDataName + " +" + saved.enhancementLevel);
@@ -373,24 +414,12 @@ public class SaveSystem : MonoBehaviour
     /// <summary>방어구 복원 후 장착</summary>
     private void RestoreArmor(SavedItemInstance saved)
     {
-        if (saved == null || string.IsNullOrEmpty(saved.itemDataName) == true)
-        {
-            return;
-        }
+        if (saved == null || string.IsNullOrEmpty(saved.itemDataName) == true) { return; }
 
         ItemInstance instance = DeserializeItem(saved);
-
-        if (instance == null)
-        {
-            return;
-        }
-
         ArmorInstance armor = instance as ArmorInstance;
 
-        if (armor == null)
-        {
-            return;
-        }
+        if (armor == null) { return; }
 
         playerEquipment.EquipItem(armor);
         Debug.Log("[SaveSystem] 방어구 복원: " + saved.itemDataName);
@@ -407,21 +436,14 @@ public class SaveSystem : MonoBehaviour
             return;
         }
 
-        if (savedList == null || savedList.Count == 0)
-        {
-            return;
-        }
+        if (savedList == null || savedList.Count == 0) { return; }
 
         List<ItemInstance> restoredItems = new List<ItemInstance>();
 
         for (int i = 0; i < savedList.Count; i++)
         {
             ItemInstance instance = DeserializeItem(savedList[i]);
-
-            if (instance != null)
-            {
-                restoredItems.Add(instance);
-            }
+            if (instance != null) { restoredItems.Add(instance); }
         }
 
         houseSystem.LoadStorage(restoredItems);
@@ -436,17 +458,9 @@ public class SaveSystem : MonoBehaviour
     /// </summary>
     private ItemInstance DeserializeItem(SavedItemInstance saved)
     {
-        if (saved == null)
-        {
-            return null;
-        }
+        if (saved == null) { return null; }
+        if (string.IsNullOrEmpty(saved.itemDataName) == true) { return null; }
 
-        if (string.IsNullOrEmpty(saved.itemDataName) == true)
-        {
-            return null;
-        }
-
-        // ItemDataRegistry 에서 에셋 이름으로 찾기
         if (ItemDataRegistry.Instance == null)
         {
             Debug.LogError("[SaveSystem] ItemDataRegistry 없음 - 씬에 배치됐는지 확인");
@@ -454,21 +468,14 @@ public class SaveSystem : MonoBehaviour
         }
 
         ItemData itemData = ItemDataRegistry.Instance.Find(saved.itemDataName);
-
-        if (itemData == null)
-        {
-            // 경고는 ItemDataRegistry.Find 안에서 출력됨
-            return null;
-        }
+        if (itemData == null) { return null; }
 
         ItemInstance instance = null;
 
-        // 타입에 맞게 Instance 생성
         if (itemData is WeaponData weaponData)
         {
             WeaponInstance weapon = new WeaponInstance(weaponData);
 
-            // 강화 단계 복원 (저장된 횟수만큼 직접 적용)
             for (int i = 0; i < saved.enhancementLevel; i++)
             {
                 weapon.TryEnhance(true);
@@ -479,26 +486,16 @@ public class SaveSystem : MonoBehaviour
         else if (itemData is ArmorData armorData)
         {
             ArmorInstance armor = new ArmorInstance(armorData);
-
-            // 각인 복원
             RuneElement rune1 = (RuneElement)saved.runeSlot1;
             RuneElement rune2 = (RuneElement)saved.runeSlot2;
 
-            if (rune1 != RuneElement.None)
-            {
-                armor.SetRune(1, rune1);
-            }
-
-            if (rune2 != RuneElement.None)
-            {
-                armor.SetRune(2, rune2);
-            }
+            if (rune1 != RuneElement.None) { armor.SetRune(1, rune1); }
+            if (rune2 != RuneElement.None) { armor.SetRune(2, rune2); }
 
             instance = armor;
         }
         else
         {
-            // 소모품/자원 등 기본 ItemInstance
             instance = new ItemInstance(itemData);
 
             if (instance != null)
@@ -515,10 +512,7 @@ public class SaveSystem : MonoBehaviour
     /// <summary>ItemInstance 를 SavedItemInstance 로 변환</summary>
     private SavedItemInstance SerializeItem(ItemInstance item)
     {
-        if (item == null)
-        {
-            return null;
-        }
+        if (item == null) { return null; }
 
         SavedItemInstance saved = new SavedItemInstance();
         saved.instanceId = item.InstanceId;
@@ -548,13 +542,10 @@ public class SaveSystem : MonoBehaviour
         return File.Exists(GetSavePath(slotIndex));
     }
 
-    /// <summary>슬롯 메타 정보 반환 (타이틀 UI 표시용)</summary>
+    /// <summary>슬롯 메타 정보 반환 (UI 표시용)</summary>
     public SaveData GetSaveMeta(int slotIndex)
     {
-        if (HasSave(slotIndex) == false)
-        {
-            return null;
-        }
+        if (HasSave(slotIndex) == false) { return null; }
 
         try
         {
@@ -572,10 +563,7 @@ public class SaveSystem : MonoBehaviour
     {
         string path = GetSavePath(slotIndex);
 
-        if (File.Exists(path) == false)
-        {
-            return false;
-        }
+        if (File.Exists(path) == false) { return false; }
 
         File.Delete(path);
         Debug.Log("[SaveSystem] 슬롯 " + slotIndex + " 삭제");
@@ -583,9 +571,9 @@ public class SaveSystem : MonoBehaviour
     }
 
     /// <summary>전체 슬롯 상태 반환 (타이틀 UI 용)</summary>
-    public (bool exists, string dateTime, int floor)[] GetAllSlotInfo()
+    public (bool exists, string saveName, string dateTime, int floor)[] GetAllSlotInfo()
     {
-        (bool, string, int)[] result = new (bool, string, int)[SLOT_COUNT];
+        (bool, string, string, int)[] result = new (bool, string, string, int)[SLOT_COUNT];
 
         for (int i = 0; i < SLOT_COUNT; i++)
         {
@@ -593,11 +581,11 @@ public class SaveSystem : MonoBehaviour
 
             if (meta != null)
             {
-                result[i] = (true, meta.saveDateTime, meta.currentFloor);
+                result[i] = (true, meta.saveName, meta.saveDateTime, meta.currentFloor);
             }
             else
             {
-                result[i] = (false, "", 0);
+                result[i] = (false, "", "", 0);
             }
         }
 
