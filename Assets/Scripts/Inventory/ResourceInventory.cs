@@ -26,6 +26,8 @@ public class ResourceInventory : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        // 모든 씬에서 자원 데이터를 유지
+        DontDestroyOnLoad(gameObject);
     }
 
     /// <summary>특정 원소 자원 보유 수 반환</summary>

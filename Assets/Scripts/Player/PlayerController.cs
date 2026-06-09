@@ -83,6 +83,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
         Instance = this;
+        // 모든 씬에서 플레이어(인벤토리/장비/스탯 단위)를 유지
+        DontDestroyOnLoad(gameObject);
 
         _rb         = GetComponent<Rigidbody>();
         _stats      = GetComponent<PlayerStats>();

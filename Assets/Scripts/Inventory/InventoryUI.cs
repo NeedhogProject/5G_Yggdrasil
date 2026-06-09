@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
-using TMPro;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -19,10 +18,6 @@ public class InventoryUI : MonoBehaviour
     [Header("바깥 클릭 닫기")]
     [Tooltip("InventoryPanel 뒤에 배치할 전체화면 투명 버튼")]
     public Button outsideCloseButton;
-
-    [Header("Info Display")]
-    public TMP_Text inventoryInfoText;
-    public TMP_Text weightText;
 
     [Header("창고와 같이 열릴 때 인벤토리 위치")]
     [SerializeField] private Vector2 storageModePosition = new Vector2(-370f, 0f);
@@ -161,7 +156,6 @@ public class InventoryUI : MonoBehaviour
         }
 
         SwitchTab(InventoryTab.Item);
-        UpdateInventoryInfo();
 
         Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
@@ -204,28 +198,14 @@ public class InventoryUI : MonoBehaviour
         {
             itemInventoryPanel.SetActive(true);
             resourceInventoryPanel.SetActive(false);
+
+            // 그리드가 보이게 된 시점에 오버레이 아이콘 위치를 다시 잡음
+            InventorySystem.Instance?.RefreshIconPositions();
         }
         else
         {
             itemInventoryPanel.SetActive(false);
             resourceInventoryPanel.SetActive(true);
         }
-
-        UpdateInventoryInfo();
-    }
-
-    private void UpdateInventoryInfo()
-    {
-        InventorySystem inventory = InventorySystem.Instance;
-
-        if (inventory == null)
-        {
-            return;
-        }
-
-        int usedSlots = inventory.items.Count;
-        int maxSlots = inventory.maxSlots;
-
-        inventoryInfoText.text = "아이템: " + usedSlots + "/" + maxSlots;
     }
 }

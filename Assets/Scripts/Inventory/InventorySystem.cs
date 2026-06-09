@@ -19,6 +19,10 @@ public class InventorySystem : MonoBehaviour
     public GameObject slotPrefab;
     public InventoryUI inventoryUI;
 
+    [Header("멀티셀 아이콘 오버레이")]
+    [Tooltip("그리드 위에 겹쳐 둔 빈 RectTransform (그리드 다음 형제, GridLayoutGroup 없음). 지정 시 아이템 아이콘을 이 위에 그려 격자선 위로 깨끗하게 표시. 비우면 기존 칸 자식 방식")]
+    [SerializeField] private RectTransform iconOverlay;
+
     [Header("참조")]
     [SerializeField] private PlayerEquipment playerEquipment;
 
@@ -43,6 +47,8 @@ public class InventorySystem : MonoBehaviour
             return;
         }
         Instance = this;
+        // 모든 씬에서 인벤토리(데이터 + UI)를 유지
+        DontDestroyOnLoad(gameObject);
 
         if (playerEquipment == null)
         {
@@ -206,12 +212,68 @@ public class InventorySystem : MonoBehaviour
         float height = cellH * size.y + spaceY * (size.y - 1);
 
         RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
-        // 좌상단 고정으로 우하단으로 확장
+
+        if (iconOverlay != null)
+        {
+            // 방식 A: 아이콘을 오버레이 레이어로 옮겨 모든 칸 위에 렌더 (격자선이 아이콘 위로 비치는 문제 해결)
+            iconRect.SetParent(iconOverlay, false);
+            iconRect.SetAsLastSibling();
+
+            // 아이콘이 슬롯의 호버/클릭/드래그를 가리지 않도록 레이캐스트 차단 (슬롯 배경이 입력을 받음)
+            ownerSlot.itemIcon.raycastTarget = false;
+
+            iconRect.anchorMin = new Vector2(0f, 1f);
+            iconRect.anchorMax = new Vector2(0f, 1f);
+            iconRect.pivot     = new Vector2(0f, 1f);
+            iconRect.sizeDelta = new Vector2(width, height);
+
+            // 주인 칸의 월드 좌상단 모서리에 아이콘 좌상단을 맞춤 (레이아웃 패딩/정렬과 무관하게 정확)
+            Vector3[] corners = new Vector3[4];
+            ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
+            iconRect.position = corners[1]; // 1 = 좌상단(TL)
+            return;
+        }
+
+        // 오버레이 미지정 시: 기존 방식 (주인 칸 자식으로 확장 — 멀티셀은 격자선 비칠 수 있음)
         iconRect.anchorMin = new Vector2(0f, 1f);
         iconRect.anchorMax = new Vector2(0f, 1f);
         iconRect.pivot     = new Vector2(0f, 1f);
         iconRect.anchoredPosition = Vector2.zero;
         iconRect.sizeDelta = new Vector2(width, height);
+    }
+
+    // 오버레이 아이콘 위치 재계산 (인벤토리 열기/탭 전환 등 그리드가 보이는 시점에 호출)
+    // 패널이 비활성이거나 위치가 바뀐 상태에서 배치된 아이콘을 올바른 칸으로 다시 맞춤
+    public void RefreshIconPositions()
+    {
+        if (iconOverlay == null)
+        {
+            return;
+        }
+
+        // 칸의 월드 좌표가 확정되도록 그리드 레이아웃을 즉시 갱신
+        RectTransform gridRect = slotContainer as RectTransform;
+        if (gridRect != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(gridRect);
+        }
+
+        foreach (InventorySlot slot in slots)
+        {
+            if (slot == null)
+            {
+                continue;
+            }
+            if (slot.IsOwner == false)
+            {
+                continue;
+            }
+            if (slot.currentItem == null)
+            {
+                continue;
+            }
+            ResizeItemIcon(slot, slot.currentItem.itemSize);
+        }
     }
 
     // 슬롯 인덱스로 슬롯 가져오기
@@ -459,6 +521,12 @@ public class InventorySystem : MonoBehaviour
         if (ownerSlot.itemIcon == null)
         {
             return;
+        }
+
+        // 오버레이에 올려둔 아이콘이면 원래 슬롯의 자식으로 되돌림
+        if (iconOverlay != null && ownerSlot.itemIcon.transform.parent == iconOverlay)
+        {
+            ownerSlot.itemIcon.rectTransform.SetParent(ownerSlot.transform, false);
         }
 
         GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
