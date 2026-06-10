@@ -70,7 +70,16 @@ public class PlayerController : MonoBehaviour
     public bool IsSprinting => _isSprinting && _moveInput.sqrMagnitude > 0.01f;
 
     /// <summary>현재 이동 속도</summary>
-    public float CurrentSpeed => IsSprinting ? sprintSpeed : walkSpeed;
+    public float CurrentSpeed => (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus);
+
+    // 세트 효과 이동속도 보너스 (비율. 0.05 = 5% 증가)
+    private float _moveSpeedBonus = 0f;
+
+    /// <summary>이동속도 보너스 설정 (ArmorSetManager 에서 호출)</summary>
+    public void SetMoveSpeedBonus(float bonus)
+    {
+        _moveSpeedBonus = bonus;
+    }
 
     // ─────────────────────── 초기화 ───────────────────────
 
@@ -157,7 +166,7 @@ public class PlayerController : MonoBehaviour
         }
 
         Vector3 moveDir = (camForward * _moveInput.y + camRight * _moveInput.x).normalized;
-        float   speed   = IsSprinting ? sprintSpeed : walkSpeed;
+        float   speed   = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus);
 
         _rb.linearVelocity = new Vector3(
             moveDir.x * speed,
