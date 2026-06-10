@@ -8541,8 +8541,6 @@ MonoBehaviour:
   closeButton: {fileID: 1515515835}
   dropButton: {fileID: 0}
   outsideCloseButton: {fileID: 0}
-  inventoryInfoText: {fileID: 0}
-  weightText: {fileID: 0}
   storageModePosition: {x: -370, y: 0}
   shopModePosition: {x: 370, y: 0}
 --- !u!1 &595686652 stripped
@@ -18093,6 +18091,7 @@ MonoBehaviour:
   slotContainer: {fileID: 1042320121}
   slotPrefab: {fileID: 7130759374801163818, guid: ea44927e1feed4647807b0550a76dd13, type: 3}
   inventoryUI: {fileID: 1694188611}
+  iconOverlay: {fileID: 0}
   playerEquipment: {fileID: 0}
   slots: []
   items: []
@@ -18116,8 +18115,6 @@ MonoBehaviour:
   closeButton: {fileID: 1455697945}
   dropButton: {fileID: 0}
   outsideCloseButton: {fileID: 1226002852}
-  inventoryInfoText: {fileID: 1213442019}
-  weightText: {fileID: 0}
   storageModePosition: {x: -370, y: 0}
   shopModePosition: {x: 370, y: 0}
 --- !u!114 &1694188612
@@ -21709,6 +21706,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2043389776}
   m_CullTransparentMesh: 1
+--- !u!1 &2053735457
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2053735458}
+  m_Layer: 0
+  m_Name: Spawn_DungeonStart
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2053735458
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2053735457}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2064327905
 GameObject:
   m_ObjectHideFlags: 0
@@ -22815,3 +22843,4 @@ SceneRoots:
   - {fileID: 854114347}
   - {fileID: 60224910}
   - {fileID: 1881698210}
+  - {fileID: 2053735458}

@@ -43,16 +43,38 @@ public class InventorySystem : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+            // 진단: 어떤 인스턴스 때문에 자기 파괴되는지 기록
+            Debug.LogWarning("[InventorySystem] 중복 감지 - 새 인스턴스 자기 파괴 (씬: " + gameObject.scene.name
+                + ", 기존: " + Instance.gameObject.name + ")");
             Destroy(gameObject);
             return;
         }
         Instance = this;
+        Debug.Log("[InventorySystem] 싱글턴 등록 (씬: " + gameObject.scene.name + ")");
+
+        // DontDestroyOnLoad 는 루트 오브젝트에만 동작하므로 자식이면 루트로 분리
+        if (transform.parent != null)
+        {
+            Debug.LogWarning("[InventorySystem] 부모('" + transform.parent.name + "') 아래에 있어 루트로 분리함 - 씬에서 루트로 배치 권장");
+            transform.SetParent(null);
+        }
+
         // 모든 씬에서 인벤토리(데이터 + UI)를 유지
         DontDestroyOnLoad(gameObject);
 
         if (playerEquipment == null)
         {
             playerEquipment = FindFirstObjectByType<PlayerEquipment>();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // 어떤 경로로 파괴되어도 static 참조가 파괴된 객체를 가리키지 않도록 정리
+        if (Instance == this)
+        {
+            Debug.Log("[InventorySystem] 현재 인스턴스 파괴됨 - static 정리");
+            Instance = null;
         }
     }
 

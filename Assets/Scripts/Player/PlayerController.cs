@@ -83,6 +83,14 @@ public class PlayerController : MonoBehaviour
             return;
         }
         Instance = this;
+
+        // DontDestroyOnLoad 는 루트 오브젝트에만 동작하므로 자식이면 루트로 분리
+        if (transform.parent != null)
+        {
+            Debug.LogWarning("[PlayerController] 부모('" + transform.parent.name + "') 아래에 있어 루트로 분리함 - 씬에서 루트로 배치 권장");
+            transform.SetParent(null);
+        }
+
         // 모든 씬에서 플레이어(인벤토리/장비/스탯 단위)를 유지
         DontDestroyOnLoad(gameObject);
 

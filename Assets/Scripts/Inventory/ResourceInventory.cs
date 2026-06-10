@@ -26,8 +26,25 @@ public class ResourceInventory : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+
+        // DontDestroyOnLoad 는 루트 오브젝트에만 동작하므로 자식이면 루트로 분리
+        if (transform.parent != null)
+        {
+            Debug.LogWarning("[ResourceInventory] 부모('" + transform.parent.name + "') 아래에 있어 루트로 분리함 - 씬에서 루트로 배치 권장");
+            transform.SetParent(null);
+        }
+
         // 모든 씬에서 자원 데이터를 유지
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void OnDestroy()
+    {
+        // 어떤 경로로 파괴되어도 static 참조가 파괴된 객체를 가리키지 않도록 정리
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     /// <summary>특정 원소 자원 보유 수 반환</summary>

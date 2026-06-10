@@ -40,13 +40,25 @@ public class StartingEquipment : MonoBehaviour
         }
 
         _equipment = GetComponent<PlayerEquipment>();
-        // InventorySystem 슬롯 초기화가 끝난 뒤 지급하도록 한 프레임 대기
+        // InventorySystem 슬롯 초기화가 끝난 뒤 지급하도록 대기
         StartCoroutine(GrantNextFrame());
     }
 
     private System.Collections.IEnumerator GrantNextFrame()
     {
-        yield return null;
+        // 인스턴스 등록(Awake)과 슬롯 생성(Start)이 모두 끝난 뒤 지급 - 최소 1프레임, 최대 10프레임 대기
+        int nWaitFrames = 0;
+        while (nWaitFrames < 10)
+        {
+            yield return null;
+            nWaitFrames = nWaitFrames + 1;
+
+            if (InventorySystem.Instance != null && InventorySystem.Instance.slots.Count > 0)
+            {
+                break;
+            }
+        }
+
         GrantStartingWeapons();
         bAlreadyGranted = true;
     }
@@ -56,7 +68,31 @@ public class StartingEquipment : MonoBehaviour
         InventorySystem inventory = InventorySystem.Instance;
         if (inventory == null)
         {
-            Debug.LogWarning("[StartingEquipment] InventorySystem 없음 — 지급 실패");
+            // 원인 진단: 비활성 오브젝트까지 포함해 씬에 존재하는지 확인
+            InventorySystem hidden = FindFirstObjectByType<InventorySystem>(FindObjectsInactive.Include);
+
+            if (hidden != null && hidden.gameObject.activeInHierarchy == false)
+            {
+                Debug.LogWarning("[StartingEquipment] 지급 실패 - InventorySystem 이 비활성 오브젝트에 있음: '"
+                    + hidden.gameObject.name + "'. 오브젝트가 비활성이면 Awake 가 돌지 않아 싱글턴 등록이 안 됨."
+                    + " 캔버스 루트는 켜두고 자식 패널만 꺼야 함");
+            }
+            else if (hidden != null)
+            {
+                Debug.LogWarning("[StartingEquipment] 지급 실패 - InventorySystem 오브젝트('" + hidden.gameObject.name
+                    + "')는 활성인데 Instance 미등록. Awake 에서 자기 파괴됐는지 위쪽 '중복 감지' 로그 확인");
+            }
+            else
+            {
+                Debug.LogWarning("[StartingEquipment] 지급 실패 - 씬에 InventorySystem 오브젝트 자체가 없음."
+                    + " 이 씬에 Inventory_Canvas 가 배치돼 있는지 확인");
+            }
+            return;
+        }
+
+        if (inventory.slots.Count == 0)
+        {
+            Debug.LogWarning("[StartingEquipment] 지급 실패 - 인벤토리 슬롯이 아직 생성되지 않음 (InventorySystem.Start 미실행)");
             return;
         }
 
