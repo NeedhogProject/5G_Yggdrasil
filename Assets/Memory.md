@@ -249,6 +249,22 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ## 아직 미완성 (다음 작업)
 
+### 플레이어 영속 단위 (이번 세션)
+- 결정: 플레이어 + 인벤토리 + 자원을 하나의 영속 단위로 (씬 전환 시 유지)
+- DontDestroyOnLoad 추가: PlayerController, InventorySystem, ResourceInventory (각각 씬 루트 오브젝트여야 함)
+- SaveSystem 역할 구분: 런타임 씬 전환 유지는 DDOL, 세션 간 저장/불러오기는 SaveSystem 슬롯
+- GameManager.DestroyPersistentPlayerObjects() 추가: StartNewGame / ContinueGame / GoToTitle 에서 영속 오브젝트 파괴
+  - 새 게임: 씬에 배치된 새 오브젝트가 깨끗하게 시작 (StartingEquipment.Start 재실행으로 시작 장비 지급)
+  - 이어하기: 세이브가 새 인스턴스에 복원
+  - 타이틀 복귀: 타이틀 씬에 플레이어가 남지 않음
+- 주의: 각 씬에 Player/Inventory_Canvas/ResourceInventory 배치 유지 (중복 진입 시 싱글턴 가드가 자기 파괴)
+- SaveSystem.Load 아이템 복원 구현 완료:
+  - SaveSystem 에 itemDatabase(List<ItemData>) + 에디터 ContextMenu '아이템 데이터베이스 자동 수집' (Assets/ScriptableObjects 에서 t:ItemData 검색)
+  - DeserializeItem: 이름 조회 후 Weapon/Armor/일반 인스턴스 생성, 강화(WeaponInstance.RestoreEnhancementLevel 추가)/각인(SetRune)/스택 복원
+  - 인벤토리(AddItem 순서 배치), 장비(EquipItem), 창고(AddToStorage) 복원
+  - 한계: 슬롯 위치(slotX/Y)는 무시하고 저장 순서대로 빈 칸 자동 배치 (위치 지정 배치 API 없음)
+  - 에디터 셋업 필수: SaveSystem 컴포넌트 우클릭으로 데이터베이스 수집 (아이템 에셋 추가 시 재수집)
+
 ### 인벤토리 멀티셀 표시 — 방식 A 확정 (추후 구현)
 - 문제: 멀티셀 아이템 아이콘이 보조 칸 배경/테두리 뒤로 깔려 내부 격자선이 비침 (GridLayoutGroup 렌더 순서)
 - **결정: 오버레이 레이어 방식(A)** 으로 진행

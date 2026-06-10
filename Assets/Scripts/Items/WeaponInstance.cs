@@ -27,6 +27,12 @@ public class WeaponInstance : ItemInstance
         EnhancementLevel = 0;
     }
 
+    /// <summary>세이브 복원 전용 — 강화 단계 직접 설정 (게임 로직에서는 TryEnhance 사용)</summary>
+    public void RestoreEnhancementLevel(int level)
+    {
+        EnhancementLevel = Mathf.Clamp(level, 0, 5);
+    }
+
     /// <summary>
     /// 테스트 전용 생성자 — WeaponType 강제 지정
     /// HitboxSystem ContextMenu 테스트에서 사용
