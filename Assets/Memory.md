@@ -247,48 +247,65 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ---
 
-## 아직 미완성 (다음 작업)
-
-### 플레이어 영속 단위 (이번 세션)
-- 결정: 플레이어 + 인벤토리 + 자원을 하나의 영속 단위로 (씬 전환 시 유지)
-- DontDestroyOnLoad 추가: PlayerController, InventorySystem, ResourceInventory (각각 씬 루트 오브젝트여야 함)
+## 플레이어 영속 단위 — 완료 (2026-06)
+- 결정: 플레이어 + 인벤토리 + 자원을 하나의 영속 단위로 (씬 전환 시 유지, 인벤토리 유지 확인 완료)
+- DontDestroyOnLoad: PlayerController, InventorySystem, ResourceInventory
+  - DDOL 호출 전 부모가 있으면 자동 루트 분리 + 경고 로그 (루트가 아니면 DDOL 실패하므로)
+  - OnDestroy 에서 static Instance 정리 (파괴된 객체 참조 방지)
 - SaveSystem 역할 구분: 런타임 씬 전환 유지는 DDOL, 세션 간 저장/불러오기는 SaveSystem 슬롯
-- GameManager.DestroyPersistentPlayerObjects() 추가: StartNewGame / ContinueGame / GoToTitle 에서 영속 오브젝트 파괴
-  - 새 게임: 씬에 배치된 새 오브젝트가 깨끗하게 시작 (StartingEquipment.Start 재실행으로 시작 장비 지급)
-  - 이어하기: 세이브가 새 인스턴스에 복원
-  - 타이틀 복귀: 타이틀 씬에 플레이어가 남지 않음
-- 주의: 각 씬에 Player/Inventory_Canvas/ResourceInventory 배치 유지 (중복 진입 시 싱글턴 가드가 자기 파괴)
-- SaveSystem.Load 아이템 복원 구현 완료:
-  - SaveSystem 에 itemDatabase(List<ItemData>) + 에디터 ContextMenu '아이템 데이터베이스 자동 수집' (Assets/ScriptableObjects 에서 t:ItemData 검색)
-  - DeserializeItem: 이름 조회 후 Weapon/Armor/일반 인스턴스 생성, 강화(WeaponInstance.RestoreEnhancementLevel 추가)/각인(SetRune)/스택 복원
-  - 인벤토리(AddItem 순서 배치), 장비(EquipItem), 창고(AddToStorage) 복원
-  - 한계: 슬롯 위치(slotX/Y)는 무시하고 저장 순서대로 빈 칸 자동 배치 (위치 지정 배치 API 없음)
-  - 에디터 셋업 필수: SaveSystem 컴포넌트 우클릭으로 데이터베이스 수집 (아이템 에셋 추가 시 재수집)
+- GameManager.DestroyPersistentPlayerObjects(): StartNewGame / ContinueGame / GoToTitle 에서 호출
+  - **반드시 DestroyImmediate 사용** — 지연 Destroy 는 새 씬 싱글턴 Awake 가 살아있는 이전 인스턴스를 보고 자기 파괴함 (인벤토리 미생성 버그의 원인이었음)
+- StartingEquipment: 인스턴스 등록 + 슬롯 생성(slots.Count > 0)까지 대기 후 지급
+  - 인스턴스만 보고 즉시 지급하면 슬롯 0개 상태라 "가득 참" 오판 발생 (수정 완료)
+- 스폰 보정: MovePlayerToSpawn(이름) 으로 일반화
+  - 마을 복귀: Spawn_TownCenter / 던전 진입·층간 이동: Spawn_DungeonStart (각 던전 씬에 배치 필요)
+  - 영속 플레이어는 이전 씬 위치를 들고 오므로 씬마다 스폰 지점 필수
+- 주의: 각 씬에 Player/Inventory_Canvas/ResourceInventory 를 **루트 오브젝트로** 배치 유지 (중복 진입 시 싱글턴 가드가 자기 파괴)
 
-### 인벤토리 멀티셀 표시 — 방식 A 확정 (추후 구현)
-- 문제: 멀티셀 아이템 아이콘이 보조 칸 배경/테두리 뒤로 깔려 내부 격자선이 비침 (GridLayoutGroup 렌더 순서)
-- **결정: 오버레이 레이어 방식(A)** 으로 진행
-  - 그리드 위에 별도 IconOverlay RectTransform 배치 (그리드 다음 형제, GridLayoutGroup 없음)
-  - 아이템 아이콘을 칸의 자식이 아니라 오버레이에서 그림 → 항상 모든 칸 위에 렌더
-  - 위치: 주인 칸 그리드 좌표 → 셀 크기/간격으로 환산 (ResizeItemIcon 계산 재활용)
-  - InventorySystem 배치/이동/제거 경로 + InventorySlot 일부 수정 필요 (중간 규모)
-- 임시 조치만 적용됨: preserveAspect=false (단일 칸 채움). 격자선 자체는 오버레이 구현 시 해결 예정
+## 세이브/로드 아이템 복원 — 완료 (리포 반영 버전)
+- ItemDataRegistry 싱글턴으로 에셋 이름 → ItemData 조회 (씬 배치 필요)
+- DeserializeItem: Weapon(강화: TryEnhance(true) 루프)/Armor(SetRune 1·2)/일반 + 스택 복원
+- RestoreInventory(기존 비우고 AddItem 순서 배치) / RestoreEquipment(EquipItem) / RestoreStorage(HouseSystem.LoadStorage)
+- SaveData.saveName + Save(슬롯, 이름) 오버로드 + RenameSave — 저장 슬롯 UI(SaveSlotPanelUI/SaveSlotCardUI, 김보민) 연동 완료
+- 한계: 슬롯 위치(slotX/Y)는 무시하고 저장 순서대로 빈 칸 자동 배치
 
-### 다음 우선순위 작업
-1. **Floor_2 ~ Floor_4_Boss 씬** — Floor_1 복제 후 수치 변경
-2. **적 프리팹** — 2~4층 적 (현재 1층만 완성)
-3. **보스 (니드호그)** — 4층
-4. **NPC 시스템 연동** — 코드 완성, UI는 별도 담당
-5. **미니맵 / 마을맵** — 코드 완성, UI는 별도 담당
-6. **세이브/로드 검증**
+## 인벤토리 멀티셀 오버레이 (방식 A) — 완료
+- 문제였던 것: 멀티셀 아이콘이 보조 칸 배경 뒤로 깔려 내부 격자선이 비침 (GridLayoutGroup 렌더 순서)
+- 구현: InventorySystem.iconOverlay (인스펙터 연결) — 아이콘을 오버레이 레이어로 옮겨 모든 칸 위에 렌더
+  - ResizeItemIcon: 오버레이로 이동 + 주인 칸 월드 좌상단 정렬 + raycastTarget=false
+  - RestoreItemIcon: 제거/이동 시 원래 슬롯으로 복귀
+  - RefreshIconPositions: 탭 활성화 시점에 전체 아이콘 위치 재계산 (InventoryUI.SwitchTab 에서 호출)
+- 씬 셋업: IconOverlay 는 ItemInventoryPanel 자식, SlotContainer 다음 형제, 레이아웃 컴포넌트 금지
+- 슬롯 배경 Image 에 Raycast Target 필수 (아이콘이 입력을 안 받으므로)
+
+---
+
+## 해야 하는 작업 (6월 18일까지)
+
+### 1순위: 각인(세트) 효과 완성
+1. **SetEffectData 에셋 5개 생성 + ArmorSetManager 등록** — 현재 0개라 모든 세트 효과 무발동 (에디터 작업)
+2. **공격력/공격속도 보너스 연결** — PlayerCombat 에 SetAttackDamageBonus/SetAttackSpeedBonus 수신부는 있으나 ArmorSetManager 가 호출 안 함
+3. **수치 보너스 % 해석 교정** — 현재 percent 를 포인트로 가산 (예: 체력 +7% 가 현재 체력 +7 회복으로 처리됨). 기획 계산 순서: 기본 → 장비 → 세트 음수 → 세트 양수 → 특수
+4. **이동속도 보너스** — PlayerController 에 수신부 추가 필요
+5. **원소 데미지 추가** — 불/물/바람/어둠 3·4세트, 땅 3·4세트. PlayerCombat 공격 파이프라인 연동
+6. **특수 효과 트리거 방식** — 기획은 공격 시(불4 흡혈)/피격 시(물4 방어막), 현재는 쿨다운 자동 발동. 방어막의 최대 체력 100 하드코딩도 MaxHealth 로 교체
+
+### 2순위: 플레이 가능 범위 완성
+- **Floor_2 씬** — Floor_1 복제 + DungeonCore 수치 변경 (2층 줄기는 UpOnly)
+- **2층 적 프리팹**
+- **세이브/로드 실플레이 검증** (복원 구현 완료 상태, 플레이 테스트 필요)
 
 ### UI 작업 (별도 담당 - 개발 외)
 - 장비 장착 UI, NPC 창들, 미니맵, 타이틀, 세이브 슬롯 등
 
-### 그래픽 작업 (개발 후반)
-- 캐릭터 모델링 (현재 Capsule 임시)
-- 오디오 클립 연결 (AudioManager의 SFX/BGM)
-- 툰 셰이더 적용 검토
+---
+
+## 6월 18일까지 하지 않는 작업 (보류)
+
+- **Floor_3 / Floor_4 씬** — 맵은 2층까지만 구현
+- **3~4층 적 프리팹**
+- **보스 (니드호그)** — 다음 학기 구현 예정
+- 그래픽 후반 작업: 캐릭터 모델링(현재 Capsule 임시), 오디오 클립 연결, 툰 셰이더 검토
 
 ---
 

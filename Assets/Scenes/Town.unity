@@ -8973,7 +8973,7 @@ PrefabInstance:
     - target: {fileID: 6010569377580550517, guid: d14914346e2eb374d80dba349d793387, type: 3}
       propertyPath: inventorySystem
       value: 
-      objectReference: {fileID: 773011853}
+      objectReference: {fileID: 0}
     - target: {fileID: 8968951732348854003, guid: d14914346e2eb374d80dba349d793387, type: 3}
       propertyPath: m_LocalScale.x
       value: 1
@@ -11809,7 +11809,6 @@ GameObject:
   - component: {fileID: 773011856}
   - component: {fileID: 773011855}
   - component: {fileID: 773011854}
-  - component: {fileID: 773011853}
   m_Layer: 5
   m_Name: Inventory_Canvas
   m_TagString: Untagged
@@ -11838,28 +11837,6 @@ RectTransform:
   m_AnchoredPosition: {x: 960, y: 540}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &773011853
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 773011851}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8cbb11d594a37d14586cc152c349cdb4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventorySystem
-  gridWidth: 10
-  gridHeight: 8
-  maxSlots: 80
-  slotContainer: {fileID: 66920787}
-  slotPrefab: {fileID: 7130759374801163818, guid: ea44927e1feed4647807b0550a76dd13, type: 3}
-  inventoryUI: {fileID: 773011854}
-  iconOverlay: {fileID: 228483287}
-  playerEquipment: {fileID: 0}
-  slots: []
-  items: []
 --- !u!114 &773011854
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14863,6 +14840,7 @@ GameObject:
   - component: {fileID: 1009216932}
   - component: {fileID: 1009216931}
   - component: {fileID: 1009216930}
+  - component: {fileID: 1009216934}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -14959,6 +14937,28 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1009216934
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1009216929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cbb11d594a37d14586cc152c349cdb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InventorySystem
+  gridWidth: 10
+  gridHeight: 8
+  maxSlots: 80
+  slotContainer: {fileID: 66920787}
+  slotPrefab: {fileID: 7130759374801163818, guid: ea44927e1feed4647807b0550a76dd13, type: 3}
+  inventoryUI: {fileID: 773011854}
+  iconOverlay: {fileID: 228483287}
+  playerEquipment: {fileID: 0}
+  slots: []
+  items: []
 --- !u!1 &1014353129
 GameObject:
   m_ObjectHideFlags: 0
