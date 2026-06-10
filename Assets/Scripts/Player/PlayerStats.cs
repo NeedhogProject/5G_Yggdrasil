@@ -1,5 +1,3 @@
-
-
 using UnityEngine;
 using System;
 
@@ -22,6 +20,11 @@ public class PlayerStats : MonoBehaviour
     [Header("장비 최대 체력 보너스 (착용 시 추가)")]
     [SerializeField] private float equipmentMaxHealth = 0f;
 
+    [Header("세트 효과 보너스 % (ArmorSetManager 가 설정)")]
+    [SerializeField] private float setMaxHealthPercent = 0f;
+    [SerializeField] private float setDefensePercent = 0f;
+    [SerializeField] private float setMentalPercent = 0f;
+
     [Header("골드")]
     [SerializeField] private int _gold = 0;
 
@@ -34,12 +37,15 @@ public class PlayerStats : MonoBehaviour
     public const float MAX_STAT = 100f;
 
     // ── 계산 프로퍼티 ─────────────────────────────
-    public float MentalMultiplier => mental / MAX_STAT;
-    public float TotalDefense => baseDefense + equipmentDefense;
+    // 세트 정신력 % 는 유효 정신력 배율에만 반영 (표시 수치 mental 은 그대로)
+    public float MentalMultiplier => Mathf.Clamp01(mental * (1f + setMentalPercent / 100f) / MAX_STAT);
+
+    // 계산 순서: 기본 + 장비 합산 후 세트 % 배율 적용 (기획: 기본 -> 장비 -> 세트)
+    public float TotalDefense => (baseDefense + equipmentDefense) * (1f + setDefensePercent / 100f);
     public float EffectiveDefense => TotalDefense * MentalMultiplier;
 
-    /// <summary>최대 체력 = 기본(100) + 장비 보너스</summary>
-    public float MaxHealth => MAX_STAT + equipmentMaxHealth;
+    /// <summary>최대 체력 = (기본 100 + 장비 보너스) x 세트 체력 % 배율</summary>
+    public float MaxHealth => (MAX_STAT + equipmentMaxHealth) * (1f + setMaxHealthPercent / 100f);
 
     // ── 이벤트 ────────────────────────────────────
     public event Action<float> OnHealthChanged;
@@ -112,6 +118,19 @@ public class PlayerStats : MonoBehaviour
         if (OnDefenseChanged != null)
         {
             OnDefenseChanged.Invoke(TotalDefense);
+        }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
+    }
+
+    public void ModifyMental(float amount)
+    {
+        mental = Mathf.Clamp(mental + amount, MIN_STAT, MAX_STAT);
+        if (OnMentalChanged != null)
+        {
+            OnMentalChanged.Invoke(mental);
         }
         if (OnStatsChanged != null)
         {
@@ -237,9 +256,27 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    public void ModifyMental(float amount)
+    /// <summary>
+    /// 세트 효과 % 보너스 일괄 설정 (ArmorSetManager 가 재계산 시 호출)
+    /// 최대 체력 % / 방어력 % / 정신력 % 를 배율로 반영한다
+    /// </summary>
+    public void SetSetBonusPercents(float healthPercent, float defensePercent, float mentalPercent)
     {
-        mental = Mathf.Clamp(mental + amount, MIN_STAT, MAX_STAT);
+        setMaxHealthPercent = healthPercent;
+        setDefensePercent = defensePercent;
+        setMentalPercent = mentalPercent;
+
+        // 최대 체력 변동으로 현재 체력이 상한을 넘으면 보정
+        health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
+
+        if (OnHealthChanged != null)
+        {
+            OnHealthChanged.Invoke(health);
+        }
+        if (OnDefenseChanged != null)
+        {
+            OnDefenseChanged.Invoke(TotalDefense);
+        }
         if (OnMentalChanged != null)
         {
             OnMentalChanged.Invoke(mental);
