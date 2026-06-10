@@ -38,6 +38,7 @@ public class SaveData
 {
     [Header("메타 정보")]
     public int    slotIndex;
+    public string saveName;         // 저장 이름 (슬롯 UI 표시용)
     public string saveDateTime;     // 저장 일시 (표시용)
     public float  playTime;         // 총 플레이 시간 (초)
 
@@ -123,9 +124,19 @@ public class SaveSystem : MonoBehaviour
     // ─────────────────────── 저장 ───────────────────────
 
     /// <summary>
-    /// 현재 게임 상태를 슬롯에 저장
+    /// 현재 게임 상태를 슬롯에 저장 (이름 없이 호출 시 기존 이름 유지)
     /// </summary>
     public bool Save(int slotIndex)
+    {
+        // 기존 세이브가 있으면 그 이름을 유지, 없으면 기본 이름
+        string existingName = GetSaveMeta(slotIndex)?.saveName ?? "";
+        return Save(slotIndex, existingName);
+    }
+
+    /// <summary>
+    /// 현재 게임 상태를 슬롯에 저장 (저장 이름 지정)
+    /// </summary>
+    public bool Save(int slotIndex, string saveName)
     {
         if (slotIndex < 0 || slotIndex >= SLOT_COUNT)
         {
@@ -138,6 +149,7 @@ public class SaveSystem : MonoBehaviour
         SaveData data = new SaveData
         {
             slotIndex    = slotIndex,
+            saveName     = saveName,
             saveDateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
             playTime     = _playTime,
             currentFloor = GameManager.Instance?.CurrentFloor ?? 0
@@ -412,6 +424,31 @@ public class SaveSystem : MonoBehaviour
             return JsonUtility.FromJson<SaveData>(json);
         }
         catch { return null; }
+    }
+
+    /// <summary>슬롯 저장 이름 변경 (파일의 saveName 만 교체)</summary>
+    public bool RenameSave(int slotIndex, string newName)
+    {
+        if (HasSave(slotIndex) == false)
+        {
+            Debug.LogWarning($"[SaveSystem] 슬롯 {slotIndex} 에 저장 데이터 없음");
+            return false;
+        }
+
+        try
+        {
+            string   json = File.ReadAllText(GetSavePath(slotIndex));
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            data.saveName = newName;
+            File.WriteAllText(GetSavePath(slotIndex), JsonUtility.ToJson(data, prettyPrint: true));
+            Debug.Log($"[SaveSystem] 슬롯 {slotIndex} 이름 변경: {newName}");
+            return true;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[SaveSystem] 이름 변경 실패: {e.Message}");
+            return false;
+        }
     }
 
     /// <summary>슬롯 삭제</summary>
