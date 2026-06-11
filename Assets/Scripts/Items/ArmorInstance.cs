@@ -5,7 +5,7 @@ using UnityEngine;
 ///
 /// [기획 반영]
 /// - 각인은 방어구 전용 (무기에는 각인 없음)
-/// - 각인 슬롯 2개, 조합에 따라 세트 효과 발동
+/// - 각인 슬롯은 부위당 최대 1개
 /// - 초기화 주문서로 각인 리셋 가능
 /// </summary>
 [System.Serializable]
@@ -23,48 +23,24 @@ public class ArmorInstance : ItemInstance
 
     // ─────────────────────── 각인 런타임 상태 ───────────────────────
 
-    /// <summary>현재 각인된 슬롯 1 (None = 비어있음)</summary>
+    /// <summary>현재 각인된 원소 (None = 비어있음). 부위당 최대 1개</summary>
     public RuneElement RuneSlot1 { get; private set; } = RuneElement.None;
 
-    /// <summary>현재 각인된 슬롯 2 (None = 비어있음)</summary>
-    public RuneElement RuneSlot2 { get; private set; } = RuneElement.None;
+    /// <summary>각인이 있는지</summary>
+    public bool HasRune => RuneSlot1 != RuneElement.None;
 
-    /// <summary>각인이 하나라도 있는지</summary>
-    public bool HasRune => RuneSlot1 != RuneElement.None || RuneSlot2 != RuneElement.None;
-
-    /// <summary>각인 슬롯이 모두 채워졌는지</summary>
-    public bool IsRuneFull => RuneSlot1 != RuneElement.None && RuneSlot2 != RuneElement.None;
-
-    // ─────────────────────── 세트 서명 캐싱 ───────────────────────
-
-    // 각인 변경 시 서명을 다시 계산해야 하므로 캐시 무효화 처리
-    private SetSignature? _cachedSignature = null;
+    /// <summary>각인 슬롯이 채워졌는지 (1슬롯이므로 HasRune 과 동일)</summary>
+    public bool IsRuneFull => RuneSlot1 != RuneElement.None;
 
     /// <summary>
-    /// 현재 각인 기반 세트 서명 (ArmorSetManager 집계에 사용)
-    /// 각인이 없으면 default(None, None) 반환
-    /// </summary>
-    public SetSignature SetSignature
-    {
-        get
-        {
-            if (_cachedSignature == null)
-                _cachedSignature = new SetSignature(RuneSlot1, RuneSlot2);
-            return _cachedSignature.Value;
-        }
-    }
-
-    /// <summary>
-    /// 현재 각인 기반으로 기여하는 원소 목록 반환 (중복 제거)
+    /// 현재 각인 기반으로 기여하는 원소 목록 반환
     /// ArmorSetManager 에서 원소별 카운트 집계에 사용
     /// </summary>
     public System.Collections.Generic.List<RuneElement> GetContributingElements()
     {
         System.Collections.Generic.List<RuneElement> result = new System.Collections.Generic.List<RuneElement>();
-        if (RuneSlot1 != RuneElement.None && !result.Contains(RuneSlot1))
+        if (RuneSlot1 != RuneElement.None)
             result.Add(RuneSlot1);
-        if (RuneSlot2 != RuneElement.None && !result.Contains(RuneSlot2))
-            result.Add(RuneSlot2);
         return result;
     }
 
@@ -74,7 +50,6 @@ public class ArmorInstance : ItemInstance
     {
         // ScriptableObject 에 기본 각인값이 있으면 런타임에 복사
         RuneSlot1 = data.RuneSlot1;
-        RuneSlot2 = data.RuneSlot2;
     }
 
     // ─────────────────────── 착용 / 해제 ───────────────────────
@@ -102,30 +77,21 @@ public class ArmorInstance : ItemInstance
 
     /// <summary>
     /// 각인 설정 (각인술사 시스템에서 호출)
-    /// slot: 1 또는 2
+    /// 부위당 1개 — 이미 각인이 있으면 거부 (초기화 후 다시 부여해야 함)
     /// </summary>
-    public bool SetRune(int slot, RuneElement element)
+    public bool SetRune(RuneElement element)
     {
-        if (slot != 1 && slot != 2) return false;
         if (element == RuneElement.None) return false;
+        if (RuneSlot1 != RuneElement.None) return false;
 
-        // 같은 원소가 다른 슬롯에 이미 있으면 거부
-        if (slot == 1 && RuneSlot2 == element) return false;
-        if (slot == 2 && RuneSlot1 == element) return false;
-
-        if (slot == 1) RuneSlot1 = element;
-        else           RuneSlot2 = element;
-
-        _cachedSignature = null; // 서명 캐시 무효화
+        RuneSlot1 = element;
         return true;
     }
 
     /// <summary>각인 초기화 (초기화 주문서 사용 시)</summary>
     public void ClearRunes()
     {
-        RuneSlot1        = RuneElement.None;
-        RuneSlot2        = RuneElement.None;
-        _cachedSignature = null;
+        RuneSlot1 = RuneElement.None;
     }
 
     // ─────────────────────── 계산된 스탯 ───────────────────────
@@ -139,12 +105,12 @@ public class ArmorInstance : ItemInstance
 
     public override string ToString() =>
         $"[{ArmorData?.ItemName ?? "null"}] {Slot} | 방어력+{DefenseBonus} | " +
-        $"각인: {RuneSlot1}/{RuneSlot2} | 세트: {SetSignature} | 장착: {IsEquipped}";
+        $"각인: {RuneSlot1} | 장착: {IsEquipped}";
 
     // ─────────────────────── 각인 색상 UI 연동 ───────────────────────
 
     /// <summary>
-    /// 각인 슬롯 1개의 UI 표시 정보
+    /// 각인 슬롯의 UI 표시 정보
     /// </summary>
     public readonly struct InscriptionInfo
     {
@@ -165,23 +131,16 @@ public class ArmorInstance : ItemInstance
     }
 
     /// <summary>
-    /// 슬롯 번호에 해당하는 각인 UI 정보 반환
-    /// slot: 1 또는 2 / 유효하지 않은 슬롯이면 None + clear 반환
+    /// 각인 UI 정보 반환 (부위당 1슬롯)
     /// </summary>
     /// <example>
-    /// var info = armor.GetInscription(1);
+    /// var info = armor.GetInscription();
     /// icon.color = info.Color;
     /// label.text = info.IsEmpty ? "빈 슬롯" : info.Element.ToString();
     /// </example>
-    public InscriptionInfo GetInscription(int slot)
+    public InscriptionInfo GetInscription()
     {
-        RuneElement element = slot switch
-        {
-            1 => RuneSlot1,
-            2 => RuneSlot2,
-            _ => RuneElement.None
-        };
-        return new InscriptionInfo(element, GetRuneColor(element));
+        return new InscriptionInfo(RuneSlot1, GetRuneColor(RuneSlot1));
     }
 
     /// <summary>

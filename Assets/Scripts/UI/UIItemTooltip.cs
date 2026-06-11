@@ -255,7 +255,7 @@ public class UIItemTooltip : MonoBehaviour
 
     /// <summary>
     /// ArmorInstance 기반 방어구 스탯
-    /// 각인 슬롯 1, 2 실제 값 표시 (RuneSlot1, RuneSlot2)
+    /// 각인 실제 값 표시 (부위당 최대 1개)
     /// </summary>
     private string GetArmorStatsFromInstance(ArmorInstance armor)
     {
@@ -266,24 +266,14 @@ public class UIItemTooltip : MonoBehaviour
             result += "방어력: " + armor.DefenseBonus.ToString() + "\n";
         }
 
-        // 각인 슬롯 1
+        // 각인 (부위당 최대 1개)
         if (armor.RuneSlot1 != RuneElement.None)
         {
-            result += "각인 1: " + GetRuneElementName(armor.RuneSlot1) + "\n";
+            result += "각인: " + GetRuneElementName(armor.RuneSlot1) + "\n";
         }
         else
         {
-            result += "각인 1: 없음\n";
-        }
-
-        // 각인 슬롯 2
-        if (armor.RuneSlot2 != RuneElement.None)
-        {
-            result += "각인 2: " + GetRuneElementName(armor.RuneSlot2) + "\n";
-        }
-        else
-        {
-            result += "각인 2: 없음\n";
+            result += "각인: 없음\n";
         }
 
         // 세트 발동 여부 안내

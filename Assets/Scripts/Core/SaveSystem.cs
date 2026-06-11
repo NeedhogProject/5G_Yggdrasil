@@ -28,8 +28,8 @@ public class SavedItemInstance
     public int enhancementLevel;
 
     // 방어구 전용
-    public int runeSlot1;        // RuneElement 정수값
-    public int runeSlot2;
+    public int    runeSlot1;        // RuneElement 정수값
+    public int    runeSlot2;
 }
 
 /// <summary>전체 세이브 데이터</summary>
@@ -96,7 +96,7 @@ public class SaveSystem : MonoBehaviour
 
     // ─────────────────────── 설정 ───────────────────────
 
-    public const int SLOT_COUNT = 5;
+    public const int SLOT_COUNT = 3;
     private const string SAVE_FILE_PREFIX = "slot_";
     private const string SAVE_FILE_EXT = ".json";
 
@@ -363,7 +363,6 @@ public class SaveSystem : MonoBehaviour
         else if (item is ArmorInstance armor)
         {
             saved.runeSlot1 = (int)armor.RuneSlot1;
-            saved.runeSlot2 = (int)armor.RuneSlot2;
         }
 
         return saved;
@@ -394,11 +393,7 @@ public class SaveSystem : MonoBehaviour
             ArmorInstance armor = new ArmorInstance(armorData);
             if ((RuneElement)saved.runeSlot1 != RuneElement.None)
             {
-                armor.SetRune(1, (RuneElement)saved.runeSlot1);
-            }
-            if ((RuneElement)saved.runeSlot2 != RuneElement.None)
-            {
-                armor.SetRune(2, (RuneElement)saved.runeSlot2);
+                armor.SetRune((RuneElement)saved.runeSlot1);
             }
             instance = armor;
         }
