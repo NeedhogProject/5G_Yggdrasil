@@ -9,9 +9,11 @@ public enum StatBonusType
     AttackDamage,   // 공격력 %
     Defense,        // 방어력 %
     Health,         // 체력 % (최대 체력 기준)
-    Mental,         // 정신력 % (최대 정신력 기준)
+    Mental,         // 정신력 (포인트 가산, 0~100 스케일. % 아님)
     AttackSpeed,    // 공격 속도 %
     MoveSpeed,      // 이동 속도 %
+    LifeSteal,      // 흡혈 % (공격 시 입힌 데미지 비례 회복)
+    Shield,         // 보호막 % (최대 체력 비례, 피해 선흡수)
 }
 
 /// <summary>수치 증가/감소 1개 항목</summary>
@@ -21,80 +23,45 @@ public struct StatBonus
     [Tooltip("대상 능력치")]
     public StatBonusType bonusType;
 
-    [Tooltip("변화량 (%). 양수=증가, 음수=감소\n" +
-             "ex) 5 → 5% 증가 / -10 → 10% 감소")]
+    [Tooltip("변화량. 양수=증가, 음수=감소\n" +
+             "Mental 은 포인트(ex: 20 → 정신력 +20), 나머지는 % (ex: 5 → 5%)")]
     [Range(-100f, 100f)]
     public float percent;
-}
-
-/// <summary>특수 효과 종류 (쿨다운 있는 발동형)</summary>
-public enum SpecialEffectType
-{
-    None,
-    ElementalDamageOnHit,       // 공격 시 원소 데미지 추가 (무기 공격력 % 기반)
-    LifeStealOnHit,             // 공격 시 최대 체력 비례 회복 (불 4세트)
-    ShieldOnHit,                // 피격 시 최대 체력 비례 방어막 (물 4세트)
-    ElementalDamageFromDefense, // 방어력 기반 원소 데미지 (땅 3/4세트)
-}
-
-/// <summary>특수 효과 1개 항목</summary>
-[System.Serializable]
-public struct SpecialEffect
-{
-    [Tooltip("효과 종류")]
-    public SpecialEffectType effectType;
-
-    [Tooltip("수치 (%). 의미는 effectType 에 따라 다름\n" +
-             "ElementalDamageOnHit       → 무기 공격력의 N%\n" +
-             "LifeStealOnHit             → 최대 체력의 N%\n" +
-             "ShieldOnHit                → 최대 체력의 N%\n" +
-             "ElementalDamageFromDefense → 방어력의 N%")]
-    [Range(0f, 200f)]
-    public float valuePercent;
-
-    [Tooltip("원소 종류 (데미지 계열 효과에 사용)")]
-    public RuneElement element;
-
-    [Tooltip("발동 쿨다운 (초)")]
-    [Range(0.1f, 60f)]
-    public float cooldown;
 }
 
 // ─────────────────────── SetEffectData ───────────────────────
 
 /// <summary>
 /// 단일 원소 세트 효과 정의 ScriptableObject
+/// 각 Tier 값은 최종값 (중첩 합산 아님 — 현재 Tier 의 보너스만 적용)
 ///
 /// [기획 확정 세트 효과]
 ///
 /// ■ 불 (Fire)
 ///   Tier2: 공격력 +5%
-///   Tier3: 공격 시 무기 공격력 12% 불 데미지 추가
-///   Tier4: 공격 시 무기 공격력 25% 불 데미지 추가
-///          + 공격 시 최대 체력 2% 회복 (쿨다운 1초)
+///   Tier3: 공격력 +10%, 공격속도 +5%
+///   Tier4: 공격력 +12%, 공격속도 +7%, 흡혈 +3%
 ///
 /// ■ 물 (Water)
 ///   Tier2: 공격력 +2%, 체력 +2%
-///   Tier3: 공격 시 무기 공격력 10% 물 데미지 추가
-///   Tier4: 공격 시 무기 공격력 20% 물 데미지 추가
-///          + 피격 시 최대 체력 5% 방어막 (쿨다운 7.5초)
-///
-/// ■ 바람 (Wind)
-///   Tier2: 공격 속도 +7%, 이동 속도 +5%
-///   Tier3: 공격 시 무기 공격력 15% 바람 데미지 추가
-///   Tier4: 공격 속도 +20%, 이동 속도 +7%
+///   Tier3: 공격력 +5%, 체력 +5%, 정신력 +20
+///   Tier4: 공격력 +7%, 체력 +7%, 정신력 +35
 ///
 /// ■ 땅 (Earth)
-///   Tier2: 방어력 +7%, 최대 체력 +7%
-///   Tier3: 방어력의 20% 땅 데미지 추가
-///   Tier4: 방어력 +15%, 이동 속도 -7%
-///          + 방어력의 5% 땅 데미지 (쿨다운형)
+///   Tier2: 체력 +5%, 방어력 +5%
+///   Tier3: 체력 +10%, 방어력 +10%, 보호막 +10%
+///   Tier4: 체력 +15%, 방어력 +15%, 보호막 +20%
+///
+/// ■ 바람 (Wind)
+///   Tier2: 공격속도 +5%, 이동속도 +5%
+///   Tier3: 공격속도 +10%, 이동속도 +10%, 정신력 +25
+///   Tier4: 공격속도 +17%, 이동속도 +17%, 정신력 +40
 ///
 /// ■ 어둠 (Darkness)
-///   Tier1: 공격력 +9%, 정신력 -15%
-///   Tier2: 이동 속도 +9%, 공격 속도 +9%
-///   Tier3: 무기 공격력 25% 어둠 데미지 추가, 최대 체력 -10%
-///   Tier4: 무기 공격력 35% 어둠 데미지 추가, 최대 체력 -15%
+///   Tier1: 공격력 +5%, 체력 -5%
+///   Tier2: 공격력 +7%, 공격속도 +7%, 체력 -8%, 방어력 -8%
+///   Tier3: 공격력 +12%, 공격속도 +12%, 체력 -14%, 방어력 -14%
+///   Tier4: 공격력 +17%, 공격속도 +17%, 체력 -20%, 방어력 -20%, 정신력 -20
 /// </summary>
 [CreateAssetMenu(fileName = "NewSetEffect", menuName = "Yggdrasil/Items/SetEffectData")]
 public class SetEffectData : ScriptableObject
@@ -113,19 +80,11 @@ public class SetEffectData : ScriptableObject
     [Header("Tier 2 — 수치 보너스 (2개 착용)")]
     [SerializeField] private StatBonus[] tier2Bonuses = new StatBonus[0];
 
-    [Header("Tier 3 — 수치 보너스 (3개 착용, 없으면 비워두기)")]
+    [Header("Tier 3 — 수치 보너스 (3개 착용)")]
     [SerializeField] private StatBonus[] tier3Bonuses = new StatBonus[0];
 
     [Header("Tier 4 — 수치 보너스 (4개 착용)")]
     [SerializeField] private StatBonus[] tier4Bonuses = new StatBonus[0];
-
-    // ─────────────────────── Tier 별 특수 효과 ───────────────────────
-
-    [Header("Tier 3 — 특수 효과 (원소 데미지 등)")]
-    [SerializeField] private SpecialEffect[] tier3Effects = new SpecialEffect[0];
-
-    [Header("Tier 4 — 특수 효과 (Tier3 효과 포함 + 추가)")]
-    [SerializeField] private SpecialEffect[] tier4Effects = new SpecialEffect[0];
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
@@ -133,7 +92,7 @@ public class SetEffectData : ScriptableObject
 
     // ─────────────────────── 조회 메서드 ───────────────────────
 
-    /// <summary>해당 Tier 의 수치 보너스 배열 반환</summary>
+    /// <summary>해당 Tier 의 수치 보너스 배열 반환 (최종값)</summary>
     public StatBonus[] GetStatBonuses(SetTier tier)
     {
         return tier switch
@@ -143,17 +102,6 @@ public class SetEffectData : ScriptableObject
             SetTier.Tier3 => tier3Bonuses,
             SetTier.Tier4 => tier4Bonuses,
             _             => new StatBonus[0]
-        };
-    }
-
-    /// <summary>해당 Tier 의 특수 효과 배열 반환</summary>
-    public SpecialEffect[] GetSpecialEffects(SetTier tier)
-    {
-        return tier switch
-        {
-            SetTier.Tier3 => tier3Effects,
-            SetTier.Tier4 => tier4Effects,
-            _             => new SpecialEffect[0]
         };
     }
 

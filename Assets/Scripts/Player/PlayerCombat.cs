@@ -13,7 +13,7 @@ using UnityEngine.InputSystem;
 ///   · 장검: 0.5 (2초에 1회)
 ///   · 창  : 0.2 (5초에 1회)
 /// - 공격력 = WeaponInstance.FinalDamage * PlayerStats.MentalMultiplier
-/// - 세트 효과 원소 데미지는 ArmorSetManager 에서 처리
+/// - 세트 공격력/공격속도/흡혈 보너스는 ArmorSetManager 가 설정
 ///
 /// [컴포넌트 설정]
 /// - PlayerInput → Actions 에 Attack(Button) 액션 등록
@@ -44,12 +44,16 @@ public class PlayerCombat : MonoBehaviour
     [Header("세트 효과 보너스 (런타임)")]
     [SerializeField] private float _attackSpeedBonus = 0f;   // 공격 속도 증가율
     [SerializeField] private float _attackDamageBonus = 0f;  // 공격력 증가율
+    [SerializeField] private float _lifeStealPercent = 0f;   // 흡혈 비율 (입힌 데미지 비례 회복)
 
     /// <summary>공격 속도 보너스 설정 (ArmorSetManager 에서 호출)</summary>
     public void SetAttackSpeedBonus(float bonus) => _attackSpeedBonus = bonus;
 
     /// <summary>공격력 보너스 설정 (ArmorSetManager 에서 호출)</summary>
     public void SetAttackDamageBonus(float bonus) => _attackDamageBonus = bonus;
+
+    /// <summary>흡혈 비율 설정 (ArmorSetManager 에서 호출. 0.03 = 데미지의 3% 회복)</summary>
+    public void SetLifeStealPercent(float percent) => _lifeStealPercent = percent;
 
     // ─────────────────────── 런타임 디버그 ───────────────────────
 
@@ -145,6 +149,9 @@ public class PlayerCombat : MonoBehaviour
         _isAttacking = true;
         _attackCooldownTimer = AttackInterval;
 
+        // 공격 — 보호막 재충전 타이머 리셋 (비전투 판정)
+        _stats?.NotifyCombatAction();
+
         // 판정 실행 — onHit 콜백으로 피격 처리
         _hitbox.PerformAttack(CurrentWeapon, OnHit);
 
@@ -164,6 +171,12 @@ public class PlayerCombat : MonoBehaviour
         {
             float damage = CalculateDamage(hitIndex);
             enemy.TakeDamage(damage);
+
+            // 불 4세트 흡혈 — 입힌 데미지 비례 회복
+            if (_lifeStealPercent > 0f && _stats != null)
+            {
+                _stats.ModifyHealth(damage * _lifeStealPercent);
+            }
             return;
         }
 
@@ -270,6 +283,7 @@ public class PlayerCombat : MonoBehaviour
     {
         SetAttackSpeedBonus(0f);
         SetAttackDamageBonus(0f);
+        SetLifeStealPercent(0f);
         Debug.Log("[PlayerCombat] 모든 보너스 초기화");
     }
 #endif
