@@ -220,5 +220,5 @@ MonoBehaviour:
   lootEntries: []
   dropCount: 1
   skipChance: 0
-  droppedItemPrefab: {fileID: 0}
+  droppedItemPrefab: {fileID: 9050273253143957091, guid: 990821102621e1145b36c049befa6795, type: 3}
   dropSpreadRadius: 0.5

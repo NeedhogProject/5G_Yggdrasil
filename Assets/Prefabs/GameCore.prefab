@@ -184,7 +184,7 @@ Transform:
   m_GameObject: {fileID: 8942303448545066385}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.42862, y: 0, z: -2.65034}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -243,6 +243,7 @@ MonoBehaviour:
   playerEquipment: {fileID: 0}
   houseSystem: {fileID: 0}
   inventorySystem: {fileID: 0}
+  itemDatabase: []
 --- !u!114 &5739348222253432421
 MonoBehaviour:
   m_ObjectHideFlags: 0
