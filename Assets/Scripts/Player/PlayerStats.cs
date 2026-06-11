@@ -20,10 +20,19 @@ public class PlayerStats : MonoBehaviour
     [Header("장비 최대 체력 보너스 (착용 시 추가)")]
     [SerializeField] private float equipmentMaxHealth = 0f;
 
-    [Header("세트 효과 보너스 % (ArmorSetManager 가 설정)")]
+    [Header("세트 효과 보너스 (ArmorSetManager 가 설정)")]
     [SerializeField] private float setMaxHealthPercent = 0f;
     [SerializeField] private float setDefensePercent = 0f;
-    [SerializeField] private float setMentalPercent = 0f;
+    [SerializeField] private float setMentalBonus = 0f;       // 최대 정신력 포인트 가산
+    [SerializeField] private float setShieldPercent = 0f;     // 최대 체력 비례 보호막 %
+
+    [Header("보호막")]
+    [Tooltip("공격/피격 없이 이 시간(초)이 지나면 보호막 재충전")]
+    [SerializeField] private float shieldRechargeIdleTime = 15f;
+
+    // 보호막 런타임 상태
+    private float _shield = 0f;
+    private float _lastCombatTime = -999f;
 
     [Header("골드")]
     [SerializeField] private int _gold = 0;
@@ -35,10 +44,15 @@ public class PlayerStats : MonoBehaviour
     // ── 상수 ──────────────────────────────────────
     private const float MIN_STAT = 0f;
     public const float MAX_STAT = 100f;
+    // 밸런싱 여지를 위한 정신력 최대 상한
+    public const float MAX_MENTAL_CAP = 150f;
 
     // ── 계산 프로퍼티 ─────────────────────────────
-    // 세트 정신력 % 는 유효 정신력 배율에만 반영 (표시 수치 mental 은 그대로)
-    public float MentalMultiplier => Mathf.Clamp01(mental * (1f + setMentalPercent / 100f) / MAX_STAT);
+    /// <summary>최대 정신력 = 기본 100 + 세트 보너스 (상한 150)</summary>
+    public float MaxMental => Mathf.Min(MAX_STAT + setMentalBonus, MAX_MENTAL_CAP);
+
+    // 정신력 100 초과분은 버퍼(소모 여유분) — 배율은 1.0 상한 고정
+    public float MentalMultiplier => Mathf.Clamp01(mental / MAX_STAT);
 
     // 계산 순서: 기본 + 장비 합산 후 세트 % 배율 적용 (기획: 기본 -> 장비 -> 세트)
     public float TotalDefense => (baseDefense + equipmentDefense) * (1f + setDefensePercent / 100f);
@@ -46,6 +60,12 @@ public class PlayerStats : MonoBehaviour
 
     /// <summary>최대 체력 = (기본 100 + 장비 보너스) x 세트 체력 % 배율</summary>
     public float MaxHealth => (MAX_STAT + equipmentMaxHealth) * (1f + setMaxHealthPercent / 100f);
+
+    /// <summary>보호막 최대치 = 최대 체력 x 세트 보호막 %</summary>
+    public float ShieldMax => MaxHealth * (setShieldPercent / 100f);
+
+    /// <summary>현재 보호막 수치 (피해 선흡수)</summary>
+    public float Shield => _shield;
 
     // ── 이벤트 ────────────────────────────────────
     public event Action<float> OnHealthChanged;
@@ -95,6 +115,28 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // 비전투(공격/피격 없음) 일정 시간 경과 시 보호막 재충전
+        if (setShieldPercent > 0f && _shield < ShieldMax)
+        {
+            if (Time.time - _lastCombatTime >= shieldRechargeIdleTime)
+            {
+                _shield = ShieldMax;
+                if (OnStatsChanged != null)
+                {
+                    OnStatsChanged.Invoke();
+                }
+            }
+        }
+    }
+
+    /// <summary>전투 행동 알림 — 공격 시 PlayerCombat 에서 호출 (보호막 재충전 타이머 리셋)</summary>
+    public void NotifyCombatAction()
+    {
+        _lastCombatTime = Time.time;
+    }
+
     // HUD 갱신 구독은 HUDManager 측에서 담당 (PlayerStats 는 UI 를 모름)
 
     // ── 스탯 변경 ─────────────────────────────────
@@ -127,7 +169,7 @@ public class PlayerStats : MonoBehaviour
 
     public void ModifyMental(float amount)
     {
-        mental = Mathf.Clamp(mental + amount, MIN_STAT, MAX_STAT);
+        mental = Mathf.Clamp(mental + amount, MIN_STAT, MaxMental);
         if (OnMentalChanged != null)
         {
             OnMentalChanged.Invoke(mental);
@@ -257,17 +299,22 @@ public class PlayerStats : MonoBehaviour
     }
 
     /// <summary>
-    /// 세트 효과 % 보너스 일괄 설정 (ArmorSetManager 가 재계산 시 호출)
-    /// 최대 체력 % / 방어력 % / 정신력 % 를 배율로 반영한다
+    /// 세트 효과 보너스 일괄 설정 (ArmorSetManager 가 재계산 시 호출)
+    /// 체력/방어는 % 배율, 정신력은 최대치 포인트, 보호막은 최대 체력 비례 %
     /// </summary>
-    public void SetSetBonusPercents(float healthPercent, float defensePercent, float mentalPercent)
+    public void SetSetBonusPercents(float healthPercent, float defensePercent, float mentalBonus, float shieldPercent)
     {
         setMaxHealthPercent = healthPercent;
         setDefensePercent = defensePercent;
-        setMentalPercent = mentalPercent;
+        setMentalBonus = mentalBonus;
+        setShieldPercent = shieldPercent;
 
-        // 최대 체력 변동으로 현재 체력이 상한을 넘으면 보정
+        // 최대치 변동으로 현재 수치가 상한을 넘으면 보정
         health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
+        mental = Mathf.Clamp(mental, MIN_STAT, MaxMental);
+
+        // 세트 구성 변경 시 보호막 즉시 충전
+        _shield = ShieldMax;
 
         if (OnHealthChanged != null)
         {
@@ -301,7 +348,7 @@ public class PlayerStats : MonoBehaviour
 
     public bool UseMentalPotion()
     {
-        if (mental >= MAX_STAT)
+        if (mental >= MaxMental)
         {
             return false;
         }
@@ -326,7 +373,19 @@ public class PlayerStats : MonoBehaviour
         // 정신력 패널티 — 정신력 낮을수록 받는 피해 증가
         actualDamage *= (2f - MentalMultiplier);
 
-        ModifyHealth(-actualDamage);
+        // 피격 — 보호막 재충전 타이머 리셋
+        _lastCombatTime = Time.time;
+
+        // 보호막 선흡수 (남은 피해만 체력으로)
+        float healthDamage = actualDamage;
+        if (_shield > 0f)
+        {
+            float absorbed = Mathf.Min(_shield, healthDamage);
+            _shield -= absorbed;
+            healthDamage -= absorbed;
+        }
+
+        ModifyHealth(-healthDamage);
         return actualDamage;
     }
 
@@ -345,7 +404,7 @@ public class PlayerStats : MonoBehaviour
         {
             equipmentDefense = 0f;
         }
-        mental = Mathf.Clamp(mental, MIN_STAT, MAX_STAT);
+        mental = Mathf.Clamp(mental, MIN_STAT, MaxMental);
     }
 
 #if UNITY_EDITOR
