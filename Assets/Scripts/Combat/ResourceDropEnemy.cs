@@ -72,10 +72,10 @@ public class ResourceDropEnemy : MonoBehaviour
         int currentFloor = FloorManager.Instance?.CurrentFloor ?? 1;
         if (availableFloors.Contains(currentFloor) == false)
         {
-            // 이 층에 등장하면 안 되는 몬스터 — 오브젝트 비활성화
+            // 층 필터는 SpawnPoint.SelectRandomPrefab 이 담당 — 여기 도달하면 설정 오류이므로 경고만
+            // (비활성화하면 EnemySpawner 잔여 카운트가 영구 인플레이션되고 열쇠 적이면 열쇠 증발)
             Debug.LogWarning($"[ResourceDropEnemy] {gameObject.name} — " +
-                             $"{currentFloor}층에 등장 불가 ({dropResourceData?.ResourceType}). 비활성화.");
-            gameObject.SetActive(false);
+                             $"{currentFloor}층 등장 불가 설정인데 스폰됨 ({dropResourceData?.ResourceType}). 프리팹/스폰 포인트 설정 확인 필요.");
         }
     }
 

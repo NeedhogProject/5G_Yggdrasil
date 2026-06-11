@@ -334,6 +334,9 @@ public class GameManager : MonoBehaviour
     // 씬 로드 완료 시 스폰 위치 조정 + 자동 저장
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // 어떤 경로로 진입해도 층 번호를 씬 이름 기준으로 동기화
+        SyncFloor(scene.name);
+
         if (scene.name != townSceneName)
         {
             // 던전 씬: 영속 플레이어가 이전 씬 위치를 들고 오므로 시작 지점으로 이동
