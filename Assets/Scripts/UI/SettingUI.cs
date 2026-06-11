@@ -3,6 +3,7 @@
 // 슬라이더 변경 시 AudioManager/AudioListener 에 반영, 라벨과 수치를 별도 텍스트로 표시
 // 탭 모드(부모가 SetActive 토글) 와 팝업 모드(Open/Close) 둘 다 지원
 // 게임 저장 버튼 추가 — SaveSlotPanel 을 열어줌 (마을에서만 활성화)
+// 마을 판단은 CurrentFloor == 0 으로 함 (설정창 열 때 Paused 상태가 되므로 CurrentState 못 씀)
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -88,8 +89,9 @@ public class SettingsUI : MonoBehaviour
     // 게임 저장 버튼 클릭 — 저장 슬롯 패널 열기
     private void OnSaveGameClicked()
     {
-        // 마을에서만 저장 가능
-        if (GameManager.Instance != null && GameManager.Instance.IsInTown == false)
+        // 마을(0층)에서만 저장 가능
+        // 설정창 열 때 일시정지(Paused) 되므로 CurrentState 대신 CurrentFloor 로 판단
+        if (GameManager.Instance != null && GameManager.Instance.CurrentFloor != 0)
         {
             Debug.Log("[SettingsUI] 마을에서만 저장할 수 있습니다.");
             return;
@@ -113,7 +115,8 @@ public class SettingsUI : MonoBehaviour
             return;
         }
 
-        bool isInTown = GameManager.Instance != null && GameManager.Instance.IsInTown;
+        // 마을(0층)에서만 활성화
+        bool isInTown = GameManager.Instance != null && GameManager.Instance.CurrentFloor == 0;
         saveGameButton.interactable = isInTown;
     }
 

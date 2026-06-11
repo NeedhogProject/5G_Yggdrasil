@@ -2,6 +2,7 @@
 // 상인 NPC(벨라) 패널
 // 시작 메뉴(구매/판매/대화) → 구매 화면(우클릭 확인 팝업) / 판매 화면(판매창 스테이징)
 // ESC: 팝업 닫기 -> 메뉴로 돌아가기 -> 상점 완전히 닫기 순서
+// ★버튼 연결을 EnsureSetup 으로 분리 — ShopUI 가 꺼진 채 시작해도 OpenShop 때 보장됨
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -73,6 +74,9 @@ public class ShopSystem : MonoBehaviour
     private bool isOpen = false;
     private ShopTab currentTab = ShopTab.Buy;
 
+    // 버튼 연결이 끝났는지 (중복 연결 방지)
+    private bool _isSetup = false;
+
     private enum ShopTab
     {
         Buy,
@@ -93,6 +97,8 @@ public class ShopSystem : MonoBehaviour
 
     private void Start()
     {
+        EnsureSetup();
+
         shopPanel.SetActive(false);
 
         if (menuPanel != null)
@@ -100,21 +106,41 @@ public class ShopSystem : MonoBehaviour
             menuPanel.SetActive(false);
         }
 
-        buyTabButton.onClick.AddListener(() => SwitchTab(ShopTab.Buy));
-        sellTabButton.onClick.AddListener(() => SwitchTab(ShopTab.Sell));
-        closeButton.onClick.AddListener(CloseShop);
-
         if (buyConfirmPopup != null)
         {
             buyConfirmPopup.SetActive(false);
         }
+    }
+
+    // 버튼 이벤트 연결 (Start 또는 OpenShop 에서 1회 실행)
+    // ShopUI 가 꺼진 채 시작하면 Start 가 안 불리므로 OpenShop 에서도 보장
+    private void EnsureSetup()
+    {
+        if (_isSetup == true)
+        {
+            return;
+        }
+
+        if (buyTabButton != null)
+        {
+            buyTabButton.onClick.AddListener(OnBuyTabClicked);
+        }
+        if (sellTabButton != null)
+        {
+            sellTabButton.onClick.AddListener(OnSellTabClicked);
+        }
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(CloseShop);
+        }
+
         if (quantityUpButton != null)
         {
-            quantityUpButton.onClick.AddListener(() => ChangeBuyQuantity(1));
+            quantityUpButton.onClick.AddListener(OnQuantityUpClicked);
         }
         if (quantityDownButton != null)
         {
-            quantityDownButton.onClick.AddListener(() => ChangeBuyQuantity(-1));
+            quantityDownButton.onClick.AddListener(OnQuantityDownClicked);
         }
         if (confirmBuyButton != null)
         {
@@ -146,10 +172,42 @@ public class ShopSystem : MonoBehaviour
         {
             cancelSellButton.onClick.AddListener(CancelSell);
         }
+
+        _isSetup = true;
+    }
+
+    // 탭 버튼 콜백 (람다 대신 명시 메서드로 — 코드 스타일)
+    private void OnBuyTabClicked()
+    {
+        SwitchTab(ShopTab.Buy);
+    }
+
+    private void OnSellTabClicked()
+    {
+        SwitchTab(ShopTab.Sell);
+    }
+
+    private void OnQuantityUpClicked()
+    {
+        ChangeBuyQuantity(1);
+    }
+
+    private void OnQuantityDownClicked()
+    {
+        ChangeBuyQuantity(-1);
     }
 
     public void OpenShop()
     {
+        // ShopUI(자기 자신) 가 꺼져있으면 먼저 켜기 (안의 ShopPanel 이 보이도록)
+        if (gameObject.activeSelf == false)
+        {
+            gameObject.SetActive(true);
+        }
+
+        // 꺼진 채 시작했을 수 있으니 버튼 연결 보장
+        EnsureSetup();
+
         if (isOpen == true)
         {
             return;
@@ -200,9 +258,10 @@ public class ShopSystem : MonoBehaviour
         {
             inventoryUI.CloseInventory();
         }
-    }
 
-    // 시작 메뉴 보여주기 (구매/판매/대화 선택 화면)
+        // ShopUI(자기 자신) 끄기 — 다음에 OpenShop 때 다시 켜짐
+        gameObject.SetActive(false);
+    }
     private void ShowMenu()
     {
         // 판매창에 담아둔 것 인벤으로 되돌림 (메뉴로 가면 판매 취소)

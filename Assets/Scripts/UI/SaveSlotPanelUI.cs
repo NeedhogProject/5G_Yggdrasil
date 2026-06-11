@@ -33,6 +33,7 @@ public class SaveSlotPanelUI : MonoBehaviour
     [SerializeField] private Button closeButton;
 
     private SaveSlotCardUI[] _slots;
+    private bool _initialized = false;
 
     private void Awake()
     {
@@ -47,6 +48,23 @@ public class SaveSlotPanelUI : MonoBehaviour
 
     private void Start()
     {
+        EnsureInitialized();
+
+        if (panelRoot != null)
+        {
+            panelRoot.SetActive(false);
+        }
+    }
+
+    // 슬롯 배열 초기화 (Start 또는 Open 에서 1회 실행)
+    // 패널이 꺼진 채 시작하면 Start 가 안 불리므로 Open 에서도 보장
+    private void EnsureInitialized()
+    {
+        if (_initialized == true)
+        {
+            return;
+        }
+
         _slots = new SaveSlotCardUI[] { slot0, slot1, slot2 };
 
         // 각 슬롯에 인덱스 할당
@@ -63,15 +81,14 @@ public class SaveSlotPanelUI : MonoBehaviour
             closeButton.onClick.AddListener(Close);
         }
 
-        if (panelRoot != null)
-        {
-            panelRoot.SetActive(false);
-        }
+        _initialized = true;
     }
 
     /// <summary>패널 열기 — 슬롯 정보 갱신 후 표시</summary>
     public void Open()
     {
+        EnsureInitialized();
+
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
@@ -92,6 +109,13 @@ public class SaveSlotPanelUI : MonoBehaviour
     /// <summary>모든 슬롯 카드 정보 갱신</summary>
     public void RefreshAllSlots()
     {
+        EnsureInitialized();
+
+        if (_slots == null)
+        {
+            return;
+        }
+
         for (int i = 0; i < _slots.Length; i++)
         {
             if (_slots[i] != null)
