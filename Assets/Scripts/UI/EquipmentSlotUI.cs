@@ -226,15 +226,34 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void TryUnequip()
     {
+        ItemInstance unequipped = null;
+
         if (slotType == EquipmentType.Weapon)
         {
-            playerEquipment.UnequipWeapon();
+            unequipped = playerEquipment.UnequipWeapon();
         }
         else
         {
             ArmorSlot armorSlot = SlotTypeToArmorSlot(slotType);
-            playerEquipment.UnequipArmorSlot(armorSlot);
+            unequipped = playerEquipment.UnequipArmorSlot(armorSlot);
         }
+
+        if (unequipped == null)
+        {
+            return;
+        }
+
+        // 해제한 장비를 인벤토리로 반환
+        bool added = InventorySystem.Instance != null && InventorySystem.Instance.AddItem(unequipped);
+
+        // 인벤토리가 가득 차면 재장착으로 롤백 (삭제 방지)
+        if (added == false)
+        {
+            Debug.LogWarning("[EquipmentSlotUI] 인벤토리가 가득 차서 해제를 취소했습니다.");
+            playerEquipment.EquipItem(unequipped);
+            return;
+        }
+
         ClearSlot();
     }
 
