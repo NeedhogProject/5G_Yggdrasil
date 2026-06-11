@@ -19,7 +19,7 @@ public class SavedPlayerStats
 public class SavedItemInstance
 {
     public string instanceId;       // 런타임 고유 ID
-    public string itemDataName;     // ScriptableObject 에셋 이름 (Resources 폴더 기준)
+    public string itemDataName;     // ScriptableObject 에셋 이름 (itemDatabase 조회 키)
     public int stackCount;
     public int slotX;
     public int slotY;
@@ -29,7 +29,6 @@ public class SavedItemInstance
 
     // 방어구 전용
     public int    runeSlot1;        // RuneElement 정수값
-    public int    runeSlot2;
 }
 
 /// <summary>전체 세이브 데이터</summary>
@@ -71,7 +70,7 @@ public class SaveData
 /// JSON 파일 기반 세이브 시스템
 ///
 /// [기획 반영]
-/// - 슬롯 5개 (slot_0.json ~ slot_4.json)
+/// - 슬롯 3개 (slot_0.json ~ slot_2.json, SLOT_COUNT)
 /// - 저장 항목: 플레이어 스탯, 인벤토리, 장착 장비, 창고, 층/위치, 강화/각인 상태
 /// - Application.persistentDataPath 에 저장 (플랫폼별 자동 경로)
 ///

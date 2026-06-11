@@ -29,6 +29,9 @@ public class SpawnPoint : MonoBehaviour
              "1개만 등록하면 항상 그 적만 스폰")]
     [SerializeField] private List<EnemySpawnEntry> enemyEntries = new List<EnemySpawnEntry>();
 
+    [Tooltip("이 포인트에서 스폰할 마리 수")]
+    [SerializeField] [Range(1, 20)] private int spawnCount = 1;
+
     [Tooltip("플레이어가 이 거리 안에 들어오면 스폰")]
     [SerializeField] private float activationRange = 8f;
 
@@ -37,11 +40,16 @@ public class SpawnPoint : MonoBehaviour
 
     // ─────────────────────── 상태 ───────────────────────
 
-    /// <summary>이미 스폰됐는지 (한 번만 스폰)</summary>
-    public bool HasSpawned { get; private set; } = false;
+    /// <summary>지금까지 스폰한 마리 수</summary>
+    public int SpawnedCount { get; private set; } = 0;
 
-    /// <summary>스폰된 적 오브젝트</summary>
+    /// <summary>이 포인트의 스폰이 모두 끝났는지</summary>
+    public bool HasSpawned => SpawnedCount >= spawnCount;
+
+    /// <summary>마지막으로 스폰된 적 오브젝트</summary>
     public GameObject SpawnedEnemy { get; private set; }
+
+    public int SpawnCount => spawnCount;
 
     public float ActivationRange   => activationRange;
     public float SpawnSpreadRadius => spawnSpreadRadius;
@@ -75,10 +83,17 @@ public class SpawnPoint : MonoBehaviour
         return enemyEntries[enemyEntries.Count - 1].prefab;
     }
 
-    /// <summary>스폰 완료 처리 (EnemySpawner 에서 호출)</summary>
+    /// <summary>스폰 1마리 완료 처리 (EnemySpawner 에서 호출)</summary>
     public void MarkSpawned(GameObject _enemy)
     {
-        HasSpawned  = true;
+        // 프리팹이 없는 포인트는 재시도하지 않도록 전부 소진 처리
+        if (_enemy == null)
+        {
+            SpawnedCount = spawnCount;
+            return;
+        }
+
+        SpawnedCount++;
         SpawnedEnemy = _enemy;
     }
 

@@ -38,8 +38,8 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private int _gold = 0;
 
     [Header("물약 회복량")]
-    [SerializeField] private float healthPotionAmount = 30f;
-    [SerializeField] private float mentalPotionAmount = 25f;
+    [SerializeField] private float healthPotionAmount = 30f;   // 최대 체력 대비 %
+    [SerializeField] private float mentalPotionAmount = 25f;   // 절대값
 
     // ── 상수 ──────────────────────────────────────
     private const float MIN_STAT = 0f;

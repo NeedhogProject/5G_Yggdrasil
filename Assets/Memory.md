@@ -262,12 +262,44 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
   - 영속 플레이어는 이전 씬 위치를 들고 오므로 씬마다 스폰 지점 필수
 - 주의: 각 씬에 Player/Inventory_Canvas/ResourceInventory 를 **루트 오브젝트로** 배치 유지 (중복 진입 시 싱글턴 가드가 자기 파괴)
 
-## 세이브/로드 아이템 복원 — 완료 (리포 반영 버전)
-- ItemDataRegistry 싱글턴으로 에셋 이름 → ItemData 조회 (씬 배치 필요)
-- DeserializeItem: Weapon(강화: TryEnhance(true) 루프)/Armor(SetRune 1·2)/일반 + 스택 복원
-- RestoreInventory(기존 비우고 AddItem 순서 배치) / RestoreEquipment(EquipItem) / RestoreStorage(HouseSystem.LoadStorage)
+## 세이브/로드 아이템 복원 — 완료 (리포 반영 버전, 2026-06-11 코드 기준 갱신)
+- 아이템 조회: SaveSystem.itemDatabase(List<ItemData>) + FindItemData
+  - 에디터 ContextMenu '아이템 데이터베이스 자동 수집' (Assets/ScriptableObjects 에서 t:ItemData 검색)
+  - 새 ItemData 에셋 추가 시 재수집 필수 (안 하면 복원 시 경고 로그와 함께 누락)
+  - 이전 기록의 ItemDataRegistry 싱글턴 방식은 현재 리포에 없음 (itemDatabase 방식으로 확정)
+- DeserializeItem: Weapon(RestoreEnhancementLevel)/Armor(SetRune 단일 — None 이면 생략)/일반 + 스택 복원
+- 복원 순서: ClearInventory 후 AddItem 순서 배치 / 장비 EquipItem / 창고 AddToStorage
 - SaveData.saveName + Save(슬롯, 이름) 오버로드 + RenameSave — 저장 슬롯 UI(SaveSlotPanelUI/SaveSlotCardUI, 김보민) 연동 완료
+- SLOT_COUNT = 3 (slot_0.json ~ slot_2.json)
 - 한계: 슬롯 위치(slotX/Y)는 무시하고 저장 순서대로 빈 칸 자동 배치
+- 한계: playerX/Y/Z 는 저장만 하고 복원은 스폰 지점(MovePlayerToSpawn) 방식
+- GameManager.DestroyPersistentPlayerObjects 리포 반영 확인 (StartNewGame/ContinueGame/GoToTitle, DestroyImmediate) — 미해결 항목 해소
+- 정리 예정(코드): SavedItemInstance.runeSlot2 죽은 필드 삭제 + 헤더 '슬롯 5개' 주석, itemDataName 'Resources 폴더 기준' 주석 교정
+
+## 스폰 포인트당 다중 스폰 기능 (2026-06-11)
+- 기존: 포인트당 1마리 고정 (의도된 설계 — 마릿수는 포인트 개수로 조절하는 구조였음)
+- SpawnPoint.spawnCount 필드 추가 (기본 1, 기존 씬 무변경 동작)
+  - HasSpawned 를 카운터 기반(SpawnedCount >= spawnCount)으로 변경, 이름/시그니처 유지로 참조처 무수정
+  - MarkSpawned(null) 은 전부 소진 처리 (프리팹 없는 포인트 재시도 방지, 기존 동작 유지)
+- EnemySpawner.SpawnEnemy: 발동 시 남은 수를 한 번에 전부 스폰 (마리마다 프리팹 가중치 재선택)
+  - maxSpawnCount 도달 시 중단, 다음 체크에서 이어서 스폰 (카운터 기반이라 자동)
+  - 열쇠 포인트는 첫 마리만 열쇠 소유 후보 (포인트당 열쇠 1개 규칙 유지)
+- 에디터 참고: 다수 스폰 포인트는 spawnSpreadRadius 3~4 권장 (겹침 방지)
+- 권장 교정: DungeonDifficultyScaler.totalSpawnCount 툴팁을 'spawnCount 합과 일치'로
+
+## 물약 회복 방식 수정 (2026-06-11)
+- 체력 물약: 절대값 -> 최대 체력 대비 % 회복 (장비로 최대치가 늘어도 비율 유지)
+  - ConsumableData.effectAmount 기본값 30 유지 (최대 체력 100 기준이면 기존과 동일)
+- 정신력 물약: 절대값 유지 (결정 사항 — effectAmount 가 정신력 물약에서는 포인트 의미)
+- 만피 판정 하드코딩 수정: Health >= 100f 를 stats.MaxHealth 기준으로, Mental 도 MaxMental 기준으로
+  - 기존엔 최대 체력이 100 초과 시 체력 100 이상이면 물약 사용 불가였음 (실질 차단 버그)
+- 우클릭 사용 경로 연결: InventorySystem.UseItem 의 Consumable 분기가 미구현 ItemData.UseItem() 을 호출하고
+  무조건 제거하던 것을 ConsumableData.TryUse(PlayerStats.Instance) 성공 시에만 제거하도록 수정
+  - 초기화 주문서(ResetScroll)는 우클릭 사용 차단 (각인술사 NPC 전용 — 기존엔 우클릭 시 효과 없이 소모됨)
+- PlayerStats.UseHealthPotion (healthPotionAmount) 도 % 해석으로 통일, UseMentalPotion 은 절대값 유지
+  (현재 ContextMenu 테스트 외 호출처 미확인 — 의미만 맞춰 둠)
+- 남은 한계 (이번 범위 제외): 스택 물약은 1개 사용 시 슬롯 전체 제거 (현재 AddItem 이 스택 병합을 안 해서 실사용 영향 적음),
+  우클릭 사용이 ItemData 기준 제거라 동일 물약 여러 슬롯 시 다른 슬롯이 제거될 수 있음
 
 ## 인벤토리 멀티셀 오버레이 (방식 A) — 완료
 - 문제였던 것: 멀티셀 아이콘이 보조 칸 배경 뒤로 깔려 내부 격자선이 비침 (GridLayoutGroup 렌더 순서)

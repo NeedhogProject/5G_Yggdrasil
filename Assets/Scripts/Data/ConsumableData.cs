@@ -35,7 +35,7 @@ public class ConsumableData : ItemData
     [SerializeField] private ConsumableType consumableType = ConsumableType.HealthPotion;
 
     [Header("즉시 효과량")]
-    [Tooltip("체력/정신력 물약: 회복량. 초기화 주문서: 사용 안 함 (0으로 두면 됨)")]
+    [Tooltip("체력 물약: 최대 체력 대비 회복 %. 정신력 물약: 회복량(절대값). 초기화 주문서: 사용 안 함 (0으로 두면 됨)")]
     [SerializeField] [Range(0f, 100f)] private float effectAmount = 30f;
 
     [Header("사용 조건 메시지 (UI 표시용)")]
@@ -91,14 +91,15 @@ public class ConsumableData : ItemData
 
     private bool TryUseHealthPotion(PlayerStats stats)
     {
-        if (stats.Health >= 100f) return false;
-        stats.ModifyHealth(effectAmount);
+        if (stats.Health >= stats.MaxHealth) return false;
+        // 최대 체력 대비 % 회복 (장비로 최대치가 늘어도 비율 유지)
+        stats.ModifyHealth(stats.MaxHealth * (effectAmount / 100f));
         return true;
     }
 
     private bool TryUseMentalPotion(PlayerStats stats)
     {
-        if (stats.Mental >= 100f) return false;
+        if (stats.Mental >= stats.MaxMental) return false;
         stats.ModifyMental(effectAmount);
         return true;
     }
