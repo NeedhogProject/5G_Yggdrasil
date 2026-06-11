@@ -82,8 +82,13 @@ public class InventoryUI : MonoBehaviour
     {
         if (Keyboard.current.iKey.wasPressedThisFrame)
         {
+            // 설정창이 열려있으면 인벤토리 토글 막음
+            if (PauseMenuManager.Instance != null && PauseMenuManager.Instance.IsSettingOpen == true)
+            {
+                // 아무것도 안 함
+            }
             // 창고/상점과 같이 열린 상태면 I 로 닫지 않음
-            if (isOpen == true && _openedBeside == true)
+            else if (isOpen == true && _openedBeside == true)
             {
                 // 아무것도 안 함
             }

@@ -16,18 +16,19 @@ using System.Collections.Generic;
 /// - 아무 창도 없으면 ESC 로 설정창 열기
 /// - 설정창이 떠있으면 ESC 로 설정창 닫기
 ///
-/// [감시 창 탐지]
-/// - 드래그 연결 대신 오브젝트 이름으로 자동 탐지 (씬 전환에도 작동)
-/// - ESC 누른 순간에만 검사하므로 성능 부담 없음
+/// [타이밍 처리]
+/// - 인벤/창고는 자기 Update 에서 ESC 로 닫히므로, PauseMenuManager 가 검사할 땐
+///   이미 꺼져있어서 못 잡는 문제가 있음
+/// - 그래서 매 프레임 감시 창 상태를 기록해두고, ESC 누른 순간
+///   "이번 프레임 또는 직전 프레임에 창이 켜져있었으면" 설정창을 안 엶
 ///
 /// [실행 순서]
-/// - Script Execution Order 를 뒤로 미뤄 각 창의 ESC 처리가 먼저 일어나게 함
-///   (인스펙터에서 직접 설정하거나 아래 DefaultExecutionOrder 속성 사용)
+/// - [DefaultExecutionOrder(1000)] 로 늦게 실행 (각 창 ESC 먼저 처리)
 ///
 /// [씬 설정]
 /// Title 씬에 빈 오브젝트 만들고 부착 (DontDestroyOnLoad 로 유지)
 /// settingPanel = KeySettingPanel 연결
-/// watchedPanelNames 에 감시할 창들의 오브젝트 이름 등록
+/// watchedPanelNames 에 감시할 창들의 오브젝트 이름 등록 (실제 토글되는 패널 이름)
 /// </summary>
 [DefaultExecutionOrder(1000)]
 public class PauseMenuManager : MonoBehaviour
@@ -42,13 +43,29 @@ public class PauseMenuManager : MonoBehaviour
     [SerializeField]
     private List<string> watchedPanelNames = new List<string>
     {
-        "Inventory_Canvas",
+        "InventoryPanel",
         "ShopMenuPanel",
         "ShopUI",
         "StoragePanel",
-        "StorageUI",
         "SaveSlotPanel"
     };
+
+    // 직전 프레임에 감시 창이 켜져있었는지 기록
+    private bool _watchedOpenLastFrame = false;
+
+    /// <summary>설정창이 열려있는지 (인벤/창고/상점 입력 차단 판단용)</summary>
+    public bool IsSettingOpen
+    {
+        get
+        {
+            if (settingPanel == null)
+            {
+                return false;
+            }
+
+            return settingPanel.activeSelf;
+        }
+    }
 
     private void Awake()
     {
@@ -64,47 +81,48 @@ public class PauseMenuManager : MonoBehaviour
 
     private void Update()
     {
-        // 키보드가 없으면 무시
+        // 키보드가 없으면 이번 프레임 상태만 기록하고 종료
         if (Keyboard.current == null)
         {
+            _watchedOpenLastFrame = false;
             return;
         }
 
-        if (Keyboard.current.escapeKey.wasPressedThisFrame == false)
+        // ESC 가 눌렸으면 먼저 판단 (이번 프레임 + 직전 프레임 상태 모두 고려)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == true)
         {
-            return;
+            HandleEscape();
         }
 
-        HandleEscape();
+        // 이번 프레임의 감시 창 상태를 다음 프레임을 위해 기록
+        _watchedOpenLastFrame = IsAnyWatchedPanelOpen();
     }
 
     // ESC 입력 처리
     private void HandleEscape()
     {
-        Debug.Log("[PauseMenuManager] ESC 감지됨");
-
         if (settingPanel == null)
         {
-            Debug.LogWarning("[PauseMenuManager] settingPanel 이 null - 연결 끊김");
             return;
         }
 
         // 설정창이 이미 열려있으면 닫기
         if (settingPanel.activeSelf == true)
         {
-            Debug.Log("[PauseMenuManager] 설정창 열려있음 - 닫기");
             CloseSetting();
             return;
         }
 
-        // 다른 창이 열려있으면 ESC 무시 (그 창이 자기 ESC 처리)
-        if (IsAnyWatchedPanelOpen() == true)
+        // 이번 프레임 또는 직전 프레임에 다른 창이 켜져있었으면 설정창 안 엶
+        // (인벤/창고가 이번 프레임에 ESC 로 막 닫혔어도, 직전 프레임엔 켜져있었음)
+        bool watchedNow = IsAnyWatchedPanelOpen();
+
+        if (watchedNow == true || _watchedOpenLastFrame == true)
         {
             return;
         }
 
-        // 아무것도 안 열려있으면 설정창 열기
-        Debug.Log("[PauseMenuManager] 설정창 열기");
+        // 아무 창도 없었으면 설정창 열기
         OpenSetting();
     }
 
@@ -122,7 +140,6 @@ public class PauseMenuManager : MonoBehaviour
 
             if (IsPanelActiveByName(panelName) == true)
             {
-                Debug.Log("[PauseMenuManager] 감시 창 열림 감지: " + panelName + " → ESC 무시");
                 return true;
             }
         }
@@ -131,7 +148,7 @@ public class PauseMenuManager : MonoBehaviour
     }
 
     // 이름이 일치하면서 화면에 실제 보이는(activeInHierarchy) 오브젝트가 있는지
-    // FindObjectsInactive.Include 로 비활성 포함 전체 탐색 후 활성 여부 확인
+    // 비활성 포함 전체 탐색 후 활성 여부 확인
     private bool IsPanelActiveByName(string panelName)
     {
         Transform[] allTransforms = Resources.FindObjectsOfTypeAll<Transform>();

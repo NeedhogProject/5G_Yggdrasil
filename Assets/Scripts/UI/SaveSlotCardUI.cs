@@ -31,6 +31,7 @@ public class SaveSlotCardUI : MonoBehaviour
     [SerializeField] private Button saveButton;          // 저장(덮어쓰기)
     [SerializeField] private Button renameButton;        // 이름 변경
     [SerializeField] private Button deleteButton;        // 삭제
+    [SerializeField] private Button loadButton;          // 불러오기 (불러오기 모드 전용)
 
     [Header("이름 편집 영역 (평소엔 숨김)")]
     [SerializeField] private GameObject editArea;        // 편집 영역 루트
@@ -52,6 +53,7 @@ public class SaveSlotCardUI : MonoBehaviour
         if (saveButton != null) { saveButton.onClick.AddListener(OnSaveClicked); }
         if (renameButton != null) { renameButton.onClick.AddListener(OnRenameClicked); }
         if (deleteButton != null) { deleteButton.onClick.AddListener(OnDeleteClicked); }
+        if (loadButton != null) { loadButton.onClick.AddListener(OnLoadClicked); }
         if (confirmButton != null) { confirmButton.onClick.AddListener(OnConfirmClicked); }
         if (cancelButton != null) { cancelButton.onClick.AddListener(OnCancelClicked); }
 
@@ -114,6 +116,12 @@ public class SaveSlotCardUI : MonoBehaviour
         _panel.DeleteSlot(_slotIndex);
     }
 
+    // 불러오기 버튼 — 이 슬롯을 불러오기
+    private void OnLoadClicked()
+    {
+        _panel.LoadSlot(_slotIndex);
+    }
+
     // 편집 모드 시작
     private void StartEditMode(string initialName)
     {
@@ -148,16 +156,35 @@ public class SaveSlotCardUI : MonoBehaviour
     // 편집 모드 전환
     private void SetEditMode(bool editing)
     {
-        if (editArea != null) { editArea.SetActive(editing); }
-        if (saveButton != null) { saveButton.gameObject.SetActive(editing == false); }
-        if (renameButton != null) { renameButton.gameObject.SetActive(editing == false); }
-        if (deleteButton != null) { deleteButton.gameObject.SetActive(editing == false); }
-
-        // 편집 모드 진입 시 InputField 포커스
-        if (editing == true && nameInput != null)
+        if (editArea != null)
         {
-            nameInput.Select();
-            nameInput.ActivateInputField();
+            editArea.SetActive(editing);
         }
+
+        // 편집 중이면 모든 일반 버튼 숨김
+        if (editing == true)
+        {
+            if (saveButton != null) { saveButton.gameObject.SetActive(false); }
+            if (renameButton != null) { renameButton.gameObject.SetActive(false); }
+            if (deleteButton != null) { deleteButton.gameObject.SetActive(false); }
+            if (loadButton != null) { loadButton.gameObject.SetActive(false); }
+
+            // 편집 모드 진입 시 InputField 포커스
+            if (nameInput != null)
+            {
+                nameInput.Select();
+                nameInput.ActivateInputField();
+            }
+            return;
+        }
+
+        // 편집 아님: 모드에 따라 버튼 표시
+        // 불러오기 모드면 불러오기 버튼만, 저장 모드면 저장/이름변경/삭제
+        bool loadMode = _panel != null && _panel.IsLoadMode == true;
+
+        if (loadButton != null) { loadButton.gameObject.SetActive(loadMode == true); }
+        if (saveButton != null) { saveButton.gameObject.SetActive(loadMode == false); }
+        if (renameButton != null) { renameButton.gameObject.SetActive(loadMode == false); }
+        if (deleteButton != null) { deleteButton.gameObject.SetActive(loadMode == false); }
     }
 }

@@ -26,7 +26,6 @@ MonoBehaviour:
   _isStackable: 0
   _maxStack: 1
   armorSlot: 3
-  defenseBonus: 2.8
+  defenseBonus: 56
   maxHealthBonus: 54
   runeSlot1: -1
-  runeSlot2: -1

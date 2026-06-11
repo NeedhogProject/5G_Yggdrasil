@@ -8,6 +8,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections.Generic;
 
@@ -48,6 +49,15 @@ public class SaveSlotPanelUI : MonoBehaviour
     private List<SaveSlotCardUI> _cards = new List<SaveSlotCardUI>();
     private bool _initialized = false;
 
+    // 불러오기 모드 여부 (true 면 카드 클릭 시 해당 슬롯 불러오기)
+    private bool _isLoadMode = false;
+
+    /// <summary>현재 불러오기 모드인지 (카드에서 확인용)</summary>
+    public bool IsLoadMode
+    {
+        get { return _isLoadMode; }
+    }
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -66,6 +76,30 @@ public class SaveSlotPanelUI : MonoBehaviour
         if (panelRoot != null)
         {
             panelRoot.SetActive(false);
+        }
+    }
+
+    private void Update()
+    {
+        // 저장 슬롯 창이 열려있을 때 ESC 누르면 닫기 (설정창으로 복귀)
+        if (panelRoot == null)
+        {
+            return;
+        }
+
+        if (panelRoot.activeSelf == false)
+        {
+            return;
+        }
+
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == true)
+        {
+            Close();
         }
     }
 
@@ -91,14 +125,34 @@ public class SaveSlotPanelUI : MonoBehaviour
         _initialized = true;
     }
 
-    /// <summary>패널 열기 — 저장된 슬롯 스캔 후 카드 생성</summary>
+    /// <summary>패널 열기 (저장 모드) — 저장된 슬롯 스캔 후 카드 생성</summary>
     public void Open()
+    {
+        _isLoadMode = false;
+        OpenInternal();
+    }
+
+    /// <summary>패널 열기 (불러오기 모드) — 카드 클릭 시 그 슬롯 불러오기</summary>
+    public void OpenForLoad()
+    {
+        _isLoadMode = true;
+        OpenInternal();
+    }
+
+    // 실제 열기 처리 (공통)
+    private void OpenInternal()
     {
         EnsureInitialized();
 
         if (panelRoot != null)
         {
             panelRoot.SetActive(true);
+        }
+
+        // 불러오기 모드면 "새 저장" 버튼 숨기기
+        if (newSaveButton != null)
+        {
+            newSaveButton.gameObject.SetActive(_isLoadMode == false);
         }
 
         RebuildCards();
@@ -251,6 +305,28 @@ public class SaveSlotPanelUI : MonoBehaviour
 
         SaveSystem.Instance.DeleteSave(slotIndex);
         RebuildCards();
+    }
+
+    /// <summary>슬롯 불러오기 — 불러오기 모드에서 카드 클릭 시 호출</summary>
+    public void LoadSlot(int slotIndex)
+    {
+        if (SaveSystem.Instance == null)
+        {
+            return;
+        }
+
+        if (SaveSystem.Instance.HasSave(slotIndex) == false)
+        {
+            return;
+        }
+
+        // 패널 닫고 게임 불러오기
+        Close();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ContinueGame(slotIndex);
+        }
     }
 
     // 안내 메시지 표시

@@ -230,7 +230,7 @@ public class InventorySystem : MonoBehaviour
         float spaceY = grid.spacing.y;
 
         // 차지하는 전체 픽셀 크기 = 셀 크기 × 칸수 + 사이 간격
-        float width  = cellW * size.x + spaceX * (size.x - 1);
+        float width = cellW * size.x + spaceX * (size.x - 1);
         float height = cellH * size.y + spaceY * (size.y - 1);
 
         RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
@@ -246,7 +246,7 @@ public class InventorySystem : MonoBehaviour
 
             iconRect.anchorMin = new Vector2(0f, 1f);
             iconRect.anchorMax = new Vector2(0f, 1f);
-            iconRect.pivot     = new Vector2(0f, 1f);
+            iconRect.pivot = new Vector2(0f, 1f);
             iconRect.sizeDelta = new Vector2(width, height);
 
             // 주인 칸의 월드 좌상단 모서리에 아이콘 좌상단을 맞춤 (레이아웃 패딩/정렬과 무관하게 정확)
@@ -259,7 +259,7 @@ public class InventorySystem : MonoBehaviour
         // 오버레이 미지정 시: 기존 방식 (주인 칸 자식으로 확장 — 멀티셀은 격자선 비칠 수 있음)
         iconRect.anchorMin = new Vector2(0f, 1f);
         iconRect.anchorMax = new Vector2(0f, 1f);
-        iconRect.pivot     = new Vector2(0f, 1f);
+        iconRect.pivot = new Vector2(0f, 1f);
         iconRect.anchoredPosition = Vector2.zero;
         iconRect.sizeDelta = new Vector2(width, height);
     }
@@ -561,7 +561,7 @@ public class InventorySystem : MonoBehaviour
         // 슬롯을 꽉 채우는 기본 형태로 복원 (stretch)
         iconRect.anchorMin = Vector2.zero;
         iconRect.anchorMax = Vector2.one;
-        iconRect.pivot     = new Vector2(0.5f, 0.5f);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
         iconRect.anchoredPosition = Vector2.zero;
         iconRect.sizeDelta = Vector2.zero;
     }
@@ -803,5 +803,71 @@ public class InventorySystem : MonoBehaviour
     public List<ItemInstance> GetAllInstances()
     {
         return _itemInstances;
+    }
+
+    /// <summary>
+    /// 슬롯에 실제 배치된 모든 아이템을 인스턴스로 반환 (저장용)
+    /// 데이터 전용으로 추가된 아이템(_itemInstances 에 없는 것)도
+    /// 임시 인스턴스로 변환해서 포함시킴
+    /// </summary>
+    public List<ItemInstance> GetAllItemsForSave()
+    {
+        List<ItemInstance> result = new List<ItemInstance>();
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            InventorySlot slot = slots[i];
+
+            // 주인 슬롯만 (보조 칸 제외)
+            if (slot == null)
+            {
+                continue;
+            }
+            if (slot.IsOwner == false)
+            {
+                continue;
+            }
+            if (slot.currentItem == null)
+            {
+                continue;
+            }
+
+            // 슬롯에 인스턴스가 이미 있으면 그걸 사용
+            ItemInstance instance = slot.CurrentInstance;
+
+            // 인스턴스가 없으면(데이터 전용) 임시 인스턴스 생성
+            if (instance == null)
+            {
+                instance = CreateInstanceFromData(slot.currentItem);
+            }
+
+            if (instance != null)
+            {
+                result.Add(instance);
+            }
+        }
+
+        return result;
+    }
+
+    // ItemData 로부터 적절한 ItemInstance 생성 (저장용 임시 변환)
+    private ItemInstance CreateInstanceFromData(ItemData data)
+    {
+        if (data == null)
+        {
+            return null;
+        }
+
+        if (data is WeaponData weaponData)
+        {
+            return new WeaponInstance(weaponData);
+        }
+
+        if (data is ArmorData armorData)
+        {
+            return new ArmorInstance(armorData);
+        }
+
+        return new ItemInstance(data);
     }
 }

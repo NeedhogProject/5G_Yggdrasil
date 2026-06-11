@@ -44,6 +44,9 @@ public class SettingsUI : MonoBehaviour
     [SerializeField] private Button saveGameButton;
     [SerializeField] private SaveSlotPanelUI saveSlotPanel;
 
+    [Header("타이틀로 나가기 버튼")]
+    [SerializeField] private Button exitToTitleButton;
+
     private bool isOpen = false;
 
     private void Start()
@@ -84,6 +87,43 @@ public class SettingsUI : MonoBehaviour
         {
             saveGameButton.onClick.AddListener(OnSaveGameClicked);
         }
+
+        // 타이틀로 나가기 버튼
+        if (exitToTitleButton != null)
+        {
+            exitToTitleButton.onClick.AddListener(OnExitToTitleClicked);
+        }
+    }
+
+    // 타이틀로 나가기 버튼 클릭
+    // 타이틀 화면이면 게임 종료, 게임 중이면 타이틀로 이동
+    private void OnExitToTitleClicked()
+    {
+        // 일시정지 상태였으면 시간 복구 (씬 넘어가기 전)
+        Time.timeScale = 1f;
+
+        // 이미 타이틀 화면이면 게임 종료
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Title)
+        {
+            QuitGame();
+            return;
+        }
+
+        // 게임 중이면 타이틀로 이동
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.GoToTitle();
+        }
+    }
+
+    // 게임 종료 (에디터에서는 플레이 정지, 빌드에서는 앱 종료)
+    private void QuitGame()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     // 게임 저장 버튼 클릭 — 저장 슬롯 패널 열기
