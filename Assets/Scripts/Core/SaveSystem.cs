@@ -96,7 +96,7 @@ public class SaveSystem : MonoBehaviour
 
     // ─────────────────────── 설정 ───────────────────────
 
-    public const int SLOT_COUNT = 3;
+    public const int SLOT_COUNT = 5;
     private const string SAVE_FILE_PREFIX = "slot_";
     private const string SAVE_FILE_EXT    = ".json";
 

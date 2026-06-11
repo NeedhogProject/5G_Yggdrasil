@@ -93,13 +93,15 @@ public class ShopSystem : MonoBehaviour
     private void Awake()
     {
         Instance = this;
-    }
 
-    private void Start()
-    {
+        // 버튼 연결을 먼저 해두고 (Awake 는 활성 상태에서 불림)
         EnsureSetup();
 
-        shopPanel.SetActive(false);
+        // 내부 패널들 초기 상태로 꺼두기
+        if (shopPanel != null)
+        {
+            shopPanel.SetActive(false);
+        }
 
         if (menuPanel != null)
         {
@@ -110,6 +112,10 @@ public class ShopSystem : MonoBehaviour
         {
             buyConfirmPopup.SetActive(false);
         }
+
+        // 시작 시 ShopUI(자기 자신) 꺼두기
+        // 벨라에게 E 누르면 OpenShop 에서 다시 켜짐
+        gameObject.SetActive(false);
     }
 
     // 버튼 이벤트 연결 (Start 또는 OpenShop 에서 1회 실행)

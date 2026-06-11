@@ -120,13 +120,39 @@ public class PauseMenuManager : MonoBehaviour
                 continue;
             }
 
-            GameObject panel = GameObject.Find(panelName);
-
-            // GameObject.Find 는 비활성 오브젝트를 못 찾으므로
-            // 찾아졌다는 것 자체가 활성 상태라는 뜻
-            if (panel != null && panel.activeInHierarchy == true)
+            if (IsPanelActiveByName(panelName) == true)
             {
                 Debug.Log("[PauseMenuManager] 감시 창 열림 감지: " + panelName + " → ESC 무시");
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // 이름이 일치하면서 화면에 실제 보이는(activeInHierarchy) 오브젝트가 있는지
+    // FindObjectsInactive.Include 로 비활성 포함 전체 탐색 후 활성 여부 확인
+    private bool IsPanelActiveByName(string panelName)
+    {
+        Transform[] allTransforms = Resources.FindObjectsOfTypeAll<Transform>();
+
+        for (int i = 0; i < allTransforms.Length; i++)
+        {
+            Transform t = allTransforms[i];
+
+            if (t.name != panelName)
+            {
+                continue;
+            }
+
+            // 씬에 실제 배치된 오브젝트만 (프리팹 에셋 제외)
+            if (t.gameObject.scene.IsValid() == false)
+            {
+                continue;
+            }
+
+            if (t.gameObject.activeInHierarchy == true)
+            {
                 return true;
             }
         }
