@@ -37,8 +37,6 @@ public class StorageUI : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("[StorageUI] Awake 실행됨!");   // 임시
-
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -129,6 +127,12 @@ public class StorageUI : MonoBehaviour
     // 창고 열기
     public void OpenStorage()
     {
+        // 설정창이 열려있으면 창고 열지 않음
+        if (PauseMenuManager.Instance != null && PauseMenuManager.Instance.IsSettingOpen == true)
+        {
+            return;
+        }
+
         InitializeSlots();
         RefreshSlots();
 

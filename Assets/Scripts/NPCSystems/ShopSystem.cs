@@ -205,6 +205,12 @@ public class ShopSystem : MonoBehaviour
 
     public void OpenShop()
     {
+        // 설정창이 열려있으면 상점 열지 않음
+        if (PauseMenuManager.Instance != null && PauseMenuManager.Instance.IsSettingOpen == true)
+        {
+            return;
+        }
+
         // ShopUI(자기 자신) 가 꺼져있으면 먼저 켜기 (안의 ShopPanel 이 보이도록)
         if (gameObject.activeSelf == false)
         {

@@ -20,16 +20,16 @@ public class SavedItemInstance
 {
     public string instanceId;       // 런타임 고유 ID
     public string itemDataName;     // ScriptableObject 에셋 이름 (Resources 폴더 기준)
-    public int    stackCount;
-    public int    slotX;
-    public int    slotY;
+    public int stackCount;
+    public int slotX;
+    public int slotY;
 
     // 무기 전용
-    public int    enhancementLevel;
+    public int enhancementLevel;
 
     // 방어구 전용
-    public int    runeSlot1;        // RuneElement 정수값
-    public int    runeSlot2;
+    public int runeSlot1;        // RuneElement 정수값
+    public int runeSlot2;
 }
 
 /// <summary>전체 세이브 데이터</summary>
@@ -37,16 +37,16 @@ public class SavedItemInstance
 public class SaveData
 {
     [Header("메타 정보")]
-    public int    slotIndex;
+    public int slotIndex;
     public string saveName;         // 저장 이름 (슬롯 UI 표시용)
     public string saveDateTime;     // 저장 일시 (표시용)
-    public float  playTime;         // 총 플레이 시간 (초)
+    public float playTime;         // 총 플레이 시간 (초)
 
     [Header("위치/층")]
-    public int    currentFloor;
-    public float  playerX;
-    public float  playerY;
-    public float  playerZ;
+    public int currentFloor;
+    public float playerX;
+    public float playerY;
+    public float playerZ;
 
     [Header("플레이어 스탯")]
     public SavedPlayerStats playerStats;
@@ -71,7 +71,7 @@ public class SaveData
 /// JSON 파일 기반 세이브 시스템
 ///
 /// [기획 반영]
-/// - 슬롯 3개 (slot_0.json ~ slot_2.json)
+/// - 슬롯 5개 (slot_0.json ~ slot_4.json)
 /// - 저장 항목: 플레이어 스탯, 인벤토리, 장착 장비, 창고, 층/위치, 강화/각인 상태
 /// - Application.persistentDataPath 에 저장 (플랫폼별 자동 경로)
 ///
@@ -98,7 +98,7 @@ public class SaveSystem : MonoBehaviour
 
     public const int SLOT_COUNT = 5;
     private const string SAVE_FILE_PREFIX = "slot_";
-    private const string SAVE_FILE_EXT    = ".json";
+    private const string SAVE_FILE_EXT = ".json";
 
     /// <summary>저장 파일 경로 반환</summary>
     private string GetSavePath(int slotIndex) =>
@@ -108,9 +108,9 @@ public class SaveSystem : MonoBehaviour
     // ─────────────────────── 참조 ───────────────────────
 
     [Header("참조 (씬 로드 후 자동 탐색)")]
-    [SerializeField] private PlayerStats     playerStats;
+    [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerEquipment playerEquipment;
-    [SerializeField] private HouseSystem     houseSystem;
+    [SerializeField] private HouseSystem houseSystem;
     [SerializeField] private InventorySystem inventorySystem;
 
     [Header("아이템 데이터베이스 (복원용)")]
@@ -148,10 +148,10 @@ public class SaveSystem : MonoBehaviour
 
         SaveData data = new SaveData
         {
-            slotIndex    = slotIndex,
-            saveName     = saveName,
+            slotIndex = slotIndex,
+            saveName = saveName,
             saveDateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
-            playTime     = _playTime,
+            playTime = _playTime,
             currentFloor = GameManager.Instance?.CurrentFloor ?? 0
         };
 
@@ -169,21 +169,21 @@ public class SaveSystem : MonoBehaviour
         {
             data.playerStats = new SavedPlayerStats
             {
-                health            = playerStats.Health,
-                baseDefense       = playerStats.BaseDefense,
-                equipmentDefense  = playerStats.EquipmentDefense,
-                mental            = playerStats.Mental
+                health = playerStats.Health,
+                baseDefense = playerStats.BaseDefense,
+                equipmentDefense = playerStats.EquipmentDefense,
+                mental = playerStats.Mental
             };
         }
 
         // 장착 장비
         if (playerEquipment != null)
         {
-            data.equippedWeapon  = SerializeItem(playerEquipment.EquippedWeapon);
-            data.equippedHelmet  = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Helmet));
-            data.equippedChest   = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Chest));
-            data.equippedLegs    = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Legs));
-            data.equippedBoots   = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Boots));
+            data.equippedWeapon = SerializeItem(playerEquipment.EquippedWeapon);
+            data.equippedHelmet = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Helmet));
+            data.equippedChest = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Chest));
+            data.equippedLegs = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Legs));
+            data.equippedBoots = SerializeItem(playerEquipment.GetArmor(ArmorSlot.Boots));
         }
 
         // 창고
@@ -199,7 +199,8 @@ public class SaveSystem : MonoBehaviour
 
         if (inventorySystem == null == false)
         {
-            List<ItemInstance> allInstances = inventorySystem.GetAllInstances();
+            // 슬롯에 실제 배치된 모든 아이템을 가져옴 (데이터 전용 아이템도 포함)
+            List<ItemInstance> allInstances = inventorySystem.GetAllItemsForSave();
             for (int i = 0; i < allInstances.Count; i++)
             {
                 data.inventoryItems.Add(SerializeItem(allInstances[i]));
@@ -236,7 +237,7 @@ public class SaveSystem : MonoBehaviour
 
         try
         {
-            string   json = File.ReadAllText(GetSavePath(slotIndex));
+            string json = File.ReadAllText(GetSavePath(slotIndex));
             SaveData data = JsonUtility.FromJson<SaveData>(json);
 
             RefreshReferences();
@@ -258,12 +259,12 @@ public class SaveSystem : MonoBehaviour
         // 플레이어 스탯 복원
         if (playerStats != null && data.playerStats != null)
         {
-            float healthDiff  = data.playerStats.health  - playerStats.Health;
-            float mentalDiff  = data.playerStats.mental  - playerStats.Mental;
+            float healthDiff = data.playerStats.health - playerStats.Health;
+            float mentalDiff = data.playerStats.mental - playerStats.Mental;
             float defenseDiff = data.playerStats.baseDefense - playerStats.BaseDefense;
 
-            if (healthDiff  != 0f) playerStats.ModifyHealth(healthDiff);
-            if (mentalDiff  != 0f) playerStats.ModifyMental(mentalDiff);
+            if (healthDiff != 0f) playerStats.ModifyHealth(healthDiff);
+            if (mentalDiff != 0f) playerStats.ModifyMental(mentalDiff);
             if (defenseDiff != 0f) playerStats.ModifyBaseDefense(defenseDiff);
             playerStats.SetEquipmentDefense(data.playerStats.equipmentDefense);
         }
@@ -278,6 +279,9 @@ public class SaveSystem : MonoBehaviour
         // 인벤토리 복원 (저장 순서대로 빈 칸 자동 배치)
         if (inventorySystem != null)
         {
+            // 기존 인벤토리 비우기 (시작 지급된 아이템과 중복 방지)
+            ClearInventory();
+
             for (int i = 0; i < data.inventoryItems.Count; i++)
             {
                 ItemInstance instance = DeserializeItem(data.inventoryItems[i]);
@@ -312,6 +316,22 @@ public class SaveSystem : MonoBehaviour
         }
     }
 
+    // 기존 인벤토리를 모두 비움 (복원 전 초기화)
+    // ClearAll 메서드가 없으므로 GetAllInstances 를 역순으로 제거
+    private void ClearInventory()
+    {
+        if (inventorySystem == null)
+        {
+            return;
+        }
+
+        List<ItemInstance> current = new List<ItemInstance>(inventorySystem.GetAllInstances());
+        for (int i = current.Count - 1; i >= 0; i--)
+        {
+            inventorySystem.RemoveItem(current[i]);
+        }
+    }
+
     /// <summary>저장된 장비 한 칸을 역직렬화 후 장착</summary>
     private void RestoreEquipped(SavedItemInstance saved)
     {
@@ -329,11 +349,11 @@ public class SaveSystem : MonoBehaviour
 
         SavedItemInstance saved = new SavedItemInstance
         {
-            instanceId    = item.InstanceId,
-            itemDataName  = item.Data?.name ?? "",
-            stackCount    = item.StackCount,
-            slotX         = item.SlotPosition.x,
-            slotY         = item.SlotPosition.y,
+            instanceId = item.InstanceId,
+            itemDataName = item.Data?.name ?? "",
+            stackCount = item.StackCount,
+            slotX = item.SlotPosition.x,
+            slotY = item.SlotPosition.y,
         };
 
         if (item is WeaponInstance weapon)
@@ -437,7 +457,7 @@ public class SaveSystem : MonoBehaviour
 
         try
         {
-            string   json = File.ReadAllText(GetSavePath(slotIndex));
+            string json = File.ReadAllText(GetSavePath(slotIndex));
             SaveData data = JsonUtility.FromJson<SaveData>(json);
             data.saveName = newName;
             File.WriteAllText(GetSavePath(slotIndex), JsonUtility.ToJson(data, prettyPrint: true));
@@ -479,9 +499,9 @@ public class SaveSystem : MonoBehaviour
 
     private void RefreshReferences()
     {
-        if (playerStats     == null) playerStats     = FindFirstObjectByType<PlayerStats>();
+        if (playerStats == null) playerStats = FindFirstObjectByType<PlayerStats>();
         if (playerEquipment == null) playerEquipment = FindFirstObjectByType<PlayerEquipment>();
-        if (houseSystem     == null) houseSystem     = FindFirstObjectByType<HouseSystem>();
+        if (houseSystem == null) houseSystem = FindFirstObjectByType<HouseSystem>();
         if (inventorySystem == null) inventorySystem = InventorySystem.Instance;
     }
 
