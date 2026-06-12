@@ -1,6 +1,9 @@
 // NPCInteractable.cs
 // 마을 NPC 오브젝트에 부착 — 플레이어 접근 시 E키로 시스템 패널을 열거나 대화를 시작한다.
 // Collider(isTrigger=true) 필수, NPC 타입에 맞는 시스템 참조를 인스펙터에서 연결한다.
+// 학자/대장장이/각인술사: 디자인 시안 형태의 메뉴형 대화창을 연다.
+//   선택지 0 = 기능 패널 열기, 선택지 1 = 대화하기 (창 유지, 하단 대사만 순환)
+// 상인은 자체 메뉴(ShopMenuPanel)가 있어 기존 동작 유지.
 
 using UnityEngine;
 
@@ -18,29 +21,41 @@ public class NPCInteractable : MonoBehaviour
 
     [Header("NPC 설정")]
     [SerializeField] private NPCType npcType = NPCType.Background;
-    [SerializeField] private string  npcName = "마을 주민";
+    [SerializeField] private string npcName = "마을 주민";
 
     [Header("주요 NPC 시스템 연결")]
     [Tooltip("NPCType.Merchant 일 때 연결")]
-    [SerializeField] private ShopSystem              shopSystem;
+    [SerializeField] private ShopSystem shopSystem;
     [Tooltip("NPCType.Scholar 일 때 연결")]
-    [SerializeField] private ScholarSystem           scholarSystem;
+    [SerializeField] private ScholarSystem scholarSystem;
     [Tooltip("NPCType.Blacksmith 일 때 연결")]
-    [SerializeField] private BlacksmithSystem        blacksmithSystem;
+    [SerializeField] private BlacksmithSystem blacksmithSystem;
     [Tooltip("NPCType.InscriptionMaster 일 때 연결")]
     [SerializeField] private InscriptionMasterSystem inscriptionMasterSystem;
 
-    [Header("배경 NPC 대화 설정")]
-    [Tooltip("NPCType.Background 일 때 사용. 대화 컴포넌트를 이 오브젝트 또는 자식에 부착한다.")]
+    [Header("대화 설정 (배경 NPC와 학자/대장장이/각인술사 공통)")]
+    [Tooltip("비워두면 NPCDialogue.Instance 를 자동 사용 (권장)")]
     [SerializeField] private NPCDialogue npcDialogue;
-    [Tooltip("배경 NPC 대화 문장 목록")]
+    [Tooltip("대사 목록. 주요 NPC는 0번이 인사말, 대화하기 누를 때마다 다음 대사로 순환")]
     [SerializeField] private string[] sentences = { "..." };
+    [Tooltip("대화창에 표시할 NPC 초상화 (선택)")]
+    [SerializeField] private Sprite npcPortrait;
+
+    [Header("주요 NPC 대화 흐름")]
+    [Tooltip("켜면 학자/대장장이/각인술사가 메뉴형 대화창을 연다. 끄면 기능 패널 바로 열기")]
+    [SerializeField] private bool useDialogueBeforeFunction = true;
+    [Tooltip("기능 패널을 여는 선택지 문구 (예: 강화하기 / 유물 감정 / 각인하기)")]
+    [SerializeField] private string functionChoiceLabel = "맡기기";
+    [Tooltip("창을 유지한 채 대사를 순환하는 선택지 문구")]
+    [SerializeField] private string talkChoiceLabel = "대화하기";
 
     [Header("UI 힌트")]
     [Tooltip("범위에 들어오면 켜질 안내 오브젝트 (예: E 상호작용 표시). 없으면 비워둠")]
     [SerializeField] private GameObject hintObject;
 
     private bool _playerInRange = false;
+    // 대화하기 순환용 현재 대사 번호
+    private int _talkLineIndex = 0;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -72,6 +87,13 @@ public class NPCInteractable : MonoBehaviour
             return;
         }
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false)
+        {
+            return;
+        }
+
+        // 대화창이 이미 열려있으면 E키 무시 (대화 중 재시작 방지)
+        NPCDialogue dialogue = ResolveDialogue();
+        if (dialogue != null && dialogue.IsOpen == true)
         {
             return;
         }
@@ -134,6 +156,10 @@ public class NPCInteractable : MonoBehaviour
             Debug.LogWarning($"[NPCInteractable] {npcName}: ScholarSystem 미연결");
             return;
         }
+        if (TryStartFunctionDialogue(scholarSystem.OpenScholar) == true)
+        {
+            return;
+        }
         scholarSystem.OpenScholar();
     }
 
@@ -142,6 +168,10 @@ public class NPCInteractable : MonoBehaviour
         if (blacksmithSystem == null)
         {
             Debug.LogWarning($"[NPCInteractable] {npcName}: BlacksmithSystem 미연결");
+            return;
+        }
+        if (TryStartFunctionDialogue(blacksmithSystem.OpenBlacksmith) == true)
+        {
             return;
         }
         blacksmithSystem.OpenBlacksmith();
@@ -154,25 +184,92 @@ public class NPCInteractable : MonoBehaviour
             Debug.LogWarning($"[NPCInteractable] {npcName}: InscriptionMasterSystem 미연결");
             return;
         }
+        if (TryStartFunctionDialogue(inscriptionMasterSystem.OpenInscriptionMaster) == true)
+        {
+            return;
+        }
         inscriptionMasterSystem.OpenInscriptionMaster();
     }
 
     private void OpenBackgroundDialogue()
     {
-        if (npcDialogue == null)
+        NPCDialogue dialogue = ResolveDialogue();
+        if (dialogue == null)
         {
             Debug.LogWarning($"[NPCInteractable] {npcName}: NPCDialogue 미연결");
             return;
         }
 
         // 인스펙터에서 설정한 문장 배열로 DialogueData 생성
-        DialogueData dialogueData = new DialogueData
+        DialogueData dialogueData = new DialogueData();
+        dialogueData.npcName = npcName;
+        dialogueData.npcPortrait = npcPortrait;
+        dialogueData.sentences = sentences;
+
+        dialogue.StartDialogue(dialogueData);
+    }
+
+    // 주요 NPC 공통: 메뉴형 대화창 열기
+    // 인사말(0번 대사) + 선택지 동시 표시
+    // 선택지 0 = 기능 패널 열기 (대화창 닫힘), 선택지 1 = 다음 대사로 순환 (창 유지)
+    // 대화 시작에 성공하면 true 반환 (호출 측은 기능 직접 열기를 건너뜀)
+    private bool TryStartFunctionDialogue(System.Action openFunction)
+    {
+        if (useDialogueBeforeFunction == false)
         {
-            npcName   = npcName,
-            sentences = sentences
+            return false;
+        }
+
+        NPCDialogue dialogue = ResolveDialogue();
+        if (dialogue == null)
+        {
+            return false;
+        }
+        if (sentences == null || sentences.Length == 0)
+        {
+            return false;
+        }
+
+        _talkLineIndex = 0;
+
+        DialogueData dialogueData = new DialogueData();
+        dialogueData.npcName = npcName;
+        dialogueData.npcPortrait = npcPortrait;
+        dialogueData.sentences = new string[] { sentences[0] };
+        dialogueData.choices = new string[] { functionChoiceLabel, talkChoiceLabel };
+        dialogueData.showChoicesImmediately = true;
+        dialogueData.endOnChoice = false;
+        dialogueData.onChoiceSelected = (int index) =>
+        {
+            if (index == 0)
+            {
+                // 기능 선택: 대화창을 닫고 해당 시스템 패널 열기
+                dialogue.EndDialogue();
+                openFunction();
+                return;
+            }
+
+            // 대화하기 선택: 창 유지, 다음 대사로 순환
+            _talkLineIndex = _talkLineIndex + 1;
+            if (_talkLineIndex >= sentences.Length)
+            {
+                _talkLineIndex = 0;
+            }
+            dialogue.ShowLine(sentences[_talkLineIndex]);
         };
 
-        npcDialogue.StartDialogue(dialogueData);
+        dialogue.StartDialogue(dialogueData);
+        return true;
+    }
+
+    // 인스펙터 연결이 있으면 그것을, 없으면 공용 싱글톤을 사용
+    private NPCDialogue ResolveDialogue()
+    {
+        if (npcDialogue != null)
+        {
+            return npcDialogue;
+        }
+        return NPCDialogue.Instance;
     }
 
 #if UNITY_EDITOR

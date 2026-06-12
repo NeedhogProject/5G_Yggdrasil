@@ -1,6 +1,6 @@
 /*
  * HUDManager.cs
- * 체력 / 방어력 / 정신력 바 실시간 갱신
+ * 체력 / 정신력 바 실시간 갱신
  * 데미지 비네트 / 정신력 맥동 / 세트 효과 표시
  * 담당: 김보민
  */
@@ -34,13 +34,6 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private Color hpColorLow = new Color(0.90f, 0.20f, 0.20f);
     [SerializeField][Range(0f, 1f)] private float hpLowThreshold = 0.3f;
 
-    // ── 방어력 바 ─────────────────────────────────
-    [Header("방어력 바")]
-    [SerializeField] private Slider defSlider;
-    [SerializeField] private Image defFill;
-    [SerializeField] private TMP_Text defText;
-    [SerializeField] private Color defColor = new Color(0.40f, 0.70f, 1.00f);
-
     // ── 정신력 바 ─────────────────────────────────
     [Header("정신력 바")]
     [SerializeField] private Slider sanitySlider;
@@ -72,7 +65,6 @@ public class HUDManager : MonoBehaviour
 
     // ── 내부 상태 ─────────────────────────────────
     private float hpRatio = 1f;
-    private float defRatio = 1f;
     private float sanityRatio = 1f;
     private float hpDelayRatio = 1f;
 
@@ -97,7 +89,6 @@ public class HUDManager : MonoBehaviour
         if (PlayerStats.Instance != null)
         {
             PlayerStats.Instance.OnHealthChanged -= HandlePlayerHealthChanged;
-            PlayerStats.Instance.OnDefenseChanged -= HandlePlayerDefenseChanged;
             PlayerStats.Instance.OnMentalChanged -= HandlePlayerMentalChanged;
         }
 
@@ -115,11 +106,6 @@ public class HUDManager : MonoBehaviour
             vignetteImage.raycastTarget = false;
         }
 
-        if (defFill != null)
-        {
-            defFill.color = defColor;
-        }
-
         foreach (SetEffectSlotUI slot in setEffectSlots)
         {
             if (slot != null)
@@ -133,11 +119,9 @@ public class HUDManager : MonoBehaviour
         if (PlayerStats.Instance != null)
         {
             PlayerStats.Instance.OnHealthChanged += HandlePlayerHealthChanged;
-            PlayerStats.Instance.OnDefenseChanged += HandlePlayerDefenseChanged;
             PlayerStats.Instance.OnMentalChanged += HandlePlayerMentalChanged;
 
-            UpdateHP(PlayerStats.Instance.Health, PlayerStats.Instance.MaxHealth);
-            UpdateDef(PlayerStats.Instance.Defense, PlayerStats.MAX_STAT);
+            UpdateHP(PlayerStats.Instance.Health, PlayerStats.MAX_STAT);
             UpdateSanity(PlayerStats.Instance.Mental, PlayerStats.MAX_STAT);
         }
     }
@@ -146,13 +130,7 @@ public class HUDManager : MonoBehaviour
 
     private void HandlePlayerHealthChanged(float hp)
     {
-        float max = PlayerStats.Instance != null ? PlayerStats.Instance.MaxHealth : PlayerStats.MAX_STAT;
-        UpdateHP(hp, max);
-    }
-
-    private void HandlePlayerDefenseChanged(float def)
-    {
-        UpdateDef(def, PlayerStats.MAX_STAT);
+        UpdateHP(hp, PlayerStats.MAX_STAT);
     }
 
     private void HandlePlayerMentalChanged(float men)
@@ -195,14 +173,6 @@ public class HUDManager : MonoBehaviour
         {
             TriggerDamageVignette();
         }
-    }
-
-    // 방어력 바 갱신 (OnDefenseChanged 이벤트 수신)
-    public void UpdateDef(float current, float max)
-    {
-        defRatio = Mathf.Clamp01(current / max);
-        SetSlider(defSlider, defRatio);
-        SetText(defText, current, max);
     }
 
     // 정신력 바 갱신 (PlayerStats에서 호출)
