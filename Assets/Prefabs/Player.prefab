@@ -59,6 +59,11 @@ MonoBehaviour:
   mental: 100
   equipmentDefense: 0
   equipmentMaxHealth: 0
+  setMaxHealthPercent: 0
+  setDefensePercent: 0
+  setMentalBonus: 0
+  setShieldPercent: 0
+  shieldRechargeIdleTime: 15
   _gold: 0
   healthPotionAmount: 30
   mentalPotionAmount: 25
@@ -150,6 +155,7 @@ MonoBehaviour:
   spearAttackSpeed: 0.2
   _attackSpeedBonus: 0
   _attackDamageBonus: 0
+  _lifeStealPercent: 0
   _currentAttackInterval: 0
 --- !u!114 &6010569377580550517
 MonoBehaviour:
@@ -198,7 +204,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArmorSetManager
   playerStats: {fileID: 3693487522456573021}
-  setEffectDatabase: []
+  playerCombat: {fileID: 0}
+  playerController: {fileID: 0}
+  setEffectDatabase:
+  - {fileID: 11400000, guid: 10467ebbe4e1608428c1ef7840334247, type: 2}
+  - {fileID: 11400000, guid: bf797f4e072615e4c8a3840dcc8c0217, type: 2}
+  - {fileID: 11400000, guid: 39a2d49143d300346aea6bfbc2596fc7, type: 2}
+  - {fileID: 11400000, guid: a1362a43c14e7fd4fa9407a10ebc2292, type: 2}
+  - {fileID: 11400000, guid: 53c55cef5b172bf4fbc1f32631be8420, type: 2}
 --- !u!114 &2333802226974840277
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,8 +225,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StartingEquipment
   startingWeapons:
-  - {fileID: 11400000, guid: bef1533976a1b7145a424366611ec70d, type: 2}
-  - {fileID: 11400000, guid: 1a7e726fec3e81a40ae577b801a6f1f6, type: 2}
   - {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   equipOnStart: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   bAlreadyGranted: 0

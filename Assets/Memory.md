@@ -276,6 +276,31 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 - GameManager.DestroyPersistentPlayerObjects 리포 반영 확인 (StartNewGame/ContinueGame/GoToTitle, DestroyImmediate) — 미해결 항목 해소
 - 정리 예정(코드): SavedItemInstance.runeSlot2 죽은 필드 삭제 + 헤더 '슬롯 5개' 주석, itemDataName 'Resources 폴더 기준' 주석 교정
 
+## 집 출입 페이드 연출 (2026-06-12)
+- ScreenFader 신규 (싱글턴, GameCore 부착): 런타임에 FadeCanvas(sortingOrder 999) + 검은 Image 자동 생성
+  - FadeOutIn(액션): 어두워짐, 암전 시점에 액션 실행, 다시 밝아짐. unscaledDeltaTime 사용 (일시정지 무관)
+  - IsFading 으로 중복 실행 방지 (E 연타 가드)
+- CameraFollow.SnapToTarget() 추가: 텔레포트 직후 카메라를 즉시 도착 위치로 (Lerp 가로지름 방지)
+- HouseDoorInteractable.Teleport: 페이드 경유로 변경, 실제 이동은 MovePlayer 로 분리
+  - 플레이어 참조를 페이드 시작 시점에 캡처 (페이드 중 트리거 이탈로 _playerObj null 돼도 안전)
+  - ScreenFader 없으면 기존처럼 즉시 이동 (폴백)
+- 연출 방식 결정: 검은 화면으로 카메라 이동을 가리는 게 아니라, 암전 동안 카메라를 스냅해서
+  페이드 인 때 이미 정착된 화면이 보이게 함
+
+## 1층 자원 몬스터 미소환 문제 수정 (2026-06-12)
+- 증상: 던전 1층에서 자원 몬스터(ResourceDropEnemy)가 안 보임
+- 원인 구조: ResourceDropEnemy.ValidateFloor 가 Awake 에서 층 검사 후 SetActive(false)
+  - 스폰은 되지만 생성 직후 스스로 꺼져서 미소환처럼 보임
+  - 콘솔 경고의 층 숫자로 원인 구분: 0 = CurrentFloor 미동기화 / 1 = 프리팹 availableFloors 에 1 누락 / 경고 없음 = SpawnPoint 미등록
+- 구조 결함 수정 (원인과 별개로 적용):
+  1. GameManager.HandleSceneLoaded 첫 줄에 SyncFloor(scene.name) — 모든 진입 경로에서 층 동기화 보장
+  2. SpawnPoint.SelectRandomPrefab 에 층 필터 — 스폰 전에 등장 불가 프리팹 제외 (IsAvailableOnFloor, 일반 몬스터는 제한 없음)
+     기존 SelectRandomPrefab 메서드 전체를 교체 + IsAvailableOnFloor 신규 추가
+  3. ResourceDropEnemy.ValidateFloor: SetActive(false) 제거, 경고 로그만
+- SetActive(false) 를 없앤 이유: 스포너가 이미 AliveEnemyCount 증가 + OnDied 등록을 마친 뒤라
+  비활성 몬스터는 영원히 안 죽어 잔여 카운트 영구 인플레이션, 열쇠 소유 적이면 열쇠 증발로 층 진행 불가
+- 부수 효과: 한 SpawnPoint 에 여러 층용 몬스터를 같이 등록해도 층마다 자동으로 걸러짐
+
 ## 스폰 포인트당 다중 스폰 기능 (2026-06-11)
 - 기존: 포인트당 1마리 고정 (의도된 설계 — 마릿수는 포인트 개수로 조절하는 구조였음)
 - SpawnPoint.spawnCount 필드 추가 (기본 1, 기존 씬 무변경 동작)
@@ -314,13 +339,20 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ## 해야 하는 작업 (6월 18일까지)
 
-### 1순위: 각인(세트) 효과 완성
-1. **SetEffectData 에셋 5개 생성 + ArmorSetManager 등록** — 현재 0개라 모든 세트 효과 무발동 (에디터 작업)
-2. **공격력/공격속도 보너스 연결** — PlayerCombat 에 SetAttackDamageBonus/SetAttackSpeedBonus 수신부는 있으나 ArmorSetManager 가 호출 안 함
-3. **수치 보너스 % 해석 교정** — 현재 percent 를 포인트로 가산 (예: 체력 +7% 가 현재 체력 +7 회복으로 처리됨). 기획 계산 순서: 기본 → 장비 → 세트 음수 → 세트 양수 → 특수
-4. **이동속도 보너스** — PlayerController 에 수신부 추가 필요
-5. **원소 데미지 추가** — 불/물/바람/어둠 3·4세트, 땅 3·4세트. PlayerCombat 공격 파이프라인 연동
-6. **특수 효과 트리거 방식** — 기획은 공격 시(불4 흡혈)/피격 시(물4 방어막), 현재는 쿨다운 자동 발동. 방어막의 최대 체력 100 하드코딩도 MaxHealth 로 교체
+### 1순위: 각인(세트) 효과 완성 (2026-06-12 리포 대조로 현황 갱신)
+코드 작업은 리포에 대부분 반영 완료 확인:
+- 완료: 공격력/공격속도/흡혈 연결 (ApplyAllStatBonuses 가 PlayerCombat 세터 호출, CalculateDamage/AttackInterval 반영)
+- 완료: % 해석 교정 (MaxHealth = (100+장비)x(1+세트%), 방어 동일 — 기본, 장비, 세트 순서)
+- 완료: 이동속도 (PlayerController.SetMoveSpeedBonus, 속도 배율 적용)
+- 완료: 특수 효과 재설계 반영 (흡혈 = 공격 적중 시 데미지 비례 회복 / 보호막 = MaxHealth 비례 선흡수 + 비전투 15초 재충전, 하드코딩 100 없음)
+
+실제 남은 작업:
+1. **SetEffectData 에셋 5개 생성 + ArmorSetManager.setEffectDatabase 등록** (에디터)
+   - 수치는 SetEffectData.cs 헤더의 '기획 확정 세트 효과' 표 그대로
+2. **발동 검증 플레이** — 동일 원소 2개 착용 시 '[ArmorSetManager] X 세트 Tier2 활성화' 로그 확인, 어둠은 1개부터
+   - 로그 미출력 시 PlayerEquipment 의 OnArmorEquipped/OnArmorUnequipped 호출 여부 추적
+3. **원소 데미지 확정 여부 팀 확인 필요** — SetEffectData.cs 헤더 확정표에는 원소 추가 공격이 없음 (순수 스탯 보너스로 재설계됨).
+   기획서 docx(3·4세트 원소 공격)와 충돌. 확정이면 원소 데미지 작업 없음, docx 가 맞다면 공격 파이프라인 신규 구현 필요
 
 ### 2순위: 플레이 가능 범위 완성
 - **Floor_2 씬** — Floor_1 복제 + DungeonCore 수치 변경 (2층 줄기는 UpOnly)
