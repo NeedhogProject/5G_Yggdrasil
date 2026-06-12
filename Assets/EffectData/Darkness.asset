@@ -12,8 +12,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e69b203daa577a540bca29a091aee525, type: 3}
   m_Name: Darkness
   m_EditorClassIdentifier: Assembly-CSharp::SetEffectData
-  element: 0
-  tier1Bonuses: []
-  tier2Bonuses: []
-  tier3Bonuses: []
-  tier4Bonuses: []
+  element: 4
+  tier1Bonuses:
+  - bonusType: 1
+    percent: 5
+  - bonusType: 3
+    percent: -5
+  tier2Bonuses:
+  - bonusType: 1
+    percent: 7
+  - bonusType: 5
+    percent: 7
+  - bonusType: 3
+    percent: -8
+  - bonusType: 2
+    percent: -8
+  tier3Bonuses:
+  - bonusType: 1
+    percent: 12
+  - bonusType: 5
+    percent: 12
+  - bonusType: 3
+    percent: -14
+  - bonusType: 2
+    percent: -14
+  tier4Bonuses:
+  - bonusType: 1
+    percent: 17
+  - bonusType: 5
+    percent: 17
+  - bonusType: 3
+    percent: -20
+  - bonusType: 2
+    percent: -20
+  - bonusType: 4
+    percent: -20

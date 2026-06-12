@@ -225,8 +225,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StartingEquipment
   startingWeapons:
-  - {fileID: 11400000, guid: bef1533976a1b7145a424366611ec70d, type: 2}
-  - {fileID: 11400000, guid: 1a7e726fec3e81a40ae577b801a6f1f6, type: 2}
   - {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   equipOnStart: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   bAlreadyGranted: 0

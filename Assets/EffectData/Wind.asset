@@ -12,8 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e69b203daa577a540bca29a091aee525, type: 3}
   m_Name: Wind
   m_EditorClassIdentifier: Assembly-CSharp::SetEffectData
-  element: 0
+  element: 2
   tier1Bonuses: []
-  tier2Bonuses: []
-  tier3Bonuses: []
-  tier4Bonuses: []
+  tier2Bonuses:
+  - bonusType: 5
+    percent: 5
+  - bonusType: 6
+    percent: 5
+  tier3Bonuses:
+  - bonusType: 5
+    percent: 10
+  - bonusType: 6
+    percent: 10
+  - bonusType: 4
+    percent: 25
+  tier4Bonuses:
+  - bonusType: 5
+    percent: 17
+  - bonusType: 6
+    percent: 17
+  - bonusType: 4
+    percent: 40

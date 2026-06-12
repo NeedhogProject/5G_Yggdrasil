@@ -12,8 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e69b203daa577a540bca29a091aee525, type: 3}
   m_Name: Water
   m_EditorClassIdentifier: Assembly-CSharp::SetEffectData
-  element: 0
+  element: 1
   tier1Bonuses: []
-  tier2Bonuses: []
-  tier3Bonuses: []
-  tier4Bonuses: []
+  tier2Bonuses:
+  - bonusType: 1
+    percent: 2
+  - bonusType: 3
+    percent: 2
+  tier3Bonuses:
+  - bonusType: 1
+    percent: 5
+  - bonusType: 3
+    percent: 5
+  - bonusType: 4
+    percent: 20
+  tier4Bonuses:
+  - bonusType: 1
+    percent: 7
+  - bonusType: 3
+    percent: 7
+  - bonusType: 4
+    percent: 35

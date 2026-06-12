@@ -12,8 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e69b203daa577a540bca29a091aee525, type: 3}
   m_Name: Earth
   m_EditorClassIdentifier: Assembly-CSharp::SetEffectData
-  element: 0
+  element: 3
   tier1Bonuses: []
-  tier2Bonuses: []
-  tier3Bonuses: []
-  tier4Bonuses: []
+  tier2Bonuses:
+  - bonusType: 3
+    percent: 5
+  - bonusType: 2
+    percent: 5
+  tier3Bonuses:
+  - bonusType: 3
+    percent: 10
+  - bonusType: 2
+    percent: 10
+  - bonusType: 8
+    percent: 10
+  tier4Bonuses:
+  - bonusType: 3
+    percent: 15
+  - bonusType: 2
+    percent: 15
+  - bonusType: 8
+    percent: 20
