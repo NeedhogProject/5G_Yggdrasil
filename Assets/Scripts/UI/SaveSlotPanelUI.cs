@@ -310,13 +310,17 @@ public class SaveSlotPanelUI : MonoBehaviour
     /// <summary>슬롯 불러오기 — 불러오기 모드에서 카드 클릭 시 호출</summary>
     public void LoadSlot(int slotIndex)
     {
+        Debug.Log("[SaveSlotPanelUI] LoadSlot 호출 - 슬롯 " + slotIndex.ToString());
+
         if (SaveSystem.Instance == null)
         {
+            Debug.LogWarning("[SaveSlotPanelUI] SaveSystem 이 null");
             return;
         }
 
         if (SaveSystem.Instance.HasSave(slotIndex) == false)
         {
+            Debug.LogWarning("[SaveSlotPanelUI] 슬롯 " + slotIndex.ToString() + " 에 저장 없음");
             return;
         }
 
@@ -325,7 +329,12 @@ public class SaveSlotPanelUI : MonoBehaviour
 
         if (GameManager.Instance != null)
         {
+            Debug.Log("[SaveSlotPanelUI] GameManager.ContinueGame 호출");
             GameManager.Instance.ContinueGame(slotIndex);
+        }
+        else
+        {
+            Debug.LogWarning("[SaveSlotPanelUI] GameManager 가 null");
         }
     }
 

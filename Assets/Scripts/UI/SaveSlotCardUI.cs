@@ -119,6 +119,7 @@ public class SaveSlotCardUI : MonoBehaviour
     // 불러오기 버튼 — 이 슬롯을 불러오기
     private void OnLoadClicked()
     {
+        Debug.Log("[SaveSlotCardUI] 불러오기 버튼 클릭 - 슬롯 " + _slotIndex.ToString());
         _panel.LoadSlot(_slotIndex);
     }
 

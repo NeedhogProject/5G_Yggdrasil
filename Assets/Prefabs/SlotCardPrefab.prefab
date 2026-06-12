@@ -2320,7 +2320,7 @@ MonoBehaviour:
   saveButton: {fileID: 6754205421081769749}
   renameButton: {fileID: 8916310216949507099}
   deleteButton: {fileID: 1356051612550011954}
-  loadButton: {fileID: 0}
+  loadButton: {fileID: 5963321508445792227}
   editArea: {fileID: 5302819564213831378}
   nameInput: {fileID: 5358717585092317018}
   confirmButton: {fileID: 326542475904919531}

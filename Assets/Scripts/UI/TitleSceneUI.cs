@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class TitleSceneUI : MonoBehaviour
 {
@@ -32,7 +33,14 @@ public class TitleSceneUI : MonoBehaviour
             quitButton.onClick.AddListener(OnQuitClicked);
         }
 
-        // 저장 슬롯이 하나도 없으면 이어하기 비활성화
+        // 저장 슬롯 인식은 SaveSystem 준비 후에 해야 하므로 한 프레임 늦춤
+        StartCoroutine(RefreshContinueNextFrame());
+    }
+
+    // 한 프레임 뒤에 이어하기 버튼 상태 갱신 (SaveSystem 초기화 대기)
+    private IEnumerator RefreshContinueNextFrame()
+    {
+        yield return null;
         RefreshContinueButton();
     }
 
@@ -41,10 +49,12 @@ public class TitleSceneUI : MonoBehaviour
     {
         if (continueButton == null)
         {
+            Debug.Log("[TitleSceneUI] continueButton 이 null - 갱신 불가");
             return;
         }
         if (SaveSystem.Instance == null)
         {
+            Debug.Log("[TitleSceneUI] SaveSystem.Instance 가 null - 이어하기 비활성화");
             continueButton.interactable = false;
             return;
         }
@@ -58,6 +68,8 @@ public class TitleSceneUI : MonoBehaviour
                 break;
             }
         }
+
+        Debug.Log("[TitleSceneUI] 저장 데이터 존재 여부: " + hasAnySave.ToString());
         continueButton.interactable = hasAnySave;
     }
 
@@ -77,13 +89,28 @@ public class TitleSceneUI : MonoBehaviour
     {
         Debug.Log("[TitleSceneUI] 이어하기 클릭됨");
 
+        // Inspector 연결이 풀렸으면(씬 전환으로 참조 끊김) 코드로 직접 찾기
+        // SaveSlotPanel 은 DontDestroyOnLoad 라서 비활성 상태로도 존재함
         if (saveSlotPanel == null)
         {
-            Debug.LogWarning("[TitleSceneUI] SaveSlotPanel 이 연결되지 않음");
+            saveSlotPanel = FindSaveSlotPanel();
+        }
+
+        if (saveSlotPanel == null)
+        {
+            Debug.LogWarning("[TitleSceneUI] SaveSlotPanel 을 찾을 수 없음");
             return;
         }
 
         saveSlotPanel.OpenForLoad();
+    }
+
+    // 씬에서 SaveSlotPanelUI 찾기 (비활성 오브젝트 포함)
+    private SaveSlotPanelUI FindSaveSlotPanel()
+    {
+        // 활성 오브젝트 먼저 시도
+        SaveSlotPanelUI found = FindFirstObjectByType<SaveSlotPanelUI>(FindObjectsInactive.Include);
+        return found;
     }
 
     // 게임 종료
