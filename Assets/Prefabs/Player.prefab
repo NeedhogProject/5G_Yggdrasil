@@ -64,6 +64,9 @@ MonoBehaviour:
   setDefensePercent: 0
   setMentalBonus: 0
   setShieldPercent: 0
+  mentalAttackPenalty: 0.5
+  mentalDefensePenalty: 0.5
+  mentalMoveSpeedPenalty: 0.3
   shieldRechargeIdleTime: 15
   _gold: 0
   healthPotionAmount: 30
@@ -139,6 +142,11 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 4294967295
+  bBlockCliffEdges: 1
+  edgeCheckDistance: 0.6
+  edgeRayLength: 3
+  fallYThreshold: -5
+  safeRecordInterval: 0.5
 --- !u!114 &3521086081576361220
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,6 +200,9 @@ MonoBehaviour:
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
   gameOverPanel: {fileID: 0}
+  gameOverPanelName: GameOverPanel
+  retryButtonName: RetryButton
+  quitButtonName: QuitButton
 --- !u!114 &7483592433788517892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,6 +257,9 @@ MonoBehaviour:
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
   gameOverPanel: {fileID: 0}
+  gameOverPanelName: GameOverPanel
+  retryButtonName: RetryButton
+  quitButtonName: QuitButton
 --- !u!1 &4525919307855606178
 GameObject:
   m_ObjectHideFlags: 0
