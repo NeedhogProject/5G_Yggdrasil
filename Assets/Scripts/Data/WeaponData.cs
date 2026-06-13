@@ -55,14 +55,20 @@ public class WeaponData : ItemData
     [Header("강화 단계 (0 ~ 5)")]
     [SerializeField] [Range(0, 5)] private int enhancementLevel = 0;
 
-    // 0강부터 4강 시도 시 성공 확률 (기획서 수치: 90/75/45/25/10%)
-    private static readonly float[] EnhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
+    [Header("강화 밸런스 (인덱스 = 강화 단계)")]
+    // 0강부터 4강 시도 시 성공 확률 % (기획 기본값: 90/75/45/25/10)
+    [SerializeField] private float[] enhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
 
-    // 강화 단계별 공격력 배율 (기획서 기준: 0/2/4/7/9/15%)
-    private static readonly float[] AttackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
+    // 강화 단계별 공격력 배율 (기획 기본값: 0/2/4/7/9/15%)
+    [SerializeField] private float[] attackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
 
-    // 강화 단계별 공격속도 배율 (기획서 기준: 3강부터 2/3/7%)
-    private static readonly float[] SpeedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
+    // 강화 단계별 공격속도 배율 (기획 기본값: 3강부터 2/3/7%)
+    [SerializeField] private float[] speedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
+
+    // WeaponInstance 가 참조하는 외부 읽기용 프로퍼티
+    public float[] EnhanceSuccessRates => enhanceSuccessRates;
+    public float[] AttackMultipliers => attackMultipliers;
+    public float[] SpeedMultipliers => speedMultipliers;
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
@@ -173,7 +179,8 @@ public enum EnhanceResult
 {
     Success,      // 성공 (최대강 미만)
     MaxReached,   // 5강 달성
-    Downgrade,    // 실패 → 등급 하락
-    ResetToBase,  // 4→5 실패 → 태초마을(완전 초기화)
+    Downgrade,    // 4강 실패 시 1강으로 하락
+    Fail,         // 0~3강 실패 시 단계 변동 없음
+    ResetToBase,  // (미사용) 과거 태초마을 방식
     AlreadyMax    // 이미 5강
 }

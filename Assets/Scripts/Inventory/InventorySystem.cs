@@ -720,7 +720,24 @@ public class InventorySystem : MonoBehaviour
         }
         else if (item.itemType == ItemType.Consumable)
         {
-            item.UseItem();
+            ConsumableData consumable = item as ConsumableData;
+            if (consumable == null)
+            {
+                return;
+            }
+
+            // 초기화 주문서는 각인술사 NPC 에서 사용 (우클릭 소모 방지)
+            if (consumable.ConsumableType == ConsumableType.ResetScroll)
+            {
+                return;
+            }
+
+            // 사용 실패(이미 최대치 등) 시 물약을 소모하지 않음
+            if (consumable.TryUse(PlayerStats.Instance) == false)
+            {
+                return;
+            }
+
             RemoveItem(item);
         }
     }

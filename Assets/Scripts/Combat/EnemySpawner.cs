@@ -99,38 +99,54 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnEnemy(SpawnPoint _sp)
     {
-        // 가중치 기반 랜덤 프리팹 선택
-        GameObject prefab = _sp.SelectRandomPrefab();
-        if (prefab == null)
+        // 포인트의 첫 마리만 열쇠 소유 후보 (포인트당 열쇠 1개 유지)
+        bool bFirstOfPoint = _sp.SpawnedCount == 0;
+
+        // 남은 수만큼 한 번에 스폰 (최대 스폰 수 도달 시 중단, 다음 체크에서 이어서)
+        while (_sp.HasSpawned == false)
         {
-            Debug.LogWarning($"[EnemySpawner] {_sp.name} 스폰 프리팹 없음 — 건너뜀");
-            _sp.MarkSpawned(null);
-            return;
+            if (AliveEnemyCount >= maxSpawnCount)
+            {
+                return;
+            }
+
+            // 가중치 기반 랜덤 프리팹 선택 (마리마다 새로 선택)
+            GameObject prefab = _sp.SelectRandomPrefab();
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[EnemySpawner] {_sp.name} 스폰 프리팹 없음 — 건너뜀");
+                _sp.MarkSpawned(null);
+                return;
+            }
+
+            // 스폰 위치에 살짝 랜덤 오프셋
+            Vector2 vSpread  = Random.insideUnitCircle * _sp.SpawnSpreadRadius;
+            Vector3 vSpawnPos = _sp.transform.position
+                              + new Vector3(vSpread.x, 0f, vSpread.y);
+
+            GameObject enemy = Instantiate(prefab, vSpawnPos,
+                                           Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+
+            // 난이도 배율 적용
+            EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
+            if (enemyBase != null)
+            {
+                enemyBase.ApplyDifficultyScale(healthMultiplier, attackMultiplier);
+                enemyBase.OnDied += OnEnemyDied;
+            }
+
+            _sp.MarkSpawned(enemy);
+            AliveEnemyCount++;
+
+            // 첫 마리만 열쇠 소유 후보로 등록
+            if (bFirstOfPoint == true)
+            {
+                TryRegisterKeyEnemy(_sp, enemy);
+                bFirstOfPoint = false;
+            }
+
+            Debug.Log($"[EnemySpawner] {enemy.name} 스폰 @ {vSpawnPos}");
         }
-
-        // 스폰 위치에 살짝 랜덤 오프셋
-        Vector2 vSpread  = Random.insideUnitCircle * _sp.SpawnSpreadRadius;
-        Vector3 vSpawnPos = _sp.transform.position
-                          + new Vector3(vSpread.x, 0f, vSpread.y);
-
-        GameObject enemy = Instantiate(prefab, vSpawnPos,
-                                       Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
-
-        // 난이도 배율 적용
-        EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
-        if (enemyBase != null)
-        {
-            enemyBase.ApplyDifficultyScale(healthMultiplier, attackMultiplier);
-            enemyBase.OnDied += OnEnemyDied;
-        }
-
-        _sp.MarkSpawned(enemy);
-        AliveEnemyCount++;
-
-        // 열쇠 소유 적 등록 체크
-        TryRegisterKeyEnemy(_sp, enemy);
-
-        Debug.Log($"[EnemySpawner] {enemy.name} 스폰 @ {vSpawnPos}");
     }
 
     // ─────────────────────── 열쇠 소유 적 선정 ───────────────────────

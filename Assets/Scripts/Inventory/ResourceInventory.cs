@@ -66,4 +66,15 @@ public class ResourceInventory : MonoBehaviour
         if (_resources.ContainsKey(type) == false) return;
         _resources[type] = Mathf.Max(0, _resources[type] - amount);
     }
+
+    /// <summary>전체 자원 초기화 — 플레이어 사망 패널티에서 호출</summary>
+    public void ClearAll()
+    {
+        // 딕셔너리 순회 중 수정 예외 방지를 위해 키를 먼저 복사
+        List<InscriptionType> keys = new List<InscriptionType>(_resources.Keys);
+        for (int i = 0; i < keys.Count; i++)
+        {
+            _resources[keys[i]] = 0;
+        }
+    }
 }

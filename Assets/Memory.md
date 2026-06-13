@@ -4,6 +4,51 @@
 
 ---
 
+## 동기화본 미반영분 추가 적용 (2026-06-14)
+앞서 패치로 드렸으나 동기화본에 일부만 적용돼 있던 3건을 동기화본 기준 재적용:
+- InventorySystem.UseItem: Consumable 분기가 item.UseItem()+무조건 RemoveItem 이었음 (물약 회복 안 되고 소모만)
+  - consumable.TryUse(PlayerStats.Instance) 성공 시에만 제거, ResetScroll 우클릭 차단으로 수정
+- SpawnPoint.SelectRandomPrefab: 층 필터 미적용이었음 (자원 몬스터 1층 미소환 핵심 방어선)
+  - IsAvailableOnFloor 추가, 현재 층 등장 불가 프리팹 제외 후 가중치 재계산
+- EnemySpawner.SpawnEnemy: spawnCount 는 SpawnPoint 에 있었으나 스포너가 1마리만 생성했음
+  - while (HasSpawned == false) 다중 스폰, maxSpawnCount 도달 시 중단, 첫 마리만 열쇠 후보
+- 참고: ConsumableData 물약%, SpawnPoint.spawnCount/MarkSpawned, ResourceDropEnemy SetActive 제거, GameManager SyncFloor 는 동기화본에 이미 반영 확인됨
+
+## 강화/정신력/가격/데스 패치 적용 완료 (2026-06-13, 동기화본 기준 전체 파일 출력)
+
+### 강화 (WeaponData/WeaponInstance/EnhancementSystem)
+- WeaponData: enhanceSuccessRates/attackMultipliers/speedMultipliers 를 SerializeField 배열로 노출 (밸런스 조정 가능) + 외부 프로퍼티
+- WeaponInstance: 틀린 static 표 제거, WeaponData 배열 참조로 FinalDamage/FinalAttackSpeed/CurrentSuccessRate 재작성
+  - 기존 버그: 확률 {100,80,60,40,20}, 공격력 1강당 10% 선형 — 둘 다 기획과 달랐음. 이제 WeaponData 단일 출처
+- TryEnhance: 0~3강 실패 변동 없음(EnhanceResult.Fail 신규), 4강 실패만 1강 하락(Downgrade)
+- EnhanceResult enum 에 Fail 추가, ResetToBase 는 미사용 잔존(죽은 코드)
+- EnhancementSystem: Fail 케이스 메시지 추가, 4강 경고 문구 '초기화' -> '1강으로 하락'
+
+### 정신력 패널티 (PlayerStats/PlayerCombat/PlayerController)
+- PlayerStats: mentalAttackPenalty/mentalDefensePenalty/mentalMoveSpeedPenalty 인스펙터 필드 (0~1)
+  - MentalAttackMultiplier, MentalMoveSpeedMultiplier 프로퍼티 + EffectiveDefense 계수화
+  - TakeDamage 의 받는 피해 증가(2f - MentalMultiplier) 제거 (방어력 감소와 이중 적용이라)
+- PlayerCombat.CalculateDamage: MentalMultiplier -> MentalAttackMultiplier
+- PlayerController: CurrentSpeed/Move 에 MentalSpeedFactor(=MentalMoveSpeedMultiplier) 곱
+
+### PlayerController 에 섬/낙하 복귀도 재반영
+- 동기화본은 섬 차단/낙하 복귀가 없는 원본이었음 — 이번에 함께 재적용
+- bBlockCliffEdges/edgeCheckDistance/edgeRayLength + FilterCliffDirection/HasGroundAhead
+- fallYThreshold/safeRecordInterval + RecordSafePosition/CheckFallRespawn
+- 주의: groundLayer 기본 ~0 이면 허공도 지면 — Floor_2 는 Ground 레이어로 좁혀 지정 필수
+
+### 가격 통일 A방식 (ItemData/ShopItemUI)
+- ItemData: _buyPrice/_sellPrice -> _price 단일. Price/BuyPrice(=_price)/SellPrice(=_price*0.3)/basePrice(=_price), SELL_RATIO=0.3
+- ShopItemUI.SetupSellItem: basePrice/2 -> item.SellPrice
+- ShopSystem.GetSellPrice 의 sellPriceRatio 는 0.3 확인됨 (표시/정산 일치)
+- 주의: 필드명 변경으로 기존 ItemData 에셋 가격값 초기화 — 에셋마다 price 재입력 필요
+
+### 사망 패널티 (PlayerDeath/ResourceInventory)
+- PlayerDeath.ApplyDeathPenalty 활성화: 장비(UnequipAll) + 인벤(GetAllInstances 역순 RemoveItem) + 자원(ClearAll) 전부 유실
+- ResourceInventory.ClearAll 신규 (키 복사 후 0 초기화)
+- 인벤 칸은 유지, 내용물만 삭제. 자원 포함 전부 유실 확정
+- UI: 사망 후 ResourceInventoryPanel.Refresh 호출 경로 확인 필요 (김보민)
+
 ## 프로젝트 환경
 - 엔진: Unity 6000.3.10f1
 - 렌더 파이프라인: Built-in
@@ -22,7 +67,7 @@
 ### 2. 플레이어 시스템
 - **이동**: WASD (월드 축 기준)
 - **회전**: 마우스 커서 방향
-- **달리기**: Shift 홀드 (`Keyboard.current.leftShiftKey.isPressed`)
+- **달리기**: Shift 홀드 (InputReader.SprintHeld 경유, 리바인딩 호환)
 - **공격**: 마우스 좌클릭, UI 위에서는 차단됨
 - **사망/리트라이**: GameOverPanel UI 연동 완료
 
@@ -53,7 +98,8 @@
 - New Input System 적용
 
 ### 7. 카메라
-- CameraFollow (Lerp 부드러운 추적)
+- CameraFollow (Lerp 부드러운 추적, 씬 전환 시 target 자동 재탐색)
+- CameraFollow.SnapToTarget (텔레포트 직후 즉시 정착 — 집 출입 페이드 연출용)
 
 ---
 
@@ -274,7 +320,24 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 - 한계: 슬롯 위치(slotX/Y)는 무시하고 저장 순서대로 빈 칸 자동 배치
 - 한계: playerX/Y/Z 는 저장만 하고 복원은 스폰 지점(MovePlayerToSpawn) 방식
 - GameManager.DestroyPersistentPlayerObjects 리포 반영 확인 (StartNewGame/ContinueGame/GoToTitle, DestroyImmediate) — 미해결 항목 해소
-- 정리 예정(코드): SavedItemInstance.runeSlot2 죽은 필드 삭제 + 헤더 '슬롯 5개' 주석, itemDataName 'Resources 폴더 기준' 주석 교정
+- 잔정리 확인 완료(2026-06-12): runeSlot2 는 이미 없음(runeSlot1 단일), 헤더 주석 '슬롯 3개', itemDataName 주석 'itemDatabase 조회 키' 로 정정됨
+- ItemDataRegistry.cs 는 리포에 존재하지 않음 확인 (삭제 대상 없음)
+- 참고(미정리, 요청 시): SetSignature.cs 가 Slot1/Slot2 2슬롯 구조 유지 — 각인 1슬롯 확정과 불일치 가능성, ArmorInstance 참조 여부 확인 후 판단
+
+## Floor_2 섬 지형 이동/진입 차단 (2026-06-12)
+- 맵 구조: 떠 있는 섬 + 다리, 사이는 허공 (플레이어는 Rigidbody 이동이라 NavMesh 로 못 막음)
+- 섬 위 이동: 섬/다리 FBX Generate Colliders + Ground 레이어 지정 + Static + NavMesh 재굽기 (에디터 작업)
+  - 적은 NavMesh 가 섬/다리 위에만 구워지므로 자동 차단
+- 허공 진입 차단: PlayerController 에 레이캐스트 가장자리 차단 추가
+  - blockCliffEdges / edgeCheckDistance(0.6) / edgeRayLength(3) / groundMask 필드
+  - Move 에서 FilterCliffDirection: 진행 방향 앞 지면 검사, 없으면 X/Z 축별로 걸러 가장자리 슬라이드
+  - 보이지 않는 벽 배치 불필요 — 모든 섬 가장자리 자동 적용, 전 씬 공통 (마을 바닥도 Ground 레이어 필요)
+  - 주의: groundMask 미지정(Nothing)이면 전 방향 이동 불가
+- 낭떠러지 차단/지면 판정/낙하 복귀 모두 기존 groundLayer 필드 공유 (groundMask 따로 안 둠)
+  - groundLayer 기본값 ~0(Everything) 이면 허공도 지면으로 잡힘 - Floor_2 는 Ground 레이어로 좁혀 지정 필수
+- 낙하 복귀: IsGrounded 일 때 0.5초마다 안전 위치 기록, Y < fallYThreshold(-10) 면 마지막 안전 위치+0.5 로 복귀
+  - 넉백/콜라이더 빈틈 추락 대비 안전망 (무한 낙하 소프트락 방지)
+- tree-s2.fbx 임포트 경고: Circle.002/012 자기교차 폴리곤 폐기 — 무해, 모델링 담당에게 면 정리 후 재출력 요청
 
 ## 집 출입 페이드 연출 (2026-06-12)
 - ScreenFader 신규 (싱글턴, GameCore 부착): 런타임에 FadeCanvas(sortingOrder 999) + 검은 Image 자동 생성
@@ -318,7 +381,7 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 - 정신력 물약: 절대값 유지 (결정 사항 — effectAmount 가 정신력 물약에서는 포인트 의미)
 - 만피 판정 하드코딩 수정: Health >= 100f 를 stats.MaxHealth 기준으로, Mental 도 MaxMental 기준으로
   - 기존엔 최대 체력이 100 초과 시 체력 100 이상이면 물약 사용 불가였음 (실질 차단 버그)
-- 우클릭 사용 경로 연결: InventorySystem.UseItem 의 Consumable 분기가 미구현 ItemData.UseItem() 을 호출하고
+- 우클릭 사용 경로 연결(수정 완료): 기존엔 InventorySystem.UseItem 의 Consumable 분기가 미구현 ItemData.UseItem() 을 호출하고
   무조건 제거하던 것을 ConsumableData.TryUse(PlayerStats.Instance) 성공 시에만 제거하도록 수정
   - 초기화 주문서(ResetScroll)는 우클릭 사용 차단 (각인술사 NPC 전용 — 기존엔 우클릭 시 효과 없이 소모됨)
 - PlayerStats.UseHealthPotion (healthPotionAmount) 도 % 해석으로 통일, UseMentalPotion 은 절대값 유지
@@ -337,9 +400,70 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
 
 ---
 
+## 가격 통일 / 데스 패널티 / 물약 (2026-06-13)
+
+### 물약 % 회복 — 결정 확정
+- 기획상 체력 최대 100 이었으나 방어구로 최대 체력이 늘어 절대값 회복은 밸런스 붕괴
+- 체력 물약은 최대 체력 대비 % 회복으로 확정 (이미 코드 반영, ConsumableData.TryUseHealthPotion)
+- 정신력 물약은 절대값 유지 (앞서 확정)
+
+### 아이템 가격 단일화 (A방식)
+- ItemData: _buyPrice/_sellPrice 두 필드 -> _price 단일 필드
+  - Price 프로퍼티, BuyPrice(=_price 호환), SellPrice(=_price*0.3 계산), basePrice(=_price)
+  - SELL_RATIO 상수 0.3 (기획: 재판매 = 구매가 x 0.3)
+- ShopItemUI.SetupSellItem: basePrice/2 하드코딩 -> item.SellPrice (0.3배 표시)
+- 상점 구매가(ShopItemData.buyPrice)는 유지 — 상점이 마진 붙여 파는 구조 (A방식 범위)
+- ShopSystem.GetSellPrice 의 sellPriceRatio 는 0.3 인지 확인 필요 (표시/정산 일치)
+- 주의: 필드명 변경으로 기존 ItemData 에셋 가격값 초기화됨 — 에셋마다 price 재입력 필요 (엑셀 정리표 활용)
+
+### 사망 패널티 — 보유 아이템 전부 유실 확정
+- PlayerDeath.ApplyDeathPenalty 활성화 (기존 인벤 삭제가 ClearAll 미존재로 주석 처리돼 있었음)
+- 장착 장비: PlayerEquipment.UnequipAll (반환분 미사용 = 소실)
+- 인벤토리: GetAllInstances 역순 RemoveItem (칸은 유지, 내용물만 비움)
+- 자원(각인 재화): ResourceInventory.ClearAll 신규 추가 후 호출 (자원도 유실 확정)
+- UI: 사망 후 ResourceInventoryPanel.Refresh 호출 경로 확인 필요 (김보민 UI 담당)
+
+## 기획 확정/충돌 정리 및 강화 점검 (2026-06-13)
+
+### 세트 효과 — 확정 (작업 종료)
+- 원소 데미지 추가 폐기 확정. 속성별로 오르는 스탯이 다른 방식으로 확정
+- SetEffectData.cs 헤더 확정표가 이 방향이라 세트 효과 코드 추가 작업 없음
+- 주의: 세트_효과.docx 와 게임_구조.txt 는 원소 데미지/중첩 기준 옛 서술 — 코드(확정표)가 정본
+
+### 정신력 패널티 — 확정
+- 적용 대상: 공격력, 방어력, 이동속도 감소만 (받는 피해 직접 증가는 제외)
+- 감소 강도는 PlayerStats 인스펙터 필드로 노출 (mentalAttackPenalty/mentalDefensePenalty/mentalMoveSpeedPenalty)
+- 기존 TakeDamage 의 (2f - MentalMultiplier) 받는 피해 증가는 제거 예정 (방어력 감소와 이중 적용이라)
+- 이동속도 패널티는 신규 연결 (PlayerController.CurrentSpeed/Move 에 MentalMoveSpeedMultiplier 곱)
+
+### 방어구 강화 — 확정
+- 방어구 강화 시스템 없음. 강화는 무기 전용, 방어구는 각인 전용
+
+### 무기 강화 — 이미 구현됨 (누락 아님), 단 수치 버그 3건
+- 구현 위치: WeaponInstance.TryEnhance + EnhancementSystem.cs(대장장이 UI, 김보민) + CoinFlipUI 완성
+- 버그1(확률): WeaponInstance 가 {100,80,60,40,20} 으로 기획({90,75,45,25,10})과 다름 - 실사용 경로라 잘못된 확률 적용중
+- 버그2(페널티): 4->5 실패가 0강 초기화로 되어있음 - 확정값은 '1~4강 실패 하락 없음, 4->5 실패만 1강 하락'
+- 버그3(배율): WeaponInstance.FinalDamage 가 1강당 10% 선형 - 확정값은 {2,4,7,9,15}% 유지하되 인스펙터 조정 가능
+- 근본 원인: 강화 로직이 WeaponData/WeaponInstance 양쪽 중복, 실사용은 WeaponInstance 인데 수치가 다 틀림
+
+### 강화 수정 — 적용 완료 (위 2026-06-13 패치 블록 참조)
+- WeaponData: enhanceSuccessRates/attackMultipliers/speedMultipliers 를 SerializeField 배열로 노출 + 외부 프로퍼티
+- WeaponInstance: FinalDamage/FinalAttackSpeed/CurrentSuccessRate 를 WeaponData 배열 참조로 교체, 틀린 static 표 제거
+- WeaponInstance.TryEnhance: 0~3강 실패 변동 없음(EnhanceResult.Fail 신규), 4강 실패만 1강 하락
+- EnhanceResult enum 에 Fail 추가 (ResetToBase 는 미사용 죽은 코드로 잔존)
+- EnhancementSystem.cs(김보민 파일): switch 에 Fail 케이스 추가 필요 - 직접 수정 전 공유 권장
+- PlayerStats: 정신력 패널티 3필드 + MentalAttackMultiplier/MentalMoveSpeedMultiplier, EffectiveDefense 계수화, TakeDamage 이중적용 제거
+- PlayerCombat.CalculateDamage: MentalMultiplier -> MentalAttackMultiplier
+- PlayerController: CurrentSpeed/Move 에 MentalMoveSpeedMultiplier 곱
+
+### 그 외 발견 (미해결, 충돌 — 팀 확정 필요)
+- 물약 회복량 수치: 장비_기획서(체력15%/정신력10) vs 코드 기본값(체력30%/정신력25) 불일치
+- 강화 초기화 단계 문서 충돌은 위 확정으로 해소(4->5 실패 1강 하락)
+- 죽으면 인벤토리 전부 소실, 재판매 차감률 0.3 - 구현 여부 미확인 (PlayerDeath/상점 로직 확인 필요)
+
 ## 해야 하는 작업 (6월 18일까지)
 
-### 1순위: 각인(세트) 효과 완성 (2026-06-12 리포 대조로 현황 갱신)
+### 1순위: 각인(세트) 효과 완성 — 코드 종료, 에디터+검증만 남음 (2026-06-13 갱신)
 코드 작업은 리포에 대부분 반영 완료 확인:
 - 완료: 공격력/공격속도/흡혈 연결 (ApplyAllStatBonuses 가 PlayerCombat 세터 호출, CalculateDamage/AttackInterval 반영)
 - 완료: % 해석 교정 (MaxHealth = (100+장비)x(1+세트%), 방어 동일 — 기본, 장비, 세트 순서)
@@ -351,8 +475,7 @@ CLAUDE.md 기준 `var 금지`, `if (!변수)` 금지 적용 완료:
    - 수치는 SetEffectData.cs 헤더의 '기획 확정 세트 효과' 표 그대로
 2. **발동 검증 플레이** — 동일 원소 2개 착용 시 '[ArmorSetManager] X 세트 Tier2 활성화' 로그 확인, 어둠은 1개부터
    - 로그 미출력 시 PlayerEquipment 의 OnArmorEquipped/OnArmorUnequipped 호출 여부 추적
-3. **원소 데미지 확정 여부 팀 확인 필요** — SetEffectData.cs 헤더 확정표에는 원소 추가 공격이 없음 (순수 스탯 보너스로 재설계됨).
-   기획서 docx(3·4세트 원소 공격)와 충돌. 확정이면 원소 데미지 작업 없음, docx 가 맞다면 공격 파이프라인 신규 구현 필요
+3. 원소 데미지: 폐기 확정 (속성별 스탯 보너스 방식). 추가 작업 없음 — 위 '기획 확정' 섹션 참조
 
 ### 2순위: 플레이 가능 범위 완성
 - **Floor_2 씬** — Floor_1 복제 + DungeonCore 수치 변경 (2층 줄기는 UpOnly)

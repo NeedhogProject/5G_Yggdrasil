@@ -226,16 +226,25 @@ public class PlayerDeath : MonoBehaviour
             Debug.Log($"[PlayerDeath] 장착 장비 {droppedItems.Count}개 삭제");
         }
 
-        // 인벤토리 전체 삭제
-        // InventorySystem 완성 후 주석 해제
-        // InventorySystem inventory = GetComponent<InventorySystem>();
-        // if (inventory != null)
-        // {
-        //     inventory.ClearAll();
-        //     Debug.Log("[PlayerDeath] 인벤토리 전체 삭제");
-        // }
+        // 인벤토리 내용물 삭제 (칸은 유지, 장비/소모품 아이템만 비움)
+        if (InventorySystem.Instance != null)
+        {
+            List<ItemInstance> nCurrent = new List<ItemInstance>(InventorySystem.Instance.GetAllInstances());
+            for (int i = nCurrent.Count - 1; i >= 0; i--)
+            {
+                InventorySystem.Instance.RemoveItem(nCurrent[i]);
+            }
+            Debug.Log($"[PlayerDeath] 인벤토리 아이템 {nCurrent.Count}개 삭제");
+        }
 
-        Debug.Log("[PlayerDeath] 사망 패널티 적용 완료 (인벤 삭제 — InventorySystem 연동 후 활성화)");
+        // 자원(각인 재화) 전체 삭제 — 사망 시 모든 보유 아이템 유실 (자원 포함 확정)
+        if (ResourceInventory.Instance != null)
+        {
+            ResourceInventory.Instance.ClearAll();
+            Debug.Log("[PlayerDeath] 자원 전체 삭제");
+        }
+
+        Debug.Log("[PlayerDeath] 사망 패널티 적용 완료");
     }
 
     // ─────────────────────── UI ───────────────────────

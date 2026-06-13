@@ -204,8 +204,8 @@ public class PlayerCombat : MonoBehaviour
 
         float baseDamage = CurrentWeapon.FinalDamage;
 
-        // 정신력 배율 (정신력 낮을수록 공격력 감소)
-        float mentalMult = _stats != null ? _stats.MentalMultiplier : 1f;
+        // 정신력 배율 (정신력 낮을수록 공격력 감소, 강도는 PlayerStats 인스펙터)
+        float mentalMult = _stats != null ? _stats.MentalAttackMultiplier : 1f;
 
         // 단검 다단히트 배율
         float hitMult = CurrentWeapon.WeaponData.WeaponType == WeaponType.Dagger

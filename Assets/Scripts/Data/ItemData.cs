@@ -33,8 +33,8 @@ public class ItemData : ScriptableObject
     [SerializeField] [Range(1, 4)] private int _inventoryHeight = 1;
 
     [Header("가격")]
-    [SerializeField] private int _buyPrice  = 0;
-    [SerializeField] private int _sellPrice = 0;
+    // 아이템 기준 가격. 판매가는 이 값의 0.3배로 자동 계산
+    [SerializeField] private int _price = 0;
 
     [Header("기타 속성")]
     [SerializeField] private bool _isDroppable = true;
@@ -73,8 +73,17 @@ public class ItemData : ScriptableObject
     /// <summary>인벤토리 칸 크기 (Vector2Int)</summary>
     public Vector2Int ItemSize        => new Vector2Int(_inventoryWidth, _inventoryHeight);
 
-    public int  BuyPrice    => _buyPrice;
-    public int  SellPrice   => _sellPrice;
+    // 판매 시 차감률 (기획: 재판매 = 가격 x 0.3)
+    public const float SELL_RATIO = 0.3f;
+
+    /// <summary>아이템 기준 가격</summary>
+    public int  Price       => _price;
+
+    /// <summary>구매가 (기준 가격과 동일, 호환용)</summary>
+    public int  BuyPrice    => _price;
+
+    /// <summary>판매가 = 기준 가격 x 0.3</summary>
+    public int  SellPrice   => Mathf.RoundToInt(_price * SELL_RATIO);
     public bool IsDroppable => _isDroppable;
     public bool IsStackable => _isStackable;
     public int  MaxStack    => _isStackable ? _maxStack : 1;
@@ -102,8 +111,8 @@ public class ItemData : ScriptableObject
     /// <summary>itemSize — InventorySlot.CanPlaceItem() 호환용</summary>
     public Vector2Int itemSize        => new Vector2Int(_inventoryWidth, _inventoryHeight);
 
-    /// <summary>basePrice — ShopSystem, BlacksmithSystem 호환용 (구매가 기준)</summary>
-    public int        basePrice       => _buyPrice;
+    /// <summary>basePrice — ShopSystem, BlacksmithSystem 호환용 (기준 가격)</summary>
+    public int        basePrice       => _price;
 
     // ───────────────────────────── 가상 메서드 ─────────────────────────────
 
@@ -121,11 +130,7 @@ public class ItemData : ScriptableObject
     private void OnValidate()
     {
         if (_isStackable == false) _maxStack = 1;
-        if (_buyPrice  < 0) _buyPrice  = 0;
-        if (_sellPrice < 0) _sellPrice = 0;
-        if (_sellPrice > _buyPrice && _buyPrice > 0)
-            UnityEngine.Debug.LogWarning(
-                $"[{_itemName}] 판매가({_sellPrice})가 구매가({_buyPrice})보다 높습니다.");
+        if (_price < 0) _price = 0;
     }
 #endif
 }

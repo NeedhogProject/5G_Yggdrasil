@@ -56,7 +56,7 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
         if (priceText != null)
         {
-            priceText.text = (item.basePrice / 2) + " G";
+            priceText.text = item.SellPrice + " G";
         }
     }
 

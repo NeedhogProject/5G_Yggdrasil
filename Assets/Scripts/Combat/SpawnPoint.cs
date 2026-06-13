@@ -62,25 +62,41 @@ public class SpawnPoint : MonoBehaviour
     {
         if (enemyEntries == null || enemyEntries.Count == 0) return null;
 
-        // 총 가중치 합산
+        int nCurrentFloor = FloorManager.Instance != null ? FloorManager.Instance.CurrentFloor : 1;
+
+        // 총 가중치 합산 (현재 층 등장 불가 프리팹 제외)
         int nTotalWeight = 0;
         foreach (EnemySpawnEntry e in enemyEntries)
         {
-            if (e.prefab != null) nTotalWeight += e.weight;
+            if (e.prefab == null) continue;
+            if (IsAvailableOnFloor(e.prefab, nCurrentFloor) == false) continue;
+            nTotalWeight += e.weight;
         }
 
         if (nTotalWeight <= 0) return null;
 
         int nRoll = Random.Range(0, nTotalWeight);
         int nCumulative = 0;
+        GameObject lastValid = null;
         foreach (EnemySpawnEntry e in enemyEntries)
         {
             if (e.prefab == null) continue;
+            if (IsAvailableOnFloor(e.prefab, nCurrentFloor) == false) continue;
+
+            lastValid = e.prefab;
             nCumulative += e.weight;
             if (nRoll < nCumulative) return e.prefab;
         }
 
-        return enemyEntries[enemyEntries.Count - 1].prefab;
+        return lastValid;
+    }
+
+    // 자원 몬스터의 층 제한 검사 (일반 몬스터는 제한 없음)
+    private static bool IsAvailableOnFloor(GameObject _prefab, int _nFloor)
+    {
+        ResourceDropEnemy resourceEnemy = _prefab.GetComponent<ResourceDropEnemy>();
+        if (resourceEnemy == null) return true;
+        return resourceEnemy.AvailableFloors.Contains(_nFloor);
     }
 
     /// <summary>스폰 1마리 완료 처리 (EnemySpawner 에서 호출)</summary>

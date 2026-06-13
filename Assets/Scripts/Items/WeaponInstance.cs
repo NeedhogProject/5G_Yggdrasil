@@ -66,36 +66,56 @@ public class WeaponInstance : ItemInstance
             EnhancementLevel++;
             return EnhancementLevel == 5 ? EnhanceResult.MaxReached : EnhanceResult.Success;
         }
-        else
+
+        // 4강에서 실패할 때만 1강으로 하락
+        if (EnhancementLevel == 4)
         {
-            if (EnhancementLevel == 4) // 4→5 실패: 태초마을 (완전 초기화)
-            {
-                EnhancementLevel = 0;
-                return EnhanceResult.ResetToBase;
-            }
-            else // 1~4 실패: 등급 하락
-            {
-                EnhancementLevel = Mathf.Max(0, EnhancementLevel - 1);
-                return EnhanceResult.Downgrade;
-            }
+            EnhancementLevel = 1;
+            return EnhanceResult.Downgrade;
         }
+
+        // 0~3강 실패: 단계 변동 없음
+        return EnhanceResult.Fail;
     }
 
     // ─────────────────────── 계산된 스탯 ───────────────────────
 
-    /// <summary>
-    /// 강화 단계가 반영된 최종 공격력
-    /// 1강마다 기본 공격력의 10% 증가
-    /// </summary>
-    public float FinalDamage =>
-        WeaponData != null ? WeaponData.BaseDamage * (1f + EnhancementLevel * 0.1f) : 0f;
+    /// <summary>강화 단계가 반영된 최종 공격력 (배율은 WeaponData 에서 관리)</summary>
+    public float FinalDamage
+    {
+        get
+        {
+            if (WeaponData == null) return 0f;
+            float[] mult = WeaponData.AttackMultipliers;
+            int idx = Mathf.Clamp(EnhancementLevel, 0, mult.Length - 1);
+            return WeaponData.BaseDamage * mult[idx];
+        }
+    }
 
-    /// <summary>현재 강화 단계의 성공 확률 (%)</summary>
-    private static readonly float[] SuccessRates = { 100f, 80f, 60f, 40f, 20f };
-    public float CurrentSuccessRate =>
-        EnhancementLevel < SuccessRates.Length ? SuccessRates[EnhancementLevel] : 0f;
+    /// <summary>강화 단계가 반영된 최종 공격속도 (배율은 WeaponData 에서 관리)</summary>
+    public float FinalAttackSpeed
+    {
+        get
+        {
+            if (WeaponData == null) return 0f;
+            float[] mult = WeaponData.SpeedMultipliers;
+            int idx = Mathf.Clamp(EnhancementLevel, 0, mult.Length - 1);
+            return WeaponData.AttackSpeed * mult[idx];
+        }
+    }
 
-    /// <summary>4→5강 시도인지 (실패 시 태초마을)</summary>
+    /// <summary>현재 강화 단계의 성공 확률 (%) — WeaponData 에서 관리</summary>
+    public float CurrentSuccessRate
+    {
+        get
+        {
+            if (WeaponData == null) return 0f;
+            float[] rates = WeaponData.EnhanceSuccessRates;
+            return EnhancementLevel < rates.Length ? rates[EnhancementLevel] : 0f;
+        }
+    }
+
+    /// <summary>4→5강 시도인지 (실패 시 1강 하락)</summary>
     public bool IsLastEnhance => EnhancementLevel == 4;
 
     public override string ToString() =>

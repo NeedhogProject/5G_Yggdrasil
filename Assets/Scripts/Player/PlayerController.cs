@@ -53,6 +53,20 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float groundCheckDistance = 0.15f;
     [SerializeField] private LayerMask groundLayer      = ~0;
 
+    [Header("낭떠러지 진입 차단")]
+    [Tooltip("진행 방향 앞에 지면이 없으면 이동을 막음 (섬 가장자리 추락 방지)")]
+    [SerializeField] private bool bBlockCliffEdges = true;
+    [Tooltip("플레이어 앞 어느 거리의 지점을 검사할지")]
+    [SerializeField] private float edgeCheckDistance = 0.6f;
+    [Tooltip("검사 지점에서 아래로 쏘는 레이 길이 (내리막 경사 허용 범위)")]
+    [SerializeField] private float edgeRayLength = 3f;
+
+    [Header("낙하 복귀")]
+    [Tooltip("플레이어 Y 가 이 값 아래로 떨어지면 마지막 안전 위치로 복귀")]
+    [SerializeField] private float fallYThreshold = -10f;
+    [Tooltip("안전 위치 기록 주기 (초). 지면 위에 있을 때만 기록")]
+    [SerializeField] private float safeRecordInterval = 0.5f;
+
     // ─────────────────────── 내부 참조 ───────────────────────
 
     private Rigidbody   _rb;
@@ -64,13 +78,21 @@ public class PlayerController : MonoBehaviour
     private Vector2 _moveInput;
     private bool    _isSprinting;
 
+    // 낙하 복귀 상태
+    private Vector3 _lastSafePosition;
+    private bool    _hasSafePosition = false;
+    private float   _safeRecordTimer = 0f;
+
     // ─────────────────────── 공개 상태 ───────────────────────
 
     /// <summary>현재 달리는 중인지 (이동 중 + Shift 홀드)</summary>
     public bool IsSprinting => _isSprinting && _moveInput.sqrMagnitude > 0.01f;
 
     /// <summary>현재 이동 속도</summary>
-    public float CurrentSpeed => (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus);
+    public float CurrentSpeed => (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor;
+
+    // 정신력 패널티 이동 배율 (stats 없으면 1)
+    private float MentalSpeedFactor => _stats != null ? _stats.MentalMoveSpeedMultiplier : 1f;
 
     // 세트 효과 이동속도 보너스 (비율. 0.05 = 5% 증가)
     private float _moveSpeedBonus = 0f;
@@ -127,6 +149,8 @@ public class PlayerController : MonoBehaviour
 
         RotateTowardsMouse();
         HandleSprintMentalCost();
+        RecordSafePosition();
+        CheckFallRespawn();
     }
 
     private void FixedUpdate()
@@ -166,12 +190,64 @@ public class PlayerController : MonoBehaviour
         }
 
         Vector3 moveDir = (camForward * _moveInput.y + camRight * _moveInput.x).normalized;
-        float   speed   = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus);
+
+        // 낭떠러지 차단 — 앞에 지면이 없으면 해당 방향 성분 제거
+        if (bBlockCliffEdges == true)
+        {
+            moveDir = FilterCliffDirection(moveDir);
+            if (moveDir.sqrMagnitude < 0.01f)
+            {
+                Vector3 blockedVel = _rb.linearVelocity;
+                _rb.linearVelocity = new Vector3(blockedVel.x * 0.85f, blockedVel.y, blockedVel.z * 0.85f);
+                return;
+            }
+        }
+
+        float   speed   = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor;
 
         _rb.linearVelocity = new Vector3(
             moveDir.x * speed,
             _rb.linearVelocity.y,
             moveDir.z * speed);
+    }
+
+    // ─────────────────────── 낭떠러지 진입 차단 ───────────────────────
+
+    // 진행 방향 앞 지면 검사 — 없으면 X/Z 축별로 걸러 가장자리를 따라 미끄러지게 함
+    private Vector3 FilterCliffDirection(Vector3 _vMoveDir)
+    {
+        if (HasGroundAhead(_vMoveDir) == true)
+        {
+            return _vMoveDir;
+        }
+
+        Vector3 vFiltered = Vector3.zero;
+
+        Vector3 vDirX = new Vector3(_vMoveDir.x, 0f, 0f);
+        if (vDirX.sqrMagnitude > 0.0001f && HasGroundAhead(vDirX.normalized) == true)
+        {
+            vFiltered += vDirX;
+        }
+
+        Vector3 vDirZ = new Vector3(0f, 0f, _vMoveDir.z);
+        if (vDirZ.sqrMagnitude > 0.0001f && HasGroundAhead(vDirZ.normalized) == true)
+        {
+            vFiltered += vDirZ;
+        }
+
+        if (vFiltered.sqrMagnitude < 0.0001f)
+        {
+            return Vector3.zero;
+        }
+        return vFiltered.normalized;
+    }
+
+    // 지정 방향 앞 지점 아래에 지면이 있는지 검사
+    private bool HasGroundAhead(Vector3 _vDir)
+    {
+        Vector3 vOrigin = transform.position + _vDir * edgeCheckDistance + Vector3.up * 1f;
+        return Physics.Raycast(vOrigin, Vector3.down, edgeRayLength, groundLayer,
+                               QueryTriggerInteraction.Ignore);
     }
 
     // ─────────────────────── 마우스 커서 방향으로 회전 ───────────────────────
@@ -222,6 +298,34 @@ public class PlayerController : MonoBehaviour
             Vector3.down,
             groundCheckDistance + 0.1f,
             groundLayer);
+    }
+
+    // ─────────────────────── 낙하 복귀 ───────────────────────
+
+    // 지면 위에 있을 때 주기적으로 안전 위치 기록
+    private void RecordSafePosition()
+    {
+        _safeRecordTimer += Time.deltaTime;
+        if (_safeRecordTimer < safeRecordInterval) return;
+        _safeRecordTimer = 0f;
+
+        if (IsGrounded() == false) return;
+
+        _lastSafePosition = transform.position;
+        _hasSafePosition  = true;
+    }
+
+    // 기준 높이 아래로 떨어지면 마지막 안전 위치로 복귀
+    private void CheckFallRespawn()
+    {
+        if (_hasSafePosition == false) return;
+        if (transform.position.y > fallYThreshold) return;
+
+        _rb.linearVelocity  = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
+        transform.position  = _lastSafePosition + Vector3.up * 0.5f;
+
+        Debug.LogWarning("[PlayerController] 낙하 감지 - 마지막 안전 위치로 복귀");
     }
 
     // ─────────────────────── 에디터 기즈모 ───────────────────────
