@@ -8,12 +8,13 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using TMPro;
 using System.Collections;
 using System.Collections.Generic;
 
-public class NPCDialogue : MonoBehaviour
+public class NPCDialogue : MonoBehaviour, IPointerClickHandler
 {
     // ── 싱글톤 ────────────────────────────────────
     public static NPCDialogue Instance { get; private set; }
@@ -56,12 +57,9 @@ public class NPCDialogue : MonoBehaviour
 
     private void Awake()
     {
-        // 중복 인스턴스 방지
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        // 대화창은 마을 전용이라 씬마다 새로 생긴다.
+        // 씬을 다시 로드하면 새 인스턴스가 자신을 등록한다.
+        // 이전 씬의 인스턴스는 함께 파괴되므로 자기 자신을 파괴하지 않는다.
         Instance = this;
     }
 
@@ -92,13 +90,16 @@ public class NPCDialogue : MonoBehaviour
         for (int i = 0; i < choiceButtons.Length; i++)
         {
             int index = i;
-            choiceButtons[i].onClick.AddListener(() => OnChoiceClicked(index));
+            choiceButtons[i].onClick.AddListener(delegate ()
+            {
+                OnChoiceClicked(index);
+            });
         }
     }
 
     private void Update()
     {
-        // 대화창 열린 상태에서 ESC 누르면 닫기
+        // 대화창 열린 상태에서만 키 입력 처리
         if (IsOpen == false)
         {
             return;
@@ -107,17 +108,59 @@ public class NPCDialogue : MonoBehaviour
         {
             return;
         }
+
+        // ESC 누르면 닫기
         if (Keyboard.current.escapeKey.wasPressedThisFrame == true)
         {
             EndDialogue();
+            return;
         }
+
+        // 스페이스바로 다음 대사 진행 (선택지가 안 떠 있을 때만)
+        if (Keyboard.current.spaceKey.wasPressedThisFrame == true)
+        {
+            TryAdvance();
+        }
+    }
+
+    // 대화 패널을 마우스로 클릭하면 다음 대사 진행 (선택지가 안 떠 있을 때만)
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (IsOpen == false)
+        {
+            return;
+        }
+        TryAdvance();
+    }
+
+    // 다음 대사로 넘길 수 있는 상황인지 확인 후 진행
+    // 선택지가 떠 있으면(메뉴형 대화) 스페이스/클릭을 무시해 선택을 방해하지 않음
+    private void TryAdvance()
+    {
+        if (choicePanel != null && choicePanel.activeSelf == true)
+        {
+            return;
+        }
+        DisplayNextSentence();
     }
 
     public void StartDialogue(DialogueData dialogue)
     {
         currentDialogue = dialogue;
+
+        // 패널 참조가 파괴되었으면 대화를 시작하지 않는다 (씬 전환 직후 안전장치)
+        if (dialoguePanel == null)
+        {
+            Debug.LogWarning("[NPCDialogue] dialoguePanel 참조가 없어 대화를 시작할 수 없습니다.");
+            return;
+        }
+
         dialoguePanel.SetActive(true);
-        choicePanel.SetActive(false);
+
+        if (choicePanel != null)
+        {
+            choicePanel.SetActive(false);
+        }
 
         // NPC 정보 설정
         if (npcNameText != null)
@@ -262,27 +305,43 @@ public class NPCDialogue : MonoBehaviour
 
     private void OnChoiceClicked(int choiceIndex)
     {
+        if (currentDialogue == null)
+        {
+            return;
+        }
+
         // 시안 반영: endOnChoice 가 꺼져 있으면 창과 선택지를 유지한 채 콜백만 실행
         // (대화하기 처럼 하단 대사만 바뀌는 선택지에 사용)
-        bool endAfterChoice = true;
-        if (currentDialogue != null)
-        {
-            endAfterChoice = currentDialogue.endOnChoice;
-        }
+        bool endAfterChoice = currentDialogue.endOnChoice;
+
+        // 콜백을 미리 로컬에 보관한다.
+        // 콜백 안에서 EndDialogue 가 호출되면 currentDialogue 가 정리될 수 있기 때문이다.
+        System.Action<int> callback = currentDialogue.onChoiceSelected;
 
         if (endAfterChoice == true)
         {
-            choicePanel.SetActive(false);
+            if (choicePanel != null)
+            {
+                choicePanel.SetActive(false);
+            }
         }
 
-        // 선택지 콜백 실행
-        currentDialogue.onChoiceSelected?.Invoke(choiceIndex);
-
+        // 클릭 사운드 먼저 재생
         AudioManager.Instance?.PlaySFX(SFXClip.UIClick);
 
+        // 선택지 콜백 실행 (이 안에서 대화창이 닫히거나 다음 대사로 바뀔 수 있음)
+        if (callback != null)
+        {
+            callback.Invoke(choiceIndex);
+        }
+
+        // endAfterChoice 가 true 이고 콜백이 아직 대화를 닫지 않았다면 여기서 닫는다.
         if (endAfterChoice == true)
         {
-            EndDialogue();
+            if (IsOpen == true)
+            {
+                EndDialogue();
+            }
         }
     }
 
@@ -291,14 +350,31 @@ public class NPCDialogue : MonoBehaviour
         if (typingCoroutine != null)
         {
             StopCoroutine(typingCoroutine);
+            typingCoroutine = null;
         }
 
-        dialoguePanel.SetActive(false);
-        choicePanel.SetActive(false);
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(false);
+        }
+        if (choicePanel != null)
+        {
+            choicePanel.SetActive(false);
+        }
         dialogueQueue.Clear();
         isTyping = false;
 
-        currentDialogue?.onDialogueEnd?.Invoke();
+        // 종료 콜백을 로컬에 담아 실행한다 (실행 중 currentDialogue 가 바뀌어도 안전).
+        DialogueData ended = currentDialogue;
+        currentDialogue = null;
+
+        if (ended != null)
+        {
+            if (ended.onDialogueEnd != null)
+            {
+                ended.onDialogueEnd.Invoke();
+            }
+        }
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }

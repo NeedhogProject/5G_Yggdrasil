@@ -151,44 +151,65 @@ public class NPCInteractable : MonoBehaviour
 
     private void OpenScholar()
     {
-        if (scholarSystem == null)
+        // 기능 시스템이 아직 없어도 대화창은 먼저 띄운다.
+        // 기능 선택지를 눌렀을 때 시스템이 없으면 그때 경고한다.
+        System.Action openFunction = delegate ()
         {
-            Debug.LogWarning($"[NPCInteractable] {npcName}: ScholarSystem 미연결");
+            if (scholarSystem == null)
+            {
+                Debug.LogWarning($"[NPCInteractable] {npcName}: ScholarSystem 미연결");
+                return;
+            }
+            scholarSystem.OpenScholar();
+        };
+
+        if (TryStartFunctionDialogue(openFunction) == true)
+        {
             return;
         }
-        if (TryStartFunctionDialogue(scholarSystem.OpenScholar) == true)
-        {
-            return;
-        }
-        scholarSystem.OpenScholar();
+
+        // 대화 흐름을 못 쓰는 경우(설정 꺼짐 등) 기존처럼 바로 기능 열기 시도
+        openFunction();
     }
 
     private void OpenBlacksmith()
     {
-        if (blacksmithSystem == null)
+        System.Action openFunction = delegate ()
         {
-            Debug.LogWarning($"[NPCInteractable] {npcName}: BlacksmithSystem 미연결");
+            if (blacksmithSystem == null)
+            {
+                Debug.LogWarning($"[NPCInteractable] {npcName}: BlacksmithSystem 미연결");
+                return;
+            }
+            blacksmithSystem.OpenBlacksmith();
+        };
+
+        if (TryStartFunctionDialogue(openFunction) == true)
+        {
             return;
         }
-        if (TryStartFunctionDialogue(blacksmithSystem.OpenBlacksmith) == true)
-        {
-            return;
-        }
-        blacksmithSystem.OpenBlacksmith();
+
+        openFunction();
     }
 
     private void OpenInscriptionMaster()
     {
-        if (inscriptionMasterSystem == null)
+        System.Action openFunction = delegate ()
         {
-            Debug.LogWarning($"[NPCInteractable] {npcName}: InscriptionMasterSystem 미연결");
+            if (inscriptionMasterSystem == null)
+            {
+                Debug.LogWarning($"[NPCInteractable] {npcName}: InscriptionMasterSystem 미연결");
+                return;
+            }
+            inscriptionMasterSystem.OpenInscriptionMaster();
+        };
+
+        if (TryStartFunctionDialogue(openFunction) == true)
+        {
             return;
         }
-        if (TryStartFunctionDialogue(inscriptionMasterSystem.OpenInscriptionMaster) == true)
-        {
-            return;
-        }
-        inscriptionMasterSystem.OpenInscriptionMaster();
+
+        openFunction();
     }
 
     private void OpenBackgroundDialogue()
@@ -239,11 +260,11 @@ public class NPCInteractable : MonoBehaviour
         dialogueData.choices = new string[] { functionChoiceLabel, talkChoiceLabel };
         dialogueData.showChoicesImmediately = true;
         dialogueData.endOnChoice = false;
-        dialogueData.onChoiceSelected = (int index) =>
+        dialogueData.onChoiceSelected = delegate (int index)
         {
             if (index == 0)
             {
-                // 기능 선택: 대화창을 닫고 해당 시스템 패널 열기
+                // 기능 선택: 대화창을 먼저 닫고 해당 시스템 패널을 연다.
                 dialogue.EndDialogue();
                 openFunction();
                 return;
@@ -269,7 +290,16 @@ public class NPCInteractable : MonoBehaviour
         {
             return npcDialogue;
         }
-        return NPCDialogue.Instance;
+
+        // 싱글톤이 등록돼 있으면 사용
+        if (NPCDialogue.Instance != null)
+        {
+            return NPCDialogue.Instance;
+        }
+
+        // 싱글톤이 비어있으면 현재 씬에서 직접 찾는다 (마을 전용 대화창 대비)
+        NPCDialogue found = FindFirstObjectByType<NPCDialogue>();
+        return found;
     }
 
 #if UNITY_EDITOR
