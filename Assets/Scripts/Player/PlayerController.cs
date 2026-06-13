@@ -17,6 +17,10 @@ using UnityEngine.InputSystem;
 ///
 /// [싱글턴]
 /// InventorySystem.DropItem() 에서 PlayerController.Instance 로 위치 참조
+///
+/// [외부 위치 이동]
+/// 사망 후 부활처럼 외부에서 위치를 옮길 때는 SetSafePosition 으로
+/// 안전 위치도 함께 갱신해야 낙하 복귀에 끌려가지 않는다.
 /// </summary>
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
@@ -29,7 +33,7 @@ public class PlayerController : MonoBehaviour
     // ─────────────────────── 이동 설정 ───────────────────────
 
     [Header("이동 속도")]
-    [SerializeField] private float walkSpeed   = 5f;
+    [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float sprintSpeed = 9f;
 
     // ─────────────────────── 달리기 설정 ───────────────────────
@@ -51,7 +55,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("지면 감지")]
     [SerializeField] private float groundCheckDistance = 0.15f;
-    [SerializeField] private LayerMask groundLayer      = ~0;
+    [SerializeField] private LayerMask groundLayer = ~0;
 
     [Header("낭떠러지 진입 차단")]
     [Tooltip("진행 방향 앞에 지면이 없으면 이동을 막음 (섬 가장자리 추락 방지)")]
@@ -69,19 +73,22 @@ public class PlayerController : MonoBehaviour
 
     // ─────────────────────── 내부 참조 ───────────────────────
 
-    private Rigidbody   _rb;
+    private Rigidbody _rb;
     private PlayerStats _stats;
-    private Camera      _mainCamera;
+    private Camera _mainCamera;
 
     // ─────────────────────── 입력 상태 ───────────────────────
 
     private Vector2 _moveInput;
-    private bool    _isSprinting;
+    private bool _isSprinting;
 
     // 낙하 복귀 상태
     private Vector3 _lastSafePosition;
-    private bool    _hasSafePosition = false;
-    private float   _safeRecordTimer = 0f;
+    private bool _hasSafePosition = false;
+    private float _safeRecordTimer = 0f;
+
+    // 외부 이동(부활 등) 직후 낙하 체크를 잠시 건너뛰는 프레임 수
+    private int _fallCheckSkipFrames = 0;
 
     // ─────────────────────── 공개 상태 ───────────────────────
 
@@ -101,6 +108,41 @@ public class PlayerController : MonoBehaviour
     public void SetMoveSpeedBonus(float bonus)
     {
         _moveSpeedBonus = bonus;
+    }
+
+    // ─────────────────────── 외부 위치 제어 (부활 등) ───────────────────────
+
+    /// <summary>
+    /// 플레이어를 지정 좌표로 옮기고 그 위치를 안전 위치로 기록한다.
+    /// 사망 후 부활처럼 외부에서 위치를 바꿀 때 호출한다.
+    /// 지하 등 낙하 임계값보다 낮은 곳으로 보낼 때도 낙하 복귀에 끌려가지 않는다.
+    /// </summary>
+    public void SetSafePosition(Vector3 targetPosition)
+    {
+        // 위치 직접 설정 후 속도 0 으로 (옮긴 뒤 미끄러짐 방지)
+        if (_rb != null)
+        {
+            _rb.position = targetPosition;
+            _rb.linearVelocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+        }
+        else
+        {
+            transform.position = targetPosition;
+        }
+
+        // 안전 위치를 새 좌표로 갱신
+        _lastSafePosition = targetPosition;
+        _hasSafePosition = true;
+
+        // 옮긴 직후 몇 프레임은 낙하 체크를 건너뛴다 (지면 안정화 대기)
+        _fallCheckSkipFrames = 5;
+    }
+
+    /// <summary>낙하 복귀 임계 Y 값을 외부에서 조정 (지하 맵 대응)</summary>
+    public void SetFallYThreshold(float newThreshold)
+    {
+        fallYThreshold = newThreshold;
     }
 
     // ─────────────────────── 초기화 ───────────────────────
@@ -125,8 +167,8 @@ public class PlayerController : MonoBehaviour
         // 모든 씬에서 플레이어(인벤토리/장비/스탯 단위)를 유지
         DontDestroyOnLoad(gameObject);
 
-        _rb         = GetComponent<Rigidbody>();
-        _stats      = GetComponent<PlayerStats>();
+        _rb = GetComponent<Rigidbody>();
+        _stats = GetComponent<PlayerStats>();
         _mainCamera = Camera.main;
 
         _rb.freezeRotation = true;
@@ -172,7 +214,7 @@ public class PlayerController : MonoBehaviour
 
         // 카메라 기준 이동 — 카메라가 바라보는 방향을 화면 기준 전진으로 사용
         Vector3 camForward = Vector3.forward;
-        Vector3 camRight   = Vector3.right;
+        Vector3 camRight = Vector3.right;
 
         if (_mainCamera == null)
             _mainCamera = Camera.main;
@@ -203,7 +245,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        float   speed   = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor;
+        float speed = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor;
 
         _rb.linearVelocity = new Vector3(
             moveDir.x * speed,
@@ -263,14 +305,14 @@ public class PlayerController : MonoBehaviour
         if (groundPlane.Raycast(ray, out float distance) == false) return;
 
         Vector3 worldMousePos = ray.GetPoint(distance);
-        Vector3 direction     = worldMousePos - transform.position;
-        direction.y           = 0f;
+        Vector3 direction = worldMousePos - transform.position;
+        direction.y = 0f;
 
         // 너무 가까우면 회전 무시 (떨림 방지)
         if (direction.sqrMagnitude < minAimDistance * minAimDistance) return;
 
-        Quaternion targetRot  = Quaternion.LookRotation(direction);
-        transform.rotation    = Quaternion.Slerp(
+        Quaternion targetRot = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(
             transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
     }
 
@@ -312,18 +354,25 @@ public class PlayerController : MonoBehaviour
         if (IsGrounded() == false) return;
 
         _lastSafePosition = transform.position;
-        _hasSafePosition  = true;
+        _hasSafePosition = true;
     }
 
     // 기준 높이 아래로 떨어지면 마지막 안전 위치로 복귀
     private void CheckFallRespawn()
     {
+        // 외부 이동(부활) 직후 몇 프레임은 건너뛴다
+        if (_fallCheckSkipFrames > 0)
+        {
+            _fallCheckSkipFrames = _fallCheckSkipFrames - 1;
+            return;
+        }
+
         if (_hasSafePosition == false) return;
         if (transform.position.y > fallYThreshold) return;
 
-        _rb.linearVelocity  = Vector3.zero;
+        _rb.linearVelocity = Vector3.zero;
         _rb.angularVelocity = Vector3.zero;
-        transform.position  = _lastSafePosition + Vector3.up * 0.5f;
+        transform.position = _lastSafePosition + Vector3.up * 0.5f;
 
         Debug.LogWarning("[PlayerController] 낙하 감지 - 마지막 안전 위치로 복귀");
     }

@@ -2006,6 +2006,7 @@ MonoBehaviour:
   - ShopUI
   - StoragePanel
   - SaveSlotPanel
+  - DialoguePanel
 --- !u!4 &375176118
 Transform:
   m_ObjectHideFlags: 0
@@ -6913,7 +6914,8 @@ Transform:
   m_LocalPosition: {x: 1433.1948, y: 524.9988, z: -185.09193}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1518809163}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1300774950
@@ -8304,6 +8306,7 @@ MonoBehaviour:
   floor3SceneName: Floor_3
   floor4SceneName: Floor_4_Boss
   endingSceneName: Ending
+  homeRespawnPosition: {x: -34, y: 0.12, z: -106}
 --- !u!4 &1518809163
 Transform:
   m_ObjectHideFlags: 0
@@ -8312,12 +8315,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1518809161}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1433.1948, y: 524.9988, z: -185.09193}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1285615385}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1551227729
 GameObject:
@@ -11930,7 +11933,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 1616835959}
   - {fileID: 375176118}
-  - {fileID: 1518809163}
   - {fileID: 1285615385}
   - {fileID: 693962620}
   - {fileID: 760380765}
