@@ -676,7 +676,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -157, y: -232.49902}
+  m_AnchoredPosition: {x: -157, y: -232.49994}
   m_SizeDelta: {x: 316, y: 256.71}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &42188592
@@ -8710,7 +8710,7 @@ MonoBehaviour:
   - ...
   npcPortrait: {fileID: 0}
   useDialogueBeforeFunction: 1
-  functionChoiceLabel: "\uB9E1\uAE30\uAE30"
+  functionChoiceLabel: "\uAD6C\uB9E4\uD558\uAE30"
   talkChoiceLabel: "\uB300\uD654\uD558\uAE30"
   hintObject: {fileID: 397804549}
 --- !u!136 &395055837
@@ -11239,7 +11239,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1014353130}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999726
+  m_Size: 0.99999696
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -13102,7 +13102,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.0009888817}
+  m_AnchoredPosition: {x: 0, y: 0.000025812169}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &823715203
@@ -23152,7 +23152,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1633368385}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99999696
+  m_Size: 0.999996
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

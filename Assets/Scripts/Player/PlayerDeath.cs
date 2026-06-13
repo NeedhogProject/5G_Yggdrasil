@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.InputSystem;
 
 /// <summary>
@@ -18,20 +19,37 @@ using UnityEngine.InputSystem;
 /// - GameManager.OnPlayerDeath() 호출
 /// - PlayerEquipment.UnequipAll() 로 장비 해제
 /// - InventorySystem 완성 후 인벤 삭제 연동
+///
+/// [GameOverPanel 자동 탐색]
+/// - 인스펙터 연결이 비어 있으면 런타임에 이름으로 패널을 찾는다.
+/// - 패널이 PersistentCanvas 안에서 평소 꺼져 있으므로 비활성 포함 검색을 사용한다.
+/// - 던전 1~4층 어디서 죽어도 패널 하나로 처리하기 위함이다.
 /// </summary>
 public class PlayerDeath : MonoBehaviour
 {
     // ─────────────────────── 참조 ───────────────────────
 
     [Header("참조")]
-    [SerializeField] private PlayerStats     playerStats;
+    [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerEquipment playerEquipment;
-    [SerializeField] private PlayerCombat    playerCombat;
+    [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerController playerController;
 
     [Header("사망 UI (GameOverPanel)")]
-    [Tooltip("다시하기/종료 버튼이 있는 UI 패널")]
+    [Tooltip("다시하기/종료 버튼이 있는 UI 패널. 비워두면 이름으로 자동 검색한다.")]
     [SerializeField] private GameObject gameOverPanel;
+
+    [Tooltip("자동 검색에 사용할 패널 오브젝트 이름")]
+    [SerializeField] private string gameOverPanelName = "GameOverPanel";
+
+    [Tooltip("다시하기 버튼 오브젝트 이름 (자동 연결용)")]
+    [SerializeField] private string retryButtonName = "RetryButton";
+
+    [Tooltip("종료 버튼 오브젝트 이름 (자동 연결용)")]
+    [SerializeField] private string quitButtonName = "QuitButton";
+
+    // 버튼 콜백 중복 등록 방지 플래그
+    private bool buttonsHooked = false;
 
     // ─────────────────────── 상태 ───────────────────────
 
@@ -41,38 +59,143 @@ public class PlayerDeath : MonoBehaviour
 
     private void Awake()
     {
-        if (playerStats      == null) playerStats      = GetComponent<PlayerStats>();
-        if (playerEquipment  == null) playerEquipment  = GetComponent<PlayerEquipment>();
-        if (playerCombat     == null) playerCombat     = GetComponent<PlayerCombat>();
-        if (playerController == null) playerController = GetComponent<PlayerController>();
+        if (playerStats == null)
+        {
+            playerStats = GetComponent<PlayerStats>();
+        }
+        if (playerEquipment == null)
+        {
+            playerEquipment = GetComponent<PlayerEquipment>();
+        }
+        if (playerCombat == null)
+        {
+            playerCombat = GetComponent<PlayerCombat>();
+        }
+        if (playerController == null)
+        {
+            playerController = GetComponent<PlayerController>();
+        }
 
         // 체력 변화 이벤트 구독
         if (playerStats != null)
+        {
             playerStats.OnHealthChanged += OnHealthChanged;
+        }
 
         // 사망 UI 초기 숨김
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        ResolveGameOverPanel();
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
     }
 
     private void OnDestroy()
     {
         if (playerStats != null)
+        {
             playerStats.OnHealthChanged -= OnHealthChanged;
+        }
+    }
+
+    // ─────────────────────── GameOverPanel 자동 탐색 ───────────────────────
+
+    // 인스펙터 연결이 없으면 이름으로 패널을 찾는다.
+    // 평소 꺼져 있는 패널도 찾기 위해 비활성 포함 검색을 사용한다.
+    private void ResolveGameOverPanel()
+    {
+        // 이미 연결되어 있으면 버튼 연결만 확인하고 사용
+        if (gameOverPanel != null)
+        {
+            HookButtons();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(gameOverPanelName) == true)
+        {
+            return;
+        }
+
+        // 비활성 오브젝트까지 포함해 모든 Transform 을 검색한다.
+        Transform[] allTransforms = Resources.FindObjectsOfTypeAll<Transform>();
+        for (int i = 0; i < allTransforms.Length; i++)
+        {
+            Transform current = allTransforms[i];
+            if (current.name != gameOverPanelName)
+            {
+                continue;
+            }
+
+            // 씬에 배치된 오브젝트만 사용한다 (프리팹 에셋 원본 제외)
+            if (current.gameObject.scene.IsValid() == false)
+            {
+                continue;
+            }
+
+            gameOverPanel = current.gameObject;
+            HookButtons();
+            return;
+        }
+
+        Debug.LogWarning("[PlayerDeath] GameOverPanel 을 찾지 못했습니다. 이름 확인 필요: " + gameOverPanelName);
+    }
+
+    // 패널 자식에서 다시하기/종료 버튼을 찾아 콜백을 코드로 연결한다.
+    // 씬과 프리팹이 분리되어 인스펙터 직접 연결이 불가능한 경우를 우회한다.
+    private void HookButtons()
+    {
+        if (buttonsHooked == true)
+        {
+            return;
+        }
+        if (gameOverPanel == null)
+        {
+            return;
+        }
+
+        // 비활성 자식까지 포함해 버튼을 찾는다.
+        Button[] buttons = gameOverPanel.GetComponentsInChildren<Button>(true);
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            Button button = buttons[i];
+
+            if (button.name == retryButtonName)
+            {
+                button.onClick.RemoveListener(OnRetryClicked);
+                button.onClick.AddListener(OnRetryClicked);
+            }
+            else if (button.name == quitButtonName)
+            {
+                button.onClick.RemoveListener(OnQuitClicked);
+                button.onClick.AddListener(OnQuitClicked);
+            }
+        }
+
+        buttonsHooked = true;
     }
 
     // ─────────────────────── 체력 감지 ───────────────────────
 
     private void OnHealthChanged(float currentHealth)
     {
-        if (IsDead) return;
-        if (currentHealth <= 0f) Die();
+        if (IsDead == true)
+        {
+            return;
+        }
+        if (currentHealth <= 0f)
+        {
+            Die();
+        }
     }
 
     // ─────────────────────── 사망 처리 ───────────────────────
 
     private void Die()
     {
-        if (IsDead) return;
+        if (IsDead == true)
+        {
+            return;
+        }
         IsDead = true;
 
         Debug.Log("[PlayerDeath] 플레이어 사망");
@@ -105,7 +228,7 @@ public class PlayerDeath : MonoBehaviour
 
         // 인벤토리 전체 삭제
         // InventorySystem 완성 후 주석 해제
-        // var inventory = GetComponent<InventorySystem>();
+        // InventorySystem inventory = GetComponent<InventorySystem>();
         // if (inventory != null)
         // {
         //     inventory.ClearAll();
@@ -119,6 +242,9 @@ public class PlayerDeath : MonoBehaviour
 
     private void ShowGameOverUI()
     {
+        // 표시 직전에 한 번 더 패널을 확인한다 (씬 전환 후 대비).
+        ResolveGameOverPanel();
+
         if (gameOverPanel != null)
         {
             gameOverPanel.SetActive(true);
@@ -151,7 +277,13 @@ public class PlayerDeath : MonoBehaviour
 
         IsDead = false;
 
-        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        // 입력 다시 활성화
+        EnablePlayerInput();
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
 
         // 마을 복귀
         GameManager.Instance?.ReturnToTown();
@@ -177,13 +309,25 @@ public class PlayerDeath : MonoBehaviour
 
     private void DisablePlayerInput()
     {
-        if (playerController != null) playerController.enabled = false;
-        if (playerCombat     != null) playerCombat.enabled     = false;
+        if (playerController != null)
+        {
+            playerController.enabled = false;
+        }
+        if (playerCombat != null)
+        {
+            playerCombat.enabled = false;
+        }
     }
 
     private void EnablePlayerInput()
     {
-        if (playerController != null) playerController.enabled = true;
-        if (playerCombat     != null) playerCombat.enabled     = true;
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
+        if (playerCombat != null)
+        {
+            playerCombat.enabled = true;
+        }
     }
 }

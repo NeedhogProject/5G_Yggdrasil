@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 3731365602666153022}
   - component: {fileID: 7483592433788517892}
   - component: {fileID: 2333802226974840277}
+  - component: {fileID: 1349664831520478086}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -228,6 +229,23 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   equipOnStart: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   bAlreadyGranted: 0
+--- !u!114 &1349664831520478086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3523993642365406597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af57ee1c4620228499b6166ac7f65928, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerDeath
+  playerStats: {fileID: 0}
+  playerEquipment: {fileID: 0}
+  playerCombat: {fileID: 0}
+  playerController: {fileID: 0}
+  gameOverPanel: {fileID: 0}
 --- !u!1 &4525919307855606178
 GameObject:
   m_ObjectHideFlags: 0
