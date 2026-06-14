@@ -4,6 +4,18 @@
 
 ---
 
+## 집 출입 페이드 적용 (2026-06-14, HouseDoorInteractable 기준 확정)
+- 집 출입 전용 스크립트는 HouseDoorInteractable (트리거 진입 + E키로 Teleport, 같은 씬 내 위치 이동)
+  - 직전 시도에서 TownMapUI 에 적용했던 것은 잘못 — 되돌리고 HouseDoorInteractable 로 재작업
+- ScreenFader.cs 신규 (싱글턴, GameCore 부착): 런타임 FadeCanvas(sortingOrder 999) + 검은 Image 자동 생성
+  - FadeOutIn(액션): 어두워짐, 암전 시점 액션 실행, 밝아짐. unscaledDeltaTime, IsFading 중복 방지(E 연타 가드)
+- CameraFollow.SnapToTarget 추가: 텔레포트 직후 카메라 즉시 정착 (target.position + offset)
+- HouseDoorInteractable.Teleport: 페이드 경유로 변경, 실제 이동은 MovePlayer 로 분리
+  - 플레이어 참조를 페이드 시작 시점에 캡처 (페이드 중 트리거 이탈로 _playerObj null 돼도 안전)
+  - Rigidbody 속도 제거 후 이동, 카메라 스냅, DoorOpen 사운드
+  - ScreenFader 없으면 기존처럼 즉시 이동 (폴백)
+- 에디터: GameCore 에 ScreenFader 컴포넌트 부착 필요. 페이드 속도는 fadeDuration/holdDuration 인스펙터 조정
+
 ## 동기화본 미반영분 추가 적용 (2026-06-14)
 앞서 패치로 드렸으나 동기화본에 일부만 적용돼 있던 3건을 동기화본 기준 재적용:
 - InventorySystem.UseItem: Consumable 분기가 item.UseItem()+무조건 RemoveItem 이었음 (물약 회복 안 되고 소모만)

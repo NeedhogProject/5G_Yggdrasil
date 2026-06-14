@@ -54,4 +54,12 @@ public class CameraFollow : MonoBehaviour
         transform.position = Vector3.Lerp(
             transform.position, desired, smoothSpeed * Time.deltaTime);
     }
+
+    // 대상 위치로 즉시 이동 (텔레포트 직후 호출, Lerp 가로지름 방지)
+    public void SnapToTarget()
+    {
+        if (target == null) return;
+
+        transform.position = target.position + offset;
+    }
 }

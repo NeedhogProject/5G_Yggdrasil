@@ -56,7 +56,7 @@ public class HouseDoorInteractable : MonoBehaviour
         Teleport();
     }
 
-    // 플레이어를 도착 지점으로 이동
+    // 페이드를 거쳐 플레이어를 도착 지점으로 이동
     private void Teleport()
     {
         if (targetPoint == null)
@@ -68,18 +68,52 @@ public class HouseDoorInteractable : MonoBehaviour
         {
             return;
         }
+        // 페이드 진행 중 E 연타로 중복 이동 방지
+        if (ScreenFader.Instance != null && ScreenFader.Instance.IsFading == true)
+        {
+            return;
+        }
 
         SetHintVisible(false);
 
+        // 페이드 도중 트리거 이탈로 _playerObj 가 비워져도 안전하도록 참조를 미리 캡처
+        GameObject objPlayer = _playerObj;
+
+        if (ScreenFader.Instance != null)
+        {
+            ScreenFader.Instance.FadeOutIn(() => MovePlayer(objPlayer));
+        }
+        else
+        {
+            // 페이더 미배치 씬에서는 기존처럼 즉시 이동
+            MovePlayer(objPlayer);
+        }
+    }
+
+    // 실제 이동 처리 (페이드가 가장 어두운 시점에 호출됨)
+    private void MovePlayer(GameObject _objPlayer)
+    {
+        if (_objPlayer == null)
+        {
+            return;
+        }
+
         // Rigidbody 가 있으면 관성으로 미끄러지지 않도록 속도를 먼저 제거
-        Rigidbody playerRb = _playerObj.GetComponent<Rigidbody>();
+        Rigidbody playerRb = _objPlayer.GetComponent<Rigidbody>();
         if (playerRb != null)
         {
             playerRb.linearVelocity = Vector3.zero;
             playerRb.angularVelocity = Vector3.zero;
         }
 
-        _playerObj.transform.position = targetPoint.position;
+        _objPlayer.transform.position = targetPoint.position;
+
+        // 암전 동안 카메라를 도착 위치로 즉시 스냅 (Lerp 로 마을을 가로지르는 화면 방지)
+        CameraFollow camFollow = FindFirstObjectByType<CameraFollow>();
+        if (camFollow != null)
+        {
+            camFollow.SnapToTarget();
+        }
 
         AudioManager.Instance?.PlaySFX(SFXClip.DoorOpen);
     }
