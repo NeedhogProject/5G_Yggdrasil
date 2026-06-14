@@ -25,6 +25,14 @@ public class EnemyBase : MonoBehaviour
     [Tooltip("0~100. PlayerStats 의 방어력 공식과 동일하게 적용")]
     [SerializeField] protected float defense = 0f;
 
+    [Header("달란 드롭 (이번 학기: 즉시 지급)")]
+    [Tooltip("처치 시 달란을 지급할 확률 0~1. 층/종류별 차등은 프리팹마다 값을 다르게 설정")]
+    [SerializeField] [Range(0f, 1f)] protected float goldDropChance = 1f;
+    [Tooltip("지급 달란 최소값 (포함)")]
+    [SerializeField] protected int goldMin = 0;
+    [Tooltip("지급 달란 최대값 (포함)")]
+    [SerializeField] protected int goldMax = 0;
+
     // ─────────────────────── 런타임 상태 ───────────────────────
 
     protected float _currentHealth;
@@ -99,13 +107,8 @@ public class EnemyBase : MonoBehaviour
     /// </summary>
     private float CalculateDamage(float rawDamage)
     {
-        float dd;
-        if      (defense <= 100f) dd = defense * 0.25f;
-        else if (defense <= 200f) dd = 25f  + (defense - 100f) * 0.125f;
-        else if (defense <= 300f) dd = 37.5f + (defense - 200f) * 0.0625f;
-        else if (defense <= 400f) dd = 43.75f + (defense - 300f) * 0.03125f;
-        else                      dd = 46.875f + (defense - 400f) * 0.015625f;
-
+        // 방어력 100 당 5% 경감 (PlayerStats 와 동일 공식)
+        float dd = defense * 0.05f;
         dd = Mathf.Clamp(dd, 0f, 95f);
         float damageRatio = Mathf.Max(1f - (dd / 100f), 0.05f);
         return rawDamage * damageRatio;
@@ -128,6 +131,9 @@ public class EnemyBase : MonoBehaviour
         // 아이템 드롭 — LootTable 연동
         GetComponent<LootTable>()?.RollDrop(transform.position);
 
+        // 달란 지급
+        GrantGold();
+
         OnDied?.Invoke(this);
 
         // 사망 연출 후 오브젝트 제거
@@ -141,6 +147,38 @@ public class EnemyBase : MonoBehaviour
         // InventorySystem 완성 전 임시: 로그만 출력
         Debug.Log($"[{gameObject.name}] {key.KeyDirection} 열쇠 드롭");
         // TODO: 열쇠 아이템 프리팹 스폰 → 플레이어 획득 시 인벤토리 추가
+    }
+
+    // 달란 지급 — 이번 학기는 즉시 지급(인스펙터 확률/범위 기반)
+    // 다음 학기 데이터 테이블 기반(층/종류별)으로 전환 시 이 메서드 내부만 교체
+    protected virtual void GrantGold()
+    {
+        if (PlayerStats.Instance == null)
+        {
+            return;
+        }
+        if (goldMax <= 0)
+        {
+            return;
+        }
+        // 확률 판정
+        if (UnityEngine.Random.value > goldDropChance)
+        {
+            return;
+        }
+
+        // 최소~최대 범위 랜덤 (Range 의 max 는 배타적이라 +1)
+        int nLow = Mathf.Min(goldMin, goldMax);
+        int nHigh = Mathf.Max(goldMin, goldMax);
+        int nAmount = UnityEngine.Random.Range(nLow, nHigh + 1);
+        if (nAmount <= 0)
+        {
+            return;
+        }
+
+        // gold setter 가 상한 999999 로 클램프
+        PlayerStats.Instance.gold += nAmount;
+        Debug.Log($"[{gameObject.name}] 달란 +{nAmount}");
     }
 
     private void DestroyEnemy() => Destroy(gameObject);

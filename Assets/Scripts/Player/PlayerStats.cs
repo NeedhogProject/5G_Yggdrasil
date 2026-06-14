@@ -44,6 +44,8 @@ public class PlayerStats : MonoBehaviour
 
     [Header("골드")]
     [SerializeField] private int _gold = 0;
+    // 달란 최대 보유량 (기획: 초과분은 버림)
+    public const int MAX_GOLD = 999999;
 
     [Header("물약 회복량")]
     [SerializeField] private float healthPotionAmount = 30f;   // 최대 체력 대비 %
@@ -104,7 +106,8 @@ public class PlayerStats : MonoBehaviour
         get => _gold;
         set
         {
-            _gold = Mathf.Max(0, value);
+            // 0 ~ 최대 보유량으로 제한 (초과분 버림)
+            _gold = Mathf.Clamp(value, 0, MAX_GOLD);
             if (OnGoldChanged != null)
             {
                 OnGoldChanged.Invoke(_gold);
