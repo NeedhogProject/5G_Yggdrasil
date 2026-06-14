@@ -8306,7 +8306,7 @@ MonoBehaviour:
   floor3SceneName: Floor_3
   floor4SceneName: Floor_4_Boss
   endingSceneName: Ending
-  homeRespawnPosition: {x: -34, y: 0.12, z: -106}
+  homeRespawnPosition: {x: -33.61, y: 0.7, z: -107.5}
 --- !u!4 &1518809163
 Transform:
   m_ObjectHideFlags: 0
@@ -8918,6 +8918,14 @@ PrefabInstance:
     - target: {fileID: 7015097066863487603, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
       propertyPath: offset.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8939204100268109601, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
+      propertyPath: homeRespawnPosition.y
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8939204100268109601, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
+      propertyPath: homeRespawnPosition.z
+      value: -107.5
       objectReference: {fileID: 0}
     - target: {fileID: 8942303448545066385, guid: b7b3b49abd845f44d96f434ab5d1a1b9, type: 3}
       propertyPath: m_Name
