@@ -27,10 +27,17 @@ public class PlayerEquipment : MonoBehaviour
     [SerializeField] private InventorySystem  inventorySystem;
     [SerializeField] private InscriptionColorHelper inscriptionColorHelper;
 
+    [Header("무기 부착 지점")]
+    // 플레이어 오른손 본 아래 빈 오브젝트. 장착 무기 모델이 이 자식으로 생성됨
+    [SerializeField] private Transform weaponHolder;
+
     // ─────────────────────── 장비 슬롯 ───────────────────────
 
     /// <summary>현재 장착 무기</summary>
     public WeaponInstance EquippedWeapon { get; private set; }
+
+    // 손에 생성된 무기 모델 인스턴스 (해제 시 제거용)
+    private GameObject _objWeaponModel;
 
     /// <summary>방어구 슬롯 (부위 → 인스턴스)</summary>
     private readonly Dictionary<ArmorSlot, ArmorInstance> _armorSlots
@@ -105,6 +112,7 @@ public class PlayerEquipment : MonoBehaviour
         // 새 무기 장착
         EquippedWeapon = newWeapon;
         playerCombat?.EquipWeapon(newWeapon);
+        AttachWeaponModel(newWeapon);
 
         Debug.Log($"[PlayerEquipment] 무기 장착: {newWeapon.WeaponData?.ItemName}");
         OnEquipmentChanged?.Invoke();
@@ -117,6 +125,45 @@ public class PlayerEquipment : MonoBehaviour
     {
         playerCombat?.UnequipWeapon();
         EquippedWeapon = null;
+        RemoveWeaponModel();
+    }
+
+    // 무기 모델을 손 부착 지점에 생성
+    private void AttachWeaponModel(WeaponInstance _weapon)
+    {
+        // 이전 모델이 남아있으면 먼저 제거
+        RemoveWeaponModel();
+
+        if (weaponHolder == null)
+        {
+            return;
+        }
+        if (_weapon == null || _weapon.WeaponData == null)
+        {
+            return;
+        }
+
+        GameObject prefabModel = _weapon.WeaponData.WeaponModelPrefab;
+        if (prefabModel == null)
+        {
+            // 모델 프리팹 미연결 (다음 학기 무기 모델 추가 예정)
+            return;
+        }
+
+        // 손 부착 지점의 자식으로 생성 (위치/회전은 부착 지점 기준)
+        _objWeaponModel = Instantiate(prefabModel, weaponHolder);
+        _objWeaponModel.transform.localPosition = Vector3.zero;
+        _objWeaponModel.transform.localRotation = Quaternion.identity;
+    }
+
+    // 손에 생성된 무기 모델 제거
+    private void RemoveWeaponModel()
+    {
+        if (_objWeaponModel != null)
+        {
+            Destroy(_objWeaponModel);
+            _objWeaponModel = null;
+        }
     }
 
     // ─────────────────────── 방어구 장착 ───────────────────────

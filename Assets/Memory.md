@@ -4,6 +4,20 @@
 
 ---
 
+## 무기 장착 시 손에 모델 표시 (2026-06-14)
+- 문제: 무기 장착이 데이터/스탯만 처리, 시각적 모델 부착 없음 + WeaponData 에 모델 프리팹 필드 자체가 없었음
+- 방식 A (무기별 다른 모델 확장 대비): WeaponData 에 프리팹 필드, 이번 학기 검 에셋만 연결
+- WeaponData: weaponModelPrefab 필드 + WeaponModelPrefab 프로퍼티 추가
+- PlayerEquipment: weaponHolder(Transform) 필드 + _objWeaponModel 추적
+  - EquipWeapon -> AttachWeaponModel: weaponHolder 자식으로 Instantiate, localPosition/Rotation 0
+  - DetachWeapon -> RemoveWeaponModel: Destroy
+  - 프리팹 미연결이면 그냥 안 보임 (다음 학기 단검/창 모델 추가 시 에셋 연결만)
+- 에디터 남은 작업:
+  1. 플레이어 모델 오른손 본 아래 빈 오브젝트 'WeaponHolder' 생성 -> PlayerEquipment.weaponHolder 에 연결
+  2. 검 WeaponData 에셋의 weaponModelPrefab 에 검 모델 프리팹 연결
+  3. 손 위치/각도 안 맞으면 WeaponHolder Transform 또는 프리팹 피벗 조정
+- 주의: 무기 모델은 Mixamo 모델 교체 후의 오른손 본 기준. 모델 교체 전이면 손 본 위치 먼저 확정 필요
+
 ## 플레이어 애니메이션 연결 (2026-06-14)
 - 현황: 임포트된 클립은 장검 공격 모션뿐. idle/walk/run 은 아직 없음 (다음 학기 무기별 모션과 함께)
 - Animator 파라미터(건희 설정): Speed(Float), IsSprinting(Bool), Attack(Trigger)
