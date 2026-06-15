@@ -7,6 +7,9 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private Vector3 offset = new Vector3(0, 15, -8);
     [SerializeField] private float smoothSpeed = 5f;
 
+    // 추적 사용 여부 (집 안 등에서 화면 고정 시 false)
+    private bool _bFollowEnabled = true;
+
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
@@ -48,6 +51,7 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (_bFollowEnabled == false) return;
         if (target == null) return;
 
         Vector3 desired = target.position + offset;
@@ -61,5 +65,22 @@ public class CameraFollow : MonoBehaviour
         if (target == null) return;
 
         transform.position = target.position + offset;
+    }
+
+    // 추적 켜기/끄기 (집 안 화면 고정 등)
+    // 끄면 현재 카메라 위치 그대로 멈춤, 켜면 다시 플레이어 추적
+    public void SetFollowEnabled(bool _bEnabled)
+    {
+        _bFollowEnabled = _bEnabled;
+    }
+
+    // 지정 오브젝트 위치로 카메라를 옮기고 추적 정지 (회전은 마을과 동일하게 현재 각도 유지)
+    // 집 안 시작 등 고정 위치가 필요할 때 호출
+    public void MoveToFixedPoint(Transform _trPoint)
+    {
+        if (_trPoint == null) return;
+
+        transform.position = _trPoint.position;
+        _bFollowEnabled = false;
     }
 }

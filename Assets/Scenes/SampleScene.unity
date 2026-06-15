@@ -176,6 +176,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1603465246}
   inscriptionIcon: {fileID: 41534263}
   equipmentLevelText: {fileID: 356629059}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -3806,6 +3808,8 @@ MonoBehaviour:
   highlightImage: {fileID: 231598737}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 995158319}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -5010,6 +5014,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1334514826}
   inscriptionIcon: {fileID: 2019518720}
   equipmentLevelText: {fileID: 1801002933}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -5880,6 +5886,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 415772250}
   m_CullTransparentMesh: 1
+--- !u!1001 &421765493
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.467348
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.5653054
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -21.739305
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
+      propertyPath: m_Name
+      value: "\uB300\uC7A5\uC7A5\uC774"
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7d9c7128419f1da4e92a9119a9ad0376, type: 3}
 --- !u!1 &430872449
 GameObject:
   m_ObjectHideFlags: 0
@@ -8044,6 +8107,63 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 555838973}
   m_CullTransparentMesh: 1
+--- !u!1001 &580689561
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.04355
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 26.14
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -14.44936
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
+      propertyPath: m_Name
+      value: FINAL OBJ
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: dbadfa4dc4bbc364785d12ddda9ed446, type: 3}
 --- !u!1 &585648547
 GameObject:
   m_ObjectHideFlags: 0
@@ -8451,6 +8571,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -10512,6 +10634,8 @@ MonoBehaviour:
   highlightImage: {fileID: 275934570}
   inscriptionIcon: {fileID: 480025628}
   equipmentLevelText: {fileID: 815998339}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -10648,6 +10772,18 @@ MonoBehaviour:
   currentLevelText: {fileID: 535628941}
   successRateText: {fileID: 609430691}
   enhancementSystem: {fileID: 0}
+  menuPanel: {fileID: 0}
+  menuEnhanceButton: {fileID: 0}
+  menuTalkButton: {fileID: 0}
+  talkLines:
+  - "\uC1E0\uB294 \uAC70\uC9D3\uB9D0\uC744 \uC548 \uD558\uC9C0. \uB450\uB4DC\uB9B0
+    \uB9CC\uD07C \uAC15\uD574\uC9C0\uB294 \uBC95\uC774\uC57C."
+  - "\uAC15\uD654\uB294 \uB3D9\uC804 \uD55C \uB2E2\uC5D0 \uC6B4\uC744 \uAC70\uB294
+    \uC77C\uC77C\uC138. \uAC01\uC624\uB294 \uB410\uB098?"
+  - "\uC704\uB85C \uC62C\uB77C\uAC08\uC218\uB85D \uC1E0\uB3C4 \uB2E8\uB2E8\uD574\uC9C0\uB354\uAD70.
+    \uC88B\uC740 \uC7AC\uB8CC\uB97C \uAC00\uC838\uC624\uAC8C."
+  - "\uBB34\uB9AC\uD55C \uAC15\uD654\uB294 \uBB34\uAE30\uB97C \uC783\uAC8C \uB9CC\uB4E4\uC9C0.
+    \uC695\uC2EC\uC740 \uAE08\uBB3C\uC774\uC57C."
 --- !u!1 &773151853
 GameObject:
   m_ObjectHideFlags: 0
@@ -10703,6 +10839,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -11161,6 +11299,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1973710881}
   inscriptionIcon: {fileID: 857203461}
   equipmentLevelText: {fileID: 1095806328}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -13209,6 +13349,19 @@ MonoBehaviour:
   windResourceText: {fileID: 0}
   earthResourceText: {fileID: 0}
   darknessResourceText: {fileID: 0}
+  menuPanel: {fileID: 0}
+  menuInscribeButton: {fileID: 0}
+  menuResetButton: {fileID: 0}
+  menuTalkButton: {fileID: 0}
+  talkLines:
+  - "\uAC01\uC778\uC774\uB780 \uC138\uACC4\uC218\uC758 \uC18D\uC0AD\uC784\uC744 \uBC29\uC5B4\uAD6C\uC5D0
+    \uC0C8\uAE30\uB294 \uC77C\uC774\uC9C0."
+  - "\uAC19\uC740 \uC18D\uC131\uC744 \uBAA8\uC744\uC218\uB85D \uADF8 \uD798\uC740
+    \uAE4A\uC5B4\uC9C4\uB2E4\uB124."
+  - "\uB9C8\uC74C\uC5D0 \uB4E4\uC9C0 \uC54A\uB294 \uAC01\uC778\uC740 \uCD08\uAE30\uD654\uAD8C\uC73C\uB85C
+    \uC9C0\uC6B8 \uC218 \uC788\uB124."
+  - "\uC18D\uC131\uC758 \uC870\uD654\uB97C \uC78A\uC9C0 \uB9D0\uAC8C. \uADF8\uAC83\uC774
+    \uACE7 \uC0DD\uC874\uC758 \uC5F4\uC1E0\uC57C."
 --- !u!1 &990272031
 GameObject:
   m_ObjectHideFlags: 0
@@ -14233,6 +14386,7 @@ MonoBehaviour:
   slotContainer: {fileID: 982648428}
   slotPrefab: {fileID: 7130759374801163818, guid: ea44927e1feed4647807b0550a76dd13, type: 3}
   inventoryUI: {fileID: 1074688456}
+  iconOverlay: {fileID: 0}
   playerEquipment: {fileID: 0}
   slots: []
   items: []
@@ -14256,8 +14410,8 @@ MonoBehaviour:
   closeButton: {fileID: 550297570}
   dropButton: {fileID: 0}
   outsideCloseButton: {fileID: 1837658466}
-  inventoryInfoText: {fileID: 1216477838}
-  weightText: {fileID: 0}
+  storageModePosition: {x: -370, y: 0}
+  shopModePosition: {x: 370, y: 0}
 --- !u!114 &1074688457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15627,6 +15781,32 @@ MonoBehaviour:
   itemListContainer: {fileID: 977049384}
   shopItemPrefab: {fileID: 0}
   shopItems: []
+  buyConfirmPopup: {fileID: 0}
+  confirmItemNameText: {fileID: 0}
+  quantityText: {fileID: 0}
+  totalPriceText: {fileID: 0}
+  balanceAfterText: {fileID: 0}
+  quantityUpButton: {fileID: 0}
+  quantityDownButton: {fileID: 0}
+  confirmBuyButton: {fileID: 0}
+  cancelBuyButton: {fileID: 0}
+  menuPanel: {fileID: 0}
+  menuBuyButton: {fileID: 0}
+  menuSellButton: {fileID: 0}
+  menuTalkButton: {fileID: 0}
+  sellControls: {fileID: 0}
+  sellTotalText: {fileID: 0}
+  sellBalanceText: {fileID: 0}
+  confirmSellButton: {fileID: 0}
+  cancelSellButton: {fileID: 0}
+  sellPriceRatio: 0.3
+  talkLines:
+  - "\uC138\uACC4\uC218 \uC544\uB798 \uB9C8\uC744\uC740 \uB298 \uBD84\uC8FC\uD558\uB2F5\uB2C8\uB2E4."
+  - "\uD544\uC694\uD55C \uAC8C \uC788\uC73C\uBA74 \uC5B8\uC81C\uB4E0 \uB9D0\uD574\uC694."
+  - "\uC694\uC998 \uB358\uC804\uC774 \uD5D8\uD558\uB2E4\uB358\uB370... \uBD80\uB514
+    \uC870\uC2EC\uD574\uC694."
+  - "\uB2E8\uACE8\uC190\uB2D8\uAEDC \uAC00\uB054 \uB364\uB3C4 \uCC59\uACA8\uB4DC\uB9B0\uB2F5\uB2C8\uB2E4.
+    \uD6C4\uD6D7."
 --- !u!1 &1188875526
 GameObject:
   m_ObjectHideFlags: 0
@@ -16723,6 +16903,8 @@ MonoBehaviour:
   highlightImage: {fileID: 808010791}
   inscriptionIcon: {fileID: 839747032}
   equipmentLevelText: {fileID: 1568078431}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -17055,6 +17237,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -18378,8 +18562,8 @@ MonoBehaviour:
   closeButton: {fileID: 42993925}
   dropButton: {fileID: 1331711703}
   outsideCloseButton: {fileID: 0}
-  inventoryInfoText: {fileID: 354594729}
-  weightText: {fileID: 0}
+  storageModePosition: {x: -370, y: 0}
+  shopModePosition: {x: 370, y: 0}
 --- !u!1 &1400283916
 GameObject:
   m_ObjectHideFlags: 0
@@ -19455,6 +19639,9 @@ MonoBehaviour:
   moveSpeed: 3
   attackRange: 1.5
   defense: 0
+  goldDropChance: 1
+  goldMin: 0
+  goldMax: 0
   hpBarObject: {fileID: 0}
   hpBarFill: {fileID: 0}
   hpBarHideDelay: 3
@@ -19747,6 +19934,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1026696245}
   inscriptionIcon: {fileID: 1888703095}
   equipmentLevelText: {fileID: 1925286522}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -19861,6 +20050,7 @@ MonoBehaviour:
   slotContainer: {fileID: 1176332371}
   slotPrefab: {fileID: 4384222009280321910, guid: 4955def0890b65c418ad1699387c5008, type: 3}
   inventoryUI: {fileID: 1398115730}
+  iconOverlay: {fileID: 0}
   playerEquipment: {fileID: 8191704344583549451}
   slots: []
   items: []
@@ -19889,6 +20079,19 @@ MonoBehaviour:
   windResourceText: {fileID: 0}
   earthResourceText: {fileID: 0}
   darknessResourceText: {fileID: 0}
+  menuPanel: {fileID: 0}
+  menuInscribeButton: {fileID: 0}
+  menuResetButton: {fileID: 0}
+  menuTalkButton: {fileID: 0}
+  talkLines:
+  - "\uAC01\uC778\uC774\uB780 \uC138\uACC4\uC218\uC758 \uC18D\uC0AD\uC784\uC744 \uBC29\uC5B4\uAD6C\uC5D0
+    \uC0C8\uAE30\uB294 \uC77C\uC774\uC9C0."
+  - "\uAC19\uC740 \uC18D\uC131\uC744 \uBAA8\uC744\uC218\uB85D \uADF8 \uD798\uC740
+    \uAE4A\uC5B4\uC9C4\uB2E4\uB124."
+  - "\uB9C8\uC74C\uC5D0 \uB4E4\uC9C0 \uC54A\uB294 \uAC01\uC778\uC740 \uCD08\uAE30\uD654\uAD8C\uC73C\uB85C
+    \uC9C0\uC6B8 \uC218 \uC788\uB124."
+  - "\uC18D\uC131\uC758 \uC870\uD654\uB97C \uC78A\uC9C0 \uB9D0\uAC8C. \uADF8\uAC83\uC774
+    \uACE7 \uC0DD\uC874\uC758 \uC5F4\uC1E0\uC57C."
 --- !u!4 &1525239507
 Transform:
   m_ObjectHideFlags: 0
@@ -20239,6 +20442,7 @@ MonoBehaviour:
   playerEquipment: {fileID: 0}
   houseSystem: {fileID: 0}
   inventorySystem: {fileID: 0}
+  itemDatabase: []
 --- !u!4 &1545246530
 Transform:
   m_ObjectHideFlags: 0
@@ -21707,6 +21911,8 @@ MonoBehaviour:
   highlightImage: {fileID: 957452522}
   inscriptionIcon: {fileID: 1454752229}
   equipmentLevelText: {fileID: 1437597461}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -22361,6 +22567,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -24089,6 +24297,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1187504241}
   inscriptionIcon: {fileID: 1874906877}
   equipmentLevelText: {fileID: 355641366}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -24149,6 +24359,8 @@ MonoBehaviour:
   highlightImage: {fileID: 1565935687}
   inscriptionIcon: {fileID: 78978169}
   equipmentLevelText: {fileID: 1290733544}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -24439,6 +24651,8 @@ MonoBehaviour:
   highlightImage: {fileID: 0}
   inscriptionIcon: {fileID: 0}
   equipmentLevelText: {fileID: 0}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -25665,10 +25879,6 @@ MonoBehaviour:
   hpColorFull: {r: 0.22, g: 0.82, b: 0.42, a: 1}
   hpColorLow: {r: 0.9, g: 0.2, b: 0.2, a: 1}
   hpLowThreshold: 0.3
-  defSlider: {fileID: 1192163049}
-  defFill: {fileID: 504890654}
-  defText: {fileID: 1778065775}
-  defColor: {r: 0.4, g: 0.7, b: 1, a: 1}
   sanitySlider: {fileID: 729948451}
   sanityFill: {fileID: 232130940}
   sanityText: {fileID: 902683448}
@@ -26898,6 +27108,8 @@ MonoBehaviour:
   highlightImage: {fileID: 372015934}
   inscriptionIcon: {fileID: 755114591}
   equipmentLevelText: {fileID: 413230963}
+  emptySlotIcon: {fileID: 0}
+  emptySlotAlpha: 0.3
   currentEquipment: {fileID: 0}
   isEquipped: 0
   playerEquipment: {fileID: 0}
@@ -27256,3 +27468,5 @@ SceneRoots:
   - {fileID: 1084575247}
   - {fileID: 729948450}
   - {fileID: 1071149060}
+  - {fileID: 421765493}
+  - {fileID: 580689561}

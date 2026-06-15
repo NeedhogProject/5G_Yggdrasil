@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 /// - 장착 장비도 전부 해제 및 삭제
 /// - 사망 시 "다시하기 / 종료" UI 표시
 /// - 다시하기: 체력/정신력 완전 회복 → 마을 복귀
-/// - 종료(메인화면): 타이틀 화면으로 이동 (GameManager.GoToTitle)
+/// - 종료: 게임 종료 (Application.Quit)
 /// - 사망 연출: 보류 (추후 추가)
 ///
 /// [연동]
@@ -226,16 +226,25 @@ public class PlayerDeath : MonoBehaviour
             Debug.Log($"[PlayerDeath] 장착 장비 {droppedItems.Count}개 삭제");
         }
 
-        // 인벤토리 전체 삭제
-        // InventorySystem 완성 후 주석 해제
-        // InventorySystem inventory = GetComponent<InventorySystem>();
-        // if (inventory != null)
-        // {
-        //     inventory.ClearAll();
-        //     Debug.Log("[PlayerDeath] 인벤토리 전체 삭제");
-        // }
+        // 인벤토리 내용물 삭제 (칸은 유지, 장비/소모품 아이템만 비움)
+        if (InventorySystem.Instance != null)
+        {
+            List<ItemInstance> nCurrent = new List<ItemInstance>(InventorySystem.Instance.GetAllInstances());
+            for (int i = nCurrent.Count - 1; i >= 0; i--)
+            {
+                InventorySystem.Instance.RemoveItem(nCurrent[i]);
+            }
+            Debug.Log($"[PlayerDeath] 인벤토리 아이템 {nCurrent.Count}개 삭제");
+        }
 
-        Debug.Log("[PlayerDeath] 사망 패널티 적용 완료 (인벤 삭제 — InventorySystem 연동 후 활성화)");
+        // 자원(각인 재화) 전체 삭제 — 사망 시 모든 보유 아이템 유실 (자원 포함 확정)
+        if (ResourceInventory.Instance != null)
+        {
+            ResourceInventory.Instance.ClearAll();
+            Debug.Log("[PlayerDeath] 자원 전체 삭제");
+        }
+
+        Debug.Log("[PlayerDeath] 사망 패널티 적용 완료");
     }
 
     // ─────────────────────── UI ───────────────────────
@@ -285,27 +294,24 @@ public class PlayerDeath : MonoBehaviour
             gameOverPanel.SetActive(false);
         }
 
-        // 집에서 부활하며 마을 복귀
+        // 집 안에서 부활 (새 게임과 동일한 시작 위치)
         GameManager.Instance?.RespawnAtHome();
         Debug.Log("[PlayerDeath] 다시하기 → 집에서 부활");
     }
 
     /// <summary>
-    /// 메인화면(타이틀) 버튼 클릭 — UI 버튼 OnClick 에 연결
-    /// 게임을 끄지 않고 타이틀 화면으로 이동한다.
+    /// 종료 버튼 클릭 — UI 버튼 OnClick 에 연결
     /// </summary>
     public void OnQuitClicked()
     {
         Time.timeScale = 1f;
-        IsDead = false;
+        Debug.Log("[PlayerDeath] 게임 종료");
 
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(false);
-        }
-
-        Debug.Log("[PlayerDeath] 메인화면 → 타이틀 이동");
-        GameManager.Instance?.GoToTitle();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 
     // ─────────────────────── 입력 비활성화 ───────────────────────
