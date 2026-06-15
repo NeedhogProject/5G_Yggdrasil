@@ -174,8 +174,9 @@ public class InventorySystem : MonoBehaviour
     }
 
     /// <summary>
-    /// ItemData 기반 추가 (하위 호환용, 상점 미리보기 등)
-    /// 런타임 정보 없이 기본 데이터만 표시
+    /// ItemData 기반 추가 (시작 장비 등)
+    /// 타입에 맞는 런타임 인스턴스를 생성해 추가한다.
+    /// 인스턴스를 가지므로 창고 이동/강화/각인/판매가 정상 동작한다.
     /// </summary>
     public bool AddItem(ItemData item)
     {
@@ -184,6 +185,14 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
 
+        // 데이터 전용으로 넣지 않고 타입에 맞는 인스턴스를 만들어 추가한다.
+        ItemInstance instance = CreateInstanceFromData(item);
+        if (instance != null)
+        {
+            return AddItem(instance);
+        }
+
+        // 인스턴스 생성 실패 시에만 기존 데이터 전용 방식으로 추가 (안전장치)
         InventorySlot emptySlot = FindEmptySlot(item);
 
         if (emptySlot == null)
@@ -192,7 +201,6 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
 
-        // 주인 슬롯에 아이템 배치 + 차지하는 모든 칸 점유
         OccupyArea(emptySlot, item);
         items.Add(item);
 
@@ -393,6 +401,34 @@ public class InventorySystem : MonoBehaviour
         return slots[idx];
     }
 
+    // 지정한 슬롯 위치에 인스턴스를 배치한다 (창고 -> 인벤토리 드롭 위치 지정용)
+    // 그 위치에 아이템 크기만큼 공간이 있으면 배치하고 true, 없으면 false 를 반환한다.
+    // false 면 호출측에서 AddItem 으로 폴백하면 된다.
+    public bool AddItemAtSlot(InventorySlot targetSlot, ItemInstance instance)
+    {
+        if (targetSlot == null || instance == null || instance.Data == null)
+        {
+            return false;
+        }
+
+        int startX = targetSlot.slotIndex % gridWidth;
+        int startY = targetSlot.slotIndex / gridWidth;
+
+        // 그 자리에 아이템 크기만큼 들어갈 공간이 있는지 검사
+        if (CanPlaceAt(startX, startY, instance.Data.itemSize) == false)
+        {
+            return false;
+        }
+
+        targetSlot.SetItem(instance);
+        OccupyAreaOnly(targetSlot, instance.Data);
+        _itemInstances.Add(instance);
+        items.Add(instance.Data);
+
+        Debug.Log("[InventorySystem] 지정 위치 배치: " + instance.Data.itemName);
+        return true;
+    }
+
     // 인스턴스 찾기 (주인 슬롯 기준)
     private ItemInstance FindInstanceBySlot(InventorySlot ownerSlot)
     {
@@ -589,6 +625,7 @@ public class InventorySystem : MonoBehaviour
 
         Debug.Log("[InventorySystem] 아이템 제거: " + item.itemName);
     }
+
     // 슬롯은 건드리지 않고 데이터 리스트에서만 제거 (컨테이너 간 이동용)
     public void RemoveInstanceData(ItemInstance instance)
     {
@@ -867,7 +904,7 @@ public class InventorySystem : MonoBehaviour
         return result;
     }
 
-    // ItemData 로부터 적절한 ItemInstance 생성 (저장용 임시 변환)
+    // ItemData 로부터 적절한 ItemInstance 생성 (추가/저장 공용)
     private ItemInstance CreateInstanceFromData(ItemData data)
     {
         if (data == null)
@@ -883,6 +920,16 @@ public class InventorySystem : MonoBehaviour
         if (data is ArmorData armorData)
         {
             return new ArmorInstance(armorData);
+        }
+
+        if (data is ConsumableData consumableData)
+        {
+            return new ConsumableInstance(consumableData, 1);
+        }
+
+        if (data is ResourceData resourceData)
+        {
+            return new ResourceInstance(resourceData, 1);
         }
 
         return new ItemInstance(data);

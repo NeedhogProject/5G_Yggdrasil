@@ -13,15 +13,14 @@ MonoBehaviour:
   m_Name: FloorKey_East_Floor_1
   m_EditorClassIdentifier: Assembly-CSharp::FloorKeyData
   _itemName: "\uB3D9\uCABD \uC904\uAE30 \uC5F4\uC1E0"
-  _description: 
+  _description: "\uB3D9\uCABD \uC904\uAE30\uB97C \uC5F4 \uC218 \uC788\uB294 \uC5F4\uC1E0\uC774\uB2E4."
   _itemType: 4
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
-  _buyPrice: 0
-  _sellPrice: 0
+  _price: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1

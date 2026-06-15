@@ -51,7 +51,8 @@ public class InventorySlot : MonoBehaviour,
     }
 
     // 인벤토리 <-> 창고 간 아이템 이동 (데이터 동기화 포함)
-    private void HandleCrossContainerDrop(ItemInstance draggedInstance)
+    // fromSlot: 드래그를 시작한 출발 슬롯 (OnDrop 에서 확보해 넘겨줌)
+    private void HandleCrossContainerDrop(InventorySlot fromSlot, ItemInstance draggedInstance)
     {
         // 창고는 인스턴스 단위 보관 — 인스턴스 없는 아이템은 이동 불가
         if (draggedInstance == null)
@@ -60,16 +61,15 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        // 목적지 칸이 차있으면 이동 막음 (컨테이너 간 스왑은 미지원)
-        if (isOccupied == true)
+        if (fromSlot == null)
         {
-            Debug.Log("[InventorySlot] 빈 칸에만 옮길 수 있습니다.");
             return;
         }
 
         if (container == SlotContainer.Storage)
         {
             // 인벤토리에서 창고로
+            // StorageUI 가 빈 칸을 찾아 배치한다 (기존 창고 아이템 위치는 유지)
             if (StorageUI.Instance == null)
             {
                 return;
@@ -78,22 +78,48 @@ public class InventorySlot : MonoBehaviour,
             bool added = StorageUI.Instance.AddToStorageData(draggedInstance);
             if (added == true)
             {
-                InventorySystem.Instance?.RemoveInstanceData(draggedInstance);
-                // 인벤토리 출발 슬롯의 다중 칸 점유 해제
-                InventorySystem.Instance?.ReleaseSlotArea(_draggingSlot);
+                // 출발 슬롯(인벤토리)을 멀티셀 영역 + 데이터까지 확실히 제거
+                // RemoveItemAtSlot 하나로 슬롯 비우기와 데이터 제거를 모두 처리한다 (복제 방지)
+                InventorySystem.Instance?.RemoveItemAtSlot(fromSlot);
             }
         }
         else
         {
             // 창고에서 인벤토리로
+            // 목적지(인벤토리) 칸이 차있으면 막는다 — 인벤토리는 위치 기반 배치라 빈 칸이 필요
+            if (isOccupied == true)
+            {
+                Debug.Log("[InventorySlot] 빈 칸에만 옮길 수 있습니다.");
+                return;
+            }
+
             if (StorageUI.Instance != null)
             {
                 StorageUI.Instance.RemoveFromStorageData(draggedInstance);
             }
             // 창고 출발 슬롯 비우기 (창고는 단일 칸 관리)
-            _draggingSlot.ClearSlot();
-            // 인벤토리에 추가 — 다중 칸 점유 자동 처리
-            InventorySystem.Instance?.AddItem(draggedInstance);
+            fromSlot.ClearSlot();
+
+            // 드롭한 위치(this 슬롯)에 정확히 배치 시도.
+            // 잡은 칸 보정으로 아이템 좌상단이 들어갈 슬롯을 구한다.
+            InventorySystem inventory = InventorySystem.Instance;
+            bool placed = false;
+            if (inventory != null)
+            {
+                Vector2Int targetOwnerGrid = gridPosition - _grabOffset;
+                InventorySlot targetSlot = inventory.GetSlotAt(targetOwnerGrid);
+                if (targetSlot == null)
+                {
+                    targetSlot = this;
+                }
+                placed = inventory.AddItemAtSlot(targetSlot, draggedInstance);
+            }
+
+            // 그 자리에 못 넣으면(공간 부족 등) 빈 칸 아무데나 폴백
+            if (placed == false)
+            {
+                inventory?.AddItem(draggedInstance);
+            }
         }
     }
 
@@ -228,6 +254,13 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
+        // 창고 슬롯에서는 우클릭(장착/판매)을 막는다.
+        // 창고 아이템을 우클릭하면 장착되면서 인벤토리에 인스턴스가 추가되어 복제가 발생한다.
+        if (container == SlotContainer.Storage)
+        {
+            return;
+        }
+
         // 보조 칸이면 주인 슬롯 기준
         InventorySlot source = this;
         if (ownerSlot != null && ownerSlot != this)
@@ -241,17 +274,6 @@ public class InventorySlot : MonoBehaviour,
             if (source.currentItem != null)
             {
                 ShopSystem.Instance.StageForSale(source);
-            }
-            return;
-        }
-
-        // 대장간 무기 선택 모드면 우클릭 = 강화 대상으로 선택 (무기만)
-        if (container == SlotContainer.Inventory && BlacksmithSystem.Instance != null && BlacksmithSystem.Instance.IsWeaponSelectMode == true)
-        {
-            WeaponInstance weapon = source.CurrentInstance as WeaponInstance;
-            if (weapon != null)
-            {
-                BlacksmithSystem.Instance.SelectWeapon(weapon);
             }
             return;
         }
@@ -356,24 +378,44 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnDrop(PointerEventData e)
     {
-        if (_draggingSlot == null || _draggingSlot == this)
+        // 드롭 처리 시작 시점에 출발 슬롯을 확보하고 static 참조를 즉시 비운다.
+        // 멀티셀 아이템이 여러 슬롯에 걸쳐 OnDrop 이 두 번 이상 불려도 첫 번째만 처리되게 한다 (복제 방지).
+        InventorySlot fromSlot = _draggingSlot;
+        _draggingSlot = null;
+
+        if (fromSlot == null || fromSlot == this)
         {
             return;
         }
 
-        ItemInstance draggedInstance = _draggingSlot._currentInstance;
-        ItemData draggedItem = _draggingSlot.currentItem;
+        ItemInstance draggedInstance = fromSlot._currentInstance;
+        ItemData draggedItem = fromSlot.currentItem;
 
         if (draggedItem == null)
         {
+            RestoreDragVisual(fromSlot);
             return;
         }
 
         // 컨테이너가 다르면 (인벤토리 <-> 창고) 별도 처리 후 종료
-        if (_draggingSlot.container != this.container)
+        if (fromSlot.container != this.container)
         {
-            HandleCrossContainerDrop(draggedInstance);
-            CleanupDrag();
+            HandleCrossContainerDrop(fromSlot, draggedInstance);
+            RestoreDragVisual(fromSlot);
+            _grabOffset = Vector2Int.zero;
+            return;
+        }
+
+        // 둘 다 창고 슬롯이면 창고 내부 위치 이동 (StorageUI가 처리)
+        // 인벤토리 MoveItem 은 인벤 그리드 기준이라 창고에 쓰면 인벤으로 빠지므로 분기한다.
+        if (this.container == SlotContainer.Storage)
+        {
+            if (StorageUI.Instance != null)
+            {
+                StorageUI.Instance.MoveWithinStorage(fromSlot, this);
+            }
+            RestoreDragVisual(fromSlot);
+            _grabOffset = Vector2Int.zero;
             return;
         }
 
@@ -381,7 +423,8 @@ public class InventorySlot : MonoBehaviour,
         InventorySystem inventory = InventorySystem.Instance;
         if (inventory == null)
         {
-            CleanupDrag();
+            RestoreDragVisual(fromSlot);
+            _grabOffset = Vector2Int.zero;
             return;
         }
 
@@ -389,25 +432,25 @@ public class InventorySlot : MonoBehaviour,
         InventorySlot targetSlot = inventory.GetSlotAt(targetOwnerGrid);
         if (targetSlot == null)
         {
-            CleanupDrag();
+            RestoreDragVisual(fromSlot);
+            _grabOffset = Vector2Int.zero;
             return;
         }
 
         // 다중 칸 이동은 InventorySystem이 충돌 검사까지 처리 (실패 시 내부에서 원위치 복원)
-        inventory.MoveItem(_draggingSlot, targetSlot);
+        inventory.MoveItem(fromSlot, targetSlot);
 
-        CleanupDrag();
+        RestoreDragVisual(fromSlot);
+        _grabOffset = Vector2Int.zero;
     }
 
-    // 드래그 종료 후 공통 정리
-    private void CleanupDrag()
+    // 드래그 종료 후 아이콘 색 복원 + 드래그 아이콘 제거
+    private void RestoreDragVisual(InventorySlot fromSlot)
     {
-        if (_draggingSlot != null && _draggingSlot.itemIcon != null)
+        if (fromSlot != null && fromSlot.itemIcon != null)
         {
-            _draggingSlot.itemIcon.color = Color.white;
+            fromSlot.itemIcon.color = Color.white;
         }
-        _draggingSlot = null;
-        _grabOffset = Vector2Int.zero;
 
         if (_dragIcon != null)
         {

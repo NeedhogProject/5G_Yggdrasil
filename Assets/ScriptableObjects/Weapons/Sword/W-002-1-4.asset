@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: W-002-1-4
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   _itemName: "\uAE08\uC774 \uAC04 \uC7A5\uAC80 "
-  _description: "\uAE08\uC774 \uAC04 \uC7A5\uAC80\uC774\uB2E4. "
+  _description: "\uAE08\uC774 \uAC04 \uC7A5\uAC80\uC774\uB2E4. \uAE08\uC774 \uAC00
+    \uC788\uC5B4 \uC5B8\uC81C\uB77C\uB3C4 \uBD80\uC234\uC9C8 \uC218 \uC788\uC5B4,
+    \uAC15\uD558\uAC8C \uD718\uB450\uB974\uC9C0 \uBABB\uD55C\uB2E4. "
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}

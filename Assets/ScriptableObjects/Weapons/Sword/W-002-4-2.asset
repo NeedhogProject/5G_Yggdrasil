@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: W-002-4-2
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   _itemName: "\uC601\uC6C5\uC758 \uC911\uAC80"
-  _description: 
+  _description: "\uC61B \uC601\uC6C5\uC774 \uC0AC\uC6A9\uD558\uC600\uB358 \uC911\uAC80\uC774\uB2E4.
+    \uC911\uAC80\uCE58\uACE0\uB294 \uB354\uC6B1 \uBB34\uAC81\uC9C0\uB9CC, \uB354\uC6B1
+    \uB354 \uAC15\uB825\uD558\uAC8C \uACF5\uACA9\uD560 \uC218 \uC788\uB2E4."
   _itemType: 0
   _rarity: 3
   _icon: {fileID: 0}

@@ -49,6 +49,18 @@ public class NPCInteractable : MonoBehaviour
     [Tooltip("창을 유지한 채 대사를 순환하는 선택지 문구")]
     [SerializeField] private string talkChoiceLabel = "대화하기";
 
+    [Header("상인(벨라) 선택지 문구")]
+    [Tooltip("상인의 첫 번째 기능 선택지 (구매)")]
+    [SerializeField] private string merchantBuyLabel = "구매";
+    [Tooltip("상인의 두 번째 기능 선택지 (판매)")]
+    [SerializeField] private string merchantSellLabel = "판매";
+
+    [Header("각인술사 선택지 문구")]
+    [Tooltip("각인술사의 첫 번째 기능 선택지 (각인)")]
+    [SerializeField] private string inscriptionEngraveLabel = "장비 각인하기";
+    [Tooltip("각인술사의 두 번째 기능 선택지 (각인 초기화)")]
+    [SerializeField] private string inscriptionResetLabel = "각인 초기화하기";
+
     [Header("UI 힌트")]
     [Tooltip("범위에 들어오면 켜질 안내 오브젝트 (예: E 상호작용 표시). 없으면 비워둠")]
     [SerializeField] private GameObject hintObject;
@@ -141,12 +153,28 @@ public class NPCInteractable : MonoBehaviour
 
     private void OpenMerchant()
     {
-        if (shopSystem == null)
+        // 상점 열기 동작 (구매/판매 둘 다 상점 패널을 연다. 탭은 패널 안에서 전환)
+        System.Action openShop = delegate ()
         {
-            Debug.LogWarning($"[NPCInteractable] {npcName}: ShopSystem 미연결");
+            if (shopSystem == null)
+            {
+                Debug.LogWarning($"[NPCInteractable] {npcName}: ShopSystem 미연결");
+                return;
+            }
+            shopSystem.OpenShop();
+        };
+
+        // 구매 / 판매 두 선택지 모두 상점을 연다
+        string[] labels = new string[] { merchantBuyLabel, merchantSellLabel };
+        System.Action[] actions = new System.Action[] { openShop, openShop };
+
+        if (TryStartMenuDialogue(labels, actions) == true)
+        {
             return;
         }
-        shopSystem.OpenShop();
+
+        // 대화 흐름을 못 쓰면 기존처럼 바로 상점 열기
+        openShop();
     }
 
     private void OpenScholar()
@@ -163,7 +191,10 @@ public class NPCInteractable : MonoBehaviour
             scholarSystem.OpenScholar();
         };
 
-        if (TryStartFunctionDialogue(openFunction) == true)
+        string[] labels = new string[] { functionChoiceLabel };
+        System.Action[] actions = new System.Action[] { openFunction };
+
+        if (TryStartMenuDialogue(labels, actions) == true)
         {
             return;
         }
@@ -184,7 +215,10 @@ public class NPCInteractable : MonoBehaviour
             blacksmithSystem.OpenBlacksmith();
         };
 
-        if (TryStartFunctionDialogue(openFunction) == true)
+        string[] labels = new string[] { functionChoiceLabel };
+        System.Action[] actions = new System.Action[] { openFunction };
+
+        if (TryStartMenuDialogue(labels, actions) == true)
         {
             return;
         }
@@ -194,6 +228,8 @@ public class NPCInteractable : MonoBehaviour
 
     private void OpenInscriptionMaster()
     {
+        // 각인하기 / 각인 초기화하기 둘 다 각인 패널을 연다.
+        // (패널 내부에 각인 기능과 초기화 버튼이 함께 있으므로 같은 패널을 연다)
         System.Action openFunction = delegate ()
         {
             if (inscriptionMasterSystem == null)
@@ -204,7 +240,10 @@ public class NPCInteractable : MonoBehaviour
             inscriptionMasterSystem.OpenInscriptionMaster();
         };
 
-        if (TryStartFunctionDialogue(openFunction) == true)
+        string[] labels = new string[] { inscriptionEngraveLabel, inscriptionResetLabel };
+        System.Action[] actions = new System.Action[] { openFunction, openFunction };
+
+        if (TryStartMenuDialogue(labels, actions) == true)
         {
             return;
         }
@@ -230,14 +269,24 @@ public class NPCInteractable : MonoBehaviour
         dialogue.StartDialogue(dialogueData);
     }
 
-    // 주요 NPC 공통: 메뉴형 대화창 열기
+    // 주요 NPC 공통: 메뉴형 대화창 열기 (N개 기능 선택지 + 대화하기)
     // 인사말(0번 대사) + 선택지 동시 표시
-    // 선택지 0 = 기능 패널 열기 (대화창 닫힘), 선택지 1 = 다음 대사로 순환 (창 유지)
+    // 기능 선택지들 = functionLabels 순서대로, 맨 뒤에 "대화하기" 자동 추가
+    // 기능 선택 = 대화창 닫고 해당 동작 실행, 대화하기 = 다음 대사로 순환 (창 유지)
     // 대화 시작에 성공하면 true 반환 (호출 측은 기능 직접 열기를 건너뜀)
-    private bool TryStartFunctionDialogue(System.Action openFunction)
+    private bool TryStartMenuDialogue(string[] functionLabels, System.Action[] functionActions)
     {
         if (useDialogueBeforeFunction == false)
         {
+            return false;
+        }
+        if (functionLabels == null || functionActions == null)
+        {
+            return false;
+        }
+        if (functionLabels.Length != functionActions.Length)
+        {
+            Debug.LogWarning($"[NPCInteractable] {npcName}: 선택지 라벨과 동작 개수가 다름");
             return false;
         }
 
@@ -253,30 +302,49 @@ public class NPCInteractable : MonoBehaviour
 
         _talkLineIndex = 0;
 
+        // 기능 선택지들 뒤에 대화하기를 한 개 더 붙인다
+        int functionCount = functionLabels.Length;
+        string[] allChoices = new string[functionCount + 1];
+        for (int i = 0; i < functionCount; i++)
+        {
+            allChoices[i] = functionLabels[i];
+        }
+        allChoices[functionCount] = talkChoiceLabel;
+
+        // 콜백에서 참조할 동작 배열을 지역 변수로 보관 (대화 닫혀도 안전)
+        System.Action[] actions = functionActions;
+        int talkChoiceIndex = functionCount;
+
         DialogueData dialogueData = new DialogueData();
         dialogueData.npcName = npcName;
         dialogueData.npcPortrait = npcPortrait;
         dialogueData.sentences = new string[] { sentences[0] };
-        dialogueData.choices = new string[] { functionChoiceLabel, talkChoiceLabel };
+        dialogueData.choices = allChoices;
         dialogueData.showChoicesImmediately = true;
         dialogueData.endOnChoice = false;
         dialogueData.onChoiceSelected = delegate (int index)
         {
-            if (index == 0)
+            // 대화하기 선택: 창 유지, 다음 대사로 순환
+            if (index == talkChoiceIndex)
             {
-                // 기능 선택: 대화창을 먼저 닫고 해당 시스템 패널을 연다.
-                dialogue.EndDialogue();
-                openFunction();
+                _talkLineIndex = _talkLineIndex + 1;
+                if (_talkLineIndex >= sentences.Length)
+                {
+                    _talkLineIndex = 0;
+                }
+                dialogue.ShowLine(sentences[_talkLineIndex]);
                 return;
             }
 
-            // 대화하기 선택: 창 유지, 다음 대사로 순환
-            _talkLineIndex = _talkLineIndex + 1;
-            if (_talkLineIndex >= sentences.Length)
+            // 기능 선택: 대화창을 먼저 닫고 해당 동작을 실행한다
+            if (index >= 0 && index < actions.Length)
             {
-                _talkLineIndex = 0;
+                dialogue.EndDialogue();
+                if (actions[index] != null)
+                {
+                    actions[index]();
+                }
             }
-            dialogue.ShowLine(sentences[_talkLineIndex]);
         };
 
         dialogue.StartDialogue(dialogueData);
