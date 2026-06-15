@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
+  m_Name: W-002-1-3
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  _itemName: "\uBE5B \uBC14\uB79C \uB9C8\uAC80 "
+  _description: "\uB9C8\uB825\uC774 \uB2E4 \uC18C\uBAA8\uB41C \uB9C8\uAC80\uC774\uB2E4.
+    \uAC15\uD654\uB97C \uD558\uBA74 \uAC15\uD574\uC9C0\uC9C0\uB9CC \uC0AC\uB77C\uC9C4
+    \uB9C8\uB825\uC740 \uB3CC\uC544\uC624\uC9C0 \uC54A\uB294\uB2E4."
+  _itemType: 0
+  _rarity: 0
+  _icon: {fileID: 0}
+  _prefab3D: {fileID: 0}
+  _inventoryWidth: 2
+  _inventoryHeight: 3
+  _price: 0
+  _isDroppable: 1
+  _isStackable: 0
+  _maxStack: 1
+  weaponType: 1
+  _weaponRarity: 0
+  baseDamage: 22
+  attackSpeed: 1
+  reach: 3
+  attackWidth: 1.5
+  enhancementLevel: 0
+  enhanceSuccessRates:
+  - 90
+  - 75
+  - 45
+  - 25
+  - 10
+  attackMultipliers:
+  - 1
+  - 1.1
+  - 1.18
+  - 1.26
+  - 1.32
+  - 1.4
+  speedMultipliers:
+  - 1
+  - 1
+  - 1
+  - 1.02
+  - 1.03
+  - 1.07

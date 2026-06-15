@@ -10,26 +10,44 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
-  m_Name: W-002-1
+  m_Name: W-002-1-4
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  _itemName: "\uD3C9\uBC94\uD55C \uC7A5\uAC80"
-  _description: "\uAC00\uC7A5 \uB9CE\uC774 \uBCFC \uC218 \uC788\uB294 \uD3C9\uBC94\uD55C
-    \uC7A5\uAC80\uC774\uB2E4."
+  _itemName: "\uAE08\uC774 \uAC04 \uC7A5\uAC80 "
+  _description: "\uAE08\uC774 \uAC04 \uC7A5\uAC80\uC774\uB2E4. "
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 2
-  _inventoryHeight: 2
-  _buyPrice: 0
-  _sellPrice: 0
+  _inventoryHeight: 3
+  _price: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
   weaponType: 1
-  _weaponRarity: 2
-  baseDamage: 25
+  _weaponRarity: 0
+  baseDamage: 20
   attackSpeed: 1
   reach: 3
   attackWidth: 1.5
   enhancementLevel: 0
+  enhanceSuccessRates:
+  - 90
+  - 75
+  - 45
+  - 25
+  - 10
+  attackMultipliers:
+  - 1
+  - 1.05
+  - 1.12
+  - 1.27
+  - 1.4
+  - 1.55
+  speedMultipliers:
+  - 1
+  - 1
+  - 1
+  - 1.02
+  - 1.03
+  - 1.07
