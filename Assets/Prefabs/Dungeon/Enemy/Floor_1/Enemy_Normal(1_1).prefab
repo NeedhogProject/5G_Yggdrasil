@@ -529,185 +529,185 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LootTable
   lootEntries:
   - item: {fileID: 11400000, guid: bc3d1a1f055fb03418db2fe8b380e2ef, type: 2}
-    weight: 15
+    weight: 100
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 2332ef5009b7a7948af5719961e5a81e, type: 2}
-    weight: 3
+    weight: 35
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 04e5452c7ab35f34997e12b6d047e854, type: 2}
-    weight: 2
+    weight: 20
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 63d1a80e2fb9c8742bfa2901438b8b19, type: 2}
-    weight: 15
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 02b271ea13bc0004c94352fc9aadeb82, type: 2}
-    weight: 3
+    weight: 35
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 551a403f4f26d2246965ceda0ea3d91d, type: 2}
-    weight: 2
+    weight: 20
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: c053cb4674446044592d53bfc0344f68, type: 2}
-    weight: 1
+    weight: 3
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: b6b8f259060c5f148a854ba4c92ba660, type: 2}
-    weight: 0
+    weight: 100
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 3417c31e61f428a408a29f9c4921f4ae, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 2c039901704d7d34a9039bbf7a3c8aba, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: a1f48399179e9884eba42075a5d49f5f, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: bef1533976a1b7145a424366611ec70d, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 1a7e726fec3e81a40ae577b801a6f1f6, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 348797dae4136334ebb4f242a4d4f588, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 10dea31477a706b4c86f6bf1d28d5e85, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 33d249c15c9b1a24c8533176da552f51, type: 2}
-    weight: 0
+    weight: 100
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: c47edc2d0df67f04ca239f8e81fe5edd, type: 2}
-    weight: 0
+    weight: 35
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 01bed33365317c34589ff275f96f052f, type: 2}
-    weight: 0
+    weight: 35
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: a7564c1fbfe584e49b482fbead9cbd9c, type: 2}
-    weight: 0
+    weight: 35
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 009f3317f2bc8834188db834d28473d6, type: 2}
-    weight: 0
+    weight: 35
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 1fcaa464514759e4694fb597081c5c98, type: 2}
-    weight: 0
+    weight: 12
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 8d9b7e49031f7624fb2762ecebc5ecc3, type: 2}
-    weight: 0
+    weight: 12
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: 016f5df830e19424bb47e7bee010359e, type: 2}
-    weight: 0
+    weight: 12
     minCount: 0
     maxCount: 0
   - item: {fileID: 11400000, guid: eae32d811be3d2b408efac6e876505c4, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 12
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 7997a3a06e8e4e44faf3e9666a3b0cec, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: b458edddf1a106e419591cc301168948, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 2a5375c9d57ae074cae8dac1a2f6fcb1, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: c9deb5a672bda5041a69be6e850fd159, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: ef49df8c0b37d1144bc70c68bf3dcb0e, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 100
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 2e007b6345cf51b4283fe70c1c7cbd1a, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 35
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: bc58e1bf299c8734eb3afc72ba8406f1, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 12
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: a6bb5d0b6fde2ec4db947edb16f483d0, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 787b3d3f1eecb4346aa2f25ddb5f8efe, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 100
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 70b6b1dd173742c4c8f957dd1a2a442b, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 35
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 5b26a52ab4739cf409f3e80ee02ded6d, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 12
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: e6db7080c2e899b49a80d12322f67386, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 0428ffc72e908c447bb983be6de3a781, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 100
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: dd4dc5e9cfbbb194a97b6cbc783c1a82, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 35
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 0b7b0bf50e611f744add5ddaa4da5bd7, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 12
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 31753921981f1134881e026074d12c1b, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: a637f4866bcdc0546ad3ae5cda39cf5d, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 100
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: dd6e515b695c5864b8cf73b69e0c0cf7, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 35
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: db8aa47f929edd344b29af4676ccc5e3, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 12
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 540a21b66abe0644c817b568977c57b8, type: 2}
-    weight: 0
-    minCount: 0
-    maxCount: 0
+    weight: 3
+    minCount: 1
+    maxCount: 1
   dropCount: 3
   skipChance: 0
   droppedItemPrefab: {fileID: 9050273253143957091, guid: 990821102621e1145b36c049befa6795, type: 3}
