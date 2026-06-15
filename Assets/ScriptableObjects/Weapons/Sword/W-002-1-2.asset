@@ -48,7 +48,7 @@ MonoBehaviour:
   speedMultipliers:
   - 1
   - 1
-  - 1
+  - 1.01
   - 1.02
   - 1.03
-  - 1.07
+  - 1.04
