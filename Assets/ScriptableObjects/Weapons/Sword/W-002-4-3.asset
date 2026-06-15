@@ -39,11 +39,11 @@ MonoBehaviour:
   - 10
   attackMultipliers:
   - 1
-  - 1.02
-  - 1.04
-  - 1.07
-  - 1.09
-  - 1.15
+  - 1.1
+  - 1.18
+  - 1.26
+  - 1.32
+  - 1.4
   speedMultipliers:
   - 1
   - 1
