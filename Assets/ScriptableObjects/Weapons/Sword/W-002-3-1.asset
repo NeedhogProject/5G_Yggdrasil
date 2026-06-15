@@ -10,25 +10,44 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
-  m_Name: W-002-2
+  m_Name: W-002-3-1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  _itemName: "\uACE0\uAE09 \uC7A5\uAC80"
+  _itemName: "\uC798 \uBCBC\uB824\uC9C4 \uC7A5\uAC80"
   _description: 
   _itemType: 0
   _rarity: 2
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 2
-  _inventoryHeight: 2
-  _buyPrice: 0
-  _sellPrice: 0
+  _inventoryHeight: 3
+  _price: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
   weaponType: 1
   _weaponRarity: 2
-  baseDamage: 30
+  baseDamage: 40
   attackSpeed: 1
   reach: 3
   attackWidth: 1.5
   enhancementLevel: 0
+  enhanceSuccessRates:
+  - 90
+  - 75
+  - 45
+  - 25
+  - 10
+  attackMultipliers:
+  - 1
+  - 1.02
+  - 1.04
+  - 1.07
+  - 1.09
+  - 1.15
+  speedMultipliers:
+  - 1
+  - 1
+  - 1
+  - 1.02
+  - 1.03
+  - 1.07

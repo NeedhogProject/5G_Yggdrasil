@@ -676,7 +676,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -157, y: -232.49992}
+  m_AnchoredPosition: {x: -157, y: -232.49925}
   m_SizeDelta: {x: 316, y: 256.71}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &42188592
@@ -9299,6 +9299,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2333802226974840277, guid: d14914346e2eb374d80dba349d793387, type: 3}
+      propertyPath: equipOnStart
+      value: 
+      objectReference: {fileID: 11400000, guid: c47edc2d0df67f04ca239f8e81fe5edd, type: 2}
+    - target: {fileID: 2333802226974840277, guid: d14914346e2eb374d80dba349d793387, type: 3}
+      propertyPath: 'startingWeapons.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: c47edc2d0df67f04ca239f8e81fe5edd, type: 2}
     - target: {fileID: 2889540291284251319, guid: d14914346e2eb374d80dba349d793387, type: 3}
       propertyPath: m_Radius
       value: 0.5
@@ -11374,7 +11382,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1014353130}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999972
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -13374,7 +13382,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000104873674}
+  m_AnchoredPosition: {x: 0, y: 0.0009775929}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &823715203
@@ -23561,7 +23569,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1633368385}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.9999957
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
