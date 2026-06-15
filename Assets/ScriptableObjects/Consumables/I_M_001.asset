@@ -10,20 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1871f717a10c882439ad3eef0a147beb, type: 3}
-  m_Name: I_H_001
+  m_Name: I_M_001
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
-  _itemName: "\uC77C\uBC18 \uCCB4\uB825 \uD3EC\uC158"
+  _itemName: "\uC77C\uBC18 \uC815\uC2E0\uB825 \uD3EC\uC158"
   _description: 
-  _itemType: 1
+  _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
-  _price: 1000
+  _price: 1200
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
-  consumableType: 0
-  effectAmount: 15
-  cannotUseMessage: "\uCCB4\uB825\uC774 \uC774\uBBF8 \uCD5C\uB300\uCE58\uC785\uB2C8\uB2E4."
+  consumableType: 1
+  effectAmount: 10
+  cannotUseMessage: "\uC815\uC2E0\uB825\uC774 \uC774\uBBF8 \uCD5C\uB300\uCE58\uC785\uB2C8\uB2E4."

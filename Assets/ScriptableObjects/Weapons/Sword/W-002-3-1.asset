@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: W-002-3-1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   _itemName: "\uC798 \uBCBC\uB824\uC9C4 \uC7A5\uAC80"
-  _description: 
+  _description: "\uC798 \uBCBC\uB824\uC9C4 \uC7A5\uAC80\uC774\uB2E4. \uC8FC\uB85C
+    \uAE30\uC0AC\uAC00 \uC0AC\uC6A9\uD560 \uC815\uB3C4\uB85C \uC88B\uC740 \uD488\uC9C8\uC774\uB2E4."
   _itemType: 0
   _rarity: 2
   _icon: {fileID: 0}

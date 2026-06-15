@@ -25,5 +25,5 @@ MonoBehaviour:
   _isStackable: 0
   _maxStack: 1
   consumableType: 0
-  effectAmount: 60
+  effectAmount: 55
   cannotUseMessage: "\uCCB4\uB825\uC774 \uC774\uBBF8 \uCD5C\uB300\uCE58\uC785\uB2C8\uB2E4."

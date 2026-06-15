@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: W-002-1-2
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
   _itemName: "\uB0A1\uC740 \uC911\uAC80"
-  _description: "\uAC00\uC7A5 \uB9CE\uC774 \uBCFC \uC218 \uC788\uB294 \uC911\uAC80\uC774\uB2E4.
-    \uAE30\uBCF8 \uAC80\uBCF4\uB2E4 \uBB34\uAC1C\uAC00 \uC788\uB2E4."
+  _description: "\uD1B5\uCCA0\uB85C \uB9CC\uB4E4\uC5B4\uC9C4 \uB0A1\uC740 \uC911\uAC80\uC774\uB2E4.
+    \uB0A1\uC558\uC9C0\uB9CC \uC0AC\uC6A9\uD560 \uC815\uB3C4\uC774\uB2E4. "
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}
-  _prefab3D: {fileID: 0}
+  _prefab3D: {fileID: 7466092561480888884, guid: 2d51358663a7acf418cfd3d6a688d672, type: 3}
   _inventoryWidth: 2
   _inventoryHeight: 3
   _price: 1550

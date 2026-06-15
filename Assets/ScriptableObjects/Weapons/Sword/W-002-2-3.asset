@@ -12,8 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
   m_Name: W-002-2-3
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  _itemName: "\uB8EC\uC774 \uAE43\uB4E0 \uB9C8\uAC80"
-  _description: 
+  _itemName: "\uBD09\uC778\uB41C \uB9C8\uAC80"
+  _description: "\uBD09\uC778\uB41C \uB9C8\uAC80\uC774\uB2E4. \uC548\uC5D0 \uC788\uB294
+    \uB8EC\uC744 \uB2E4 \uAEBC\uB0B4 \uC0AC\uC6A9\uD558\uC9C0 \uBABB\uD558\uC9C0\uB9CC
+    \uC5B4\uB290\uC815\uB3C4 \uAEBC\uB0B4\uC11C \uC0AC\uC6A9\uD560 \uC218 \uC788\uB2E4."
   _itemType: 0
   _rarity: 1
   _icon: {fileID: 0}
