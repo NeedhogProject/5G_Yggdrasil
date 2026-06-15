@@ -56,7 +56,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   health: 100
-  baseDefense: 0
+  baseDefense: 100
   mental: 100
   equipmentDefense: 0
   equipmentMaxHealth: 0
@@ -68,7 +68,7 @@ MonoBehaviour:
   mentalDefensePenalty: 0.5
   mentalMoveSpeedPenalty: 0.3
   shieldRechargeIdleTime: 15
-  _gold: 0
+  _gold: 1000
   healthPotionAmount: 30
   mentalPotionAmount: 25
 --- !u!54 &1362522765917066004
