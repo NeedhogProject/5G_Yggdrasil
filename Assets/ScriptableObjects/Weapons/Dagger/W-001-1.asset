@@ -21,8 +21,7 @@ MonoBehaviour:
   _prefab3D: {fileID: 0}
   _inventoryWidth: 2
   _inventoryHeight: 1
-  _buyPrice: 0
-  _sellPrice: 0
+  _price: 1500
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
@@ -33,3 +32,23 @@ MonoBehaviour:
   reach: 1.2
   attackWidth: 0.3
   enhancementLevel: 0
+  enhanceSuccessRates:
+  - 90
+  - 75
+  - 45
+  - 25
+  - 10
+  attackMultipliers:
+  - 1
+  - 1.02
+  - 1.04
+  - 1.07
+  - 1.09
+  - 1.15
+  speedMultipliers:
+  - 1
+  - 1
+  - 1
+  - 1.02
+  - 1.03
+  - 1.07

@@ -20,7 +20,7 @@ MonoBehaviour:
   _prefab3D: {fileID: 0}
   _inventoryWidth: 2
   _inventoryHeight: 3
-  _price: 0
+  _price: 15000
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
