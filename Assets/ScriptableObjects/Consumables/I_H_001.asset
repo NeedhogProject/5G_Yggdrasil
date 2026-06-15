@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1871f717a10c882439ad3eef0a147beb, type: 3}
   m_Name: I_H_001
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
-  _itemName: "\uCCB4\uB825 \uD68C\uBCF5 \uD3EC\uC158"
+  _itemName: "\uC77C\uBC1C \uCCB4\uB825 \uD3EC\uC158"
   _description: 
   _itemType: 1
   _rarity: 0
@@ -20,11 +20,10 @@ MonoBehaviour:
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
-  _buyPrice: 100
-  _sellPrice: 0
+  _price: 1000
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
   consumableType: 0
-  effectAmount: 30
+  effectAmount: 15
   cannotUseMessage: "\uCCB4\uB825\uC774 \uC774\uBBF8 \uCD5C\uB300\uCE58\uC785\uB2C8\uB2E4."
