@@ -25,6 +25,7 @@ public class PlayerCombat : MonoBehaviour
     // ─────────────────────── 참조 ───────────────────────
 
     private HitboxSystem _hitbox;
+    private Animator _animator;
     private PlayerStats _stats;
 
     // ─────────────────────── 장착 무기 ───────────────────────
@@ -98,6 +99,7 @@ public class PlayerCombat : MonoBehaviour
     {
         _hitbox = GetComponentInChildren<HitboxSystem>();
         _stats = GetComponent<PlayerStats>();
+        _animator = GetComponentInChildren<Animator>();
     }
 
     // ─────────────────────── 업데이트 ───────────────────────
@@ -148,6 +150,12 @@ public class PlayerCombat : MonoBehaviour
 
         _isAttacking = true;
         _attackCooldownTimer = AttackInterval;
+
+        // 공격 애니메이션 트리거 (이번 학기 공통 모션, 다음 학기 무기별 분기 예정)
+        if (_animator != null)
+        {
+            _animator.SetTrigger("Attack");
+        }
 
         // 공격 — 보호막 재충전 타이머 리셋 (비전투 판정)
         _stats?.NotifyCombatAction();

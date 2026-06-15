@@ -4,6 +4,18 @@
 
 ---
 
+## 플레이어 애니메이션 연결 (2026-06-14)
+- 현황: 임포트된 클립은 장검 공격 모션뿐. idle/walk/run 은 아직 없음 (다음 학기 무기별 모션과 함께)
+- Animator 파라미터(건희 설정): Speed(Float), IsSprinting(Bool), Attack(Trigger)
+- 코드 연결 (이동 클립 들어오면 추가 코드 없이 동작하도록 세 파라미터 모두 전달):
+  - PlayerCombat: _animator = GetComponentInChildren<Animator>(), TryAttack 에서 SetTrigger('Attack')
+  - PlayerController: _animator 참조, Update 에서 UpdateAnimator() 호출
+    - SetFloat('Speed', 입력 크기), SetBool('IsSprinting', IsSprinting)
+- 이번 학기 검증 대상: 공격 모션만 (Attack 트리거 -> 장검 모션 재생 후 Idle 복귀)
+- Animator 는 모델 자식에 있다고 가정 (GetComponentInChildren). 루트에 있으면 GetComponent 로 잡힘(자식 검색이 자기 자신 포함)
+- 에디터 남은 작업: Animator Controller 에 Idle<->Attack 전이(Attack 트리거, 재생 후 복귀), 공격 모션 길이와 HitboxSystem 판정 타이밍 맞추기
+- 다음 학기: idle/walk/run 클립 임포트 후 Speed/IsSprinting 전이 구성(코드는 이미 전달 중), 무기별 공격 모션 분기
+
 ## 새 게임 집 카메라 고정 타이밍 버그 수정 (2026-06-14)
 - 증상: 타이틀에서 새 게임 진입 시 집에서 시작하지만 카메라가 고정 안 되고 플레이어 추적
 - 원인: HandleSceneLoaded(sceneLoaded 이벤트) 시점에 즉시 MoveCameraToHousePoint 호출

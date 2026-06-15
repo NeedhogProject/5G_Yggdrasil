@@ -18,7 +18,7 @@ MonoBehaviour:
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}
-  _prefab3D: {fileID: 0}
+  _prefab3D: {fileID: 919132149155446097, guid: 98b384b95ddbffe44b88371a98baf688, type: 3}
   _inventoryWidth: 2
   _inventoryHeight: 3
   _price: 1500
