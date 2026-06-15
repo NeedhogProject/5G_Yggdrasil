@@ -245,6 +245,17 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
+        // 대장간 무기 선택 모드면 우클릭 = 강화 대상으로 선택 (무기만)
+        if (container == SlotContainer.Inventory && BlacksmithSystem.Instance != null && BlacksmithSystem.Instance.IsWeaponSelectMode == true)
+        {
+            WeaponInstance weapon = source.CurrentInstance as WeaponInstance;
+            if (weapon != null)
+            {
+                BlacksmithSystem.Instance.SelectWeapon(weapon);
+            }
+            return;
+        }
+
         // 그 외에는 장착/해제
         if (source.currentItem != null)
         {

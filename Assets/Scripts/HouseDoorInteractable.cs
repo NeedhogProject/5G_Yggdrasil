@@ -11,6 +11,10 @@ public class HouseDoorInteractable : MonoBehaviour
     [Tooltip("상호작용 시 플레이어가 이동할 위치. 집 입구면 실내 지점, 실내 문이면 집 앞 지점을 연결")]
     [SerializeField] private Transform targetPoint;
 
+    [Header("화면 고정")]
+    [Tooltip("집으로 들어가는 문이면 체크. 들어갈 때 카메라 추적을 멈춰 화면을 고정하고, 끄면(나오는 문) 추적을 재개")]
+    [SerializeField] private bool bEntersHouse = false;
+
     [Header("UI 힌트")]
     [Tooltip("범위에 들어오면 켜질 안내 오브젝트. 없으면 비워둠")]
     [SerializeField] private GameObject hintObject;
@@ -112,7 +116,27 @@ public class HouseDoorInteractable : MonoBehaviour
         CameraFollow camFollow = FindFirstObjectByType<CameraFollow>();
         if (camFollow != null)
         {
-            camFollow.SnapToTarget();
+            // 집으로 들어가는 문이면 카메라를 집 고정 위치로, 나오는 문이면 추적 재개
+            if (bEntersHouse == true)
+            {
+                // 집 카메라 고정 위치로 이동 (새 게임 시작과 동일한 구도)
+                GameObject objCamPoint = GameObject.Find("HouseCameraPoint");
+                if (objCamPoint != null)
+                {
+                    camFollow.MoveToFixedPoint(objCamPoint.transform);
+                }
+                else
+                {
+                    // 고정 위치가 없으면 플레이어 기준으로 고정 (폴백)
+                    camFollow.SnapToTarget();
+                    camFollow.SetFollowEnabled(false);
+                }
+            }
+            else
+            {
+                camFollow.SetFollowEnabled(true);
+                camFollow.SnapToTarget();
+            }
         }
 
         AudioManager.Instance?.PlaySFX(SFXClip.DoorOpen);

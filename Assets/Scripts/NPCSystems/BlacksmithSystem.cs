@@ -11,6 +11,8 @@ using TMPro;
 
 public class BlacksmithSystem : MonoBehaviour
 {
+    public static BlacksmithSystem Instance { get; private set; }
+
     [Header("UI 참조")]
     public GameObject blacksmithPanel;
     public TMP_Text dialogueText;
@@ -45,6 +47,30 @@ public class BlacksmithSystem : MonoBehaviour
     // WeaponData 대신 WeaponInstance 사용 (강화 단계는 런타임에 있음)
     private WeaponInstance _selectedWeapon = null;
     private bool _isOpen = false;
+
+    // 대장간이 열려 있는지 (인벤토리 우클릭으로 무기 받을 수 있는지 판단용)
+    public bool IsOpen => _isOpen;
+
+    // 무기 선택 화면이 떠 있는지 (강화 패널 표시 상태)
+    public bool IsWeaponSelectMode => _isOpen == true && blacksmithPanel != null && blacksmithPanel.activeSelf == true;
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
+    }
 
     private void Start()
     {

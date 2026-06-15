@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 /// [기획 반영]
 /// - 게임 흐름: 타이틀 → 마을 → 던전(1~4층) → 엔딩
 /// - 게임 상태: Playing / Paused / GameOver / Ending
-/// - 플레이어 사망 시 인벤 드롭 → 집에서 부활
+/// - 플레이어 사망 시 인벤 드롭 → 마을 복귀
 /// - DontDestroyOnLoad 로 씬 전환에도 유지
 ///
 /// [씬 이름 설정]
@@ -69,9 +69,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string floor4SceneName = "Floor_4_Boss";
     [SerializeField] private string endingSceneName = "Ending";
 
-    [Header("사망 후 부활 위치 (마을 집 좌표)")]
-    [SerializeField] private Vector3 homeRespawnPosition = new Vector3(-33.61f, -43.46f, -1.83f);
-
     // 런타임 상태
 
     /// <summary>현재 층 (0=마을, 1~4=던전)</summary>
@@ -82,7 +79,7 @@ public class GameManager : MonoBehaviour
     {
         NewGame,
         DungeonReturn,
-        PlayerRespawn
+        Respawn
     }
 
     private TownEntry _townEntry = TownEntry.NewGame;
@@ -335,10 +332,10 @@ public class GameManager : MonoBehaviour
         LoadScene(townSceneName, GameState.Town);
     }
 
-    /// <summary>사망 후 집에서 부활하며 마을로 복귀 — PlayerDeath 의 다시하기 버튼에서 호출</summary>
+    /// <summary>사망 후 다시하기 — 새 게임과 동일하게 집 안에서 부활</summary>
     public void RespawnAtHome()
     {
-        _townEntry = TownEntry.PlayerRespawn;
+        _townEntry = TownEntry.Respawn;
         CurrentFloor = 0;
         LoadScene(townSceneName, GameState.Town);
     }
@@ -359,22 +356,27 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // 마을 진입 종류에 따라 스폰 위치 분기
-        if (_townEntry == TownEntry.PlayerRespawn)
+        // 던전 복귀 시 마을 중앙으로 이동
+        if (_townEntry == TownEntry.DungeonReturn)
         {
-            // 사망 후 부활: 집 좌표로 이동하며 안전 위치도 함께 갱신
-            // (지하 집은 낙하 임계값보다 낮으므로 SetSafePosition 으로 낙하 복귀를 막는다)
-            RespawnPlayerToPosition(homeRespawnPosition);
-        }
-        else if (_townEntry == TownEntry.DungeonReturn)
-        {
-            // 던전 복귀 시 마을 중앙으로 이동
             MovePlayerToSpawn("Spawn_TownCenter");
         }
 
-        // 마을 도착 시 자동 저장 (던전 복귀 또는 부활 + 슬롯 지정된 경우)
-        bool shouldAutoSave = _townEntry == TownEntry.DungeonReturn || _townEntry == TownEntry.PlayerRespawn;
-        if (shouldAutoSave == true && CurrentSlot >= 0)
+        // 새 게임은 집 안에서 시작 — 카메라를 집 고정 위치로 (한 프레임 뒤: CameraFollow Start 완료 후)
+        if (_townEntry == TownEntry.NewGame)
+        {
+            StartCoroutine(MoveCameraToHouseNextFrame());
+        }
+
+        // 사망 부활은 던전에서 마을로 오므로 플레이어를 집 위치로 옮긴 뒤 카메라 고정
+        if (_townEntry == TownEntry.Respawn)
+        {
+            MovePlayerToSpawn("Spawn_House");
+            StartCoroutine(MoveCameraToHouseNextFrame());
+        }
+
+        // 마을 도착 시 자동 저장 (던전 복귀 + 슬롯 지정된 경우)
+        if (_townEntry == TownEntry.DungeonReturn && CurrentSlot >= 0)
         {
             StartCoroutine(AutoSaveNextFrame());
         }
@@ -403,12 +405,6 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        MovePlayerToPosition(spawn.transform.position);
-    }
-
-    // 플레이어를 지정한 좌표로 이동 (Rigidbody 기반)
-    private void MovePlayerToPosition(Vector3 targetPosition)
-    {
         if (PlayerController.Instance == null)
         {
             return;
@@ -419,25 +415,39 @@ public class GameManager : MonoBehaviour
 
         if (body != null)
         {
-            body.position = targetPosition;
+            body.position = spawn.transform.position;
             body.linearVelocity = Vector3.zero;
         }
         else
         {
-            PlayerController.Instance.transform.position = targetPosition;
+            PlayerController.Instance.transform.position = spawn.transform.position;
         }
     }
 
-    // 사망 부활 전용: 위치 이동 + 안전 위치 갱신 (지하 집 낙하 복귀 방지)
-    private void RespawnPlayerToPosition(Vector3 targetPosition)
+    // 한 프레임 뒤 카메라 고정 (씬의 CameraFollow Awake/Start 완료를 보장)
+    private System.Collections.IEnumerator MoveCameraToHouseNextFrame()
     {
-        if (PlayerController.Instance == null)
+        yield return null;
+        MoveCameraToHousePoint();
+    }
+
+    // 새 게임 시작 시 카메라를 집 고정 위치(HouseCameraPoint)로 이동하고 추적 정지
+    private void MoveCameraToHousePoint()
+    {
+        GameObject objPoint = GameObject.Find("HouseCameraPoint");
+        if (objPoint == null)
+        {
+            Debug.LogWarning("[GameManager] HouseCameraPoint 를 찾을 수 없습니다. 카메라 고정 생략.");
+            return;
+        }
+
+        CameraFollow camFollow = FindFirstObjectByType<CameraFollow>();
+        if (camFollow == null)
         {
             return;
         }
 
-        // PlayerController 가 위치 이동과 안전 위치 기록을 함께 처리한다.
-        PlayerController.Instance.SetSafePosition(targetPosition);
+        camFollow.MoveToFixedPoint(objPoint.transform);
     }
 
     /// <summary>타이틀로 복귀</summary>
@@ -515,7 +525,7 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 플레이어 사망 처리 — PlayerDeath 에서 호출
-    /// GameOver 상태로 전환만 한다. 실제 복귀/타이틀 이동은 GameOverPanel 버튼이 처리한다.
+    /// 인벤토리 드롭 → GameOver 상태 → 마을 복귀
     /// </summary>
     public void OnPlayerDeath()
     {
@@ -529,7 +539,14 @@ public class GameManager : MonoBehaviour
 
         Debug.Log("[GameManager] 플레이어 사망 → GameOver");
 
-        // 자동 복귀 제거: GameOverPanel 의 다시하기/타이틀 버튼이 직접 처리한다.
+        // 임시: 3초 후 자동 복귀
+        Invoke(nameof(GameOverToTown), 3f);
+    }
+
+    private void GameOverToTown()
+    {
+        Time.timeScale = 1f;
+        ReturnToTown();
     }
 
     // 엔딩
@@ -578,8 +595,8 @@ public class GameManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [ContextMenu("테스트: 마을로")] private void TestTown() { ReturnToTown(); }
+    [ContextMenu("테스트: 마을로")]   private void TestTown()    { ReturnToTown(); }
     [ContextMenu("테스트: 던전으로")] private void TestDungeon() { EnterDungeon(); }
-    [ContextMenu("테스트: 사망")] private void TestDeath() { OnPlayerDeath(); }
+    [ContextMenu("테스트: 사망")]     private void TestDeath()   { OnPlayerDeath(); }
 #endif
 }

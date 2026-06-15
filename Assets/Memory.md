@@ -4,6 +4,73 @@
 
 ---
 
+## 새 게임 집 카메라 고정 타이밍 버그 수정 (2026-06-14)
+- 증상: 타이틀에서 새 게임 진입 시 집에서 시작하지만 카메라가 고정 안 되고 플레이어 추적
+- 원인: HandleSceneLoaded(sceneLoaded 이벤트) 시점에 즉시 MoveCameraToHousePoint 호출
+  - 이 시점엔 씬의 CameraFollow Awake/Start 가 아직 완료 전이라 FindFirstObjectByType 가 못 잡거나
+  - 잡아서 _bFollowEnabled=false 걸어도 이후 CameraFollow 기본값(true)으로 시작해 추적 재개
+- 수정: MoveCameraToHouseNextFrame 코루틴으로 yield return null(한 프레임) 후 고정
+  - CameraFollow Awake/Start 완료 보장 후 MoveToFixedPoint 적용 -> 추적 정지 유지
+- NewGame, Respawn 분기 모두 코루틴 경유로 변경 (집 출입 문 경로는 이미 정상이라 그대로)
+- 기존 AutoSaveNextFrame 과 동일한 한 프레임 지연 패턴
+
+## 집 진입 카메라를 HouseCameraPoint 로 통일 (2026-06-14)
+- 문제: 집 들어가는 문(bEntersHouse)이 SnapToTarget(플레이어 기준)으로 고정해서 새 게임 시작(HouseCameraPoint)과 구도가 달랐음
+- 수정: HouseDoorInteractable 들어가는 분기를 MoveToFixedPoint(HouseCameraPoint)로 변경
+  - GameObject.Find('HouseCameraPoint') 후 MoveToFixedPoint (GameManager 와 동일 패턴, 같은 오브젝트 공유)
+  - HouseCameraPoint 없으면 기존 SnapToTarget+SetFollowEnabled(false) 폴백
+- 이제 새 게임 시작/집 출입 모두 같은 HouseCameraPoint 구도로 통일됨
+- 나오는 문(bEntersHouse 체크 해제)은 그대로 SetFollowEnabled(true)+SnapToTarget 으로 추적 재개
+
+## 사망 부활 = 집에서 시작 + 던전 재입장 스폰 초기화 확인 (2026-06-14)
+
+### RespawnAtHome (사망 후 다시하기)
+- 컴파일 에러 원인: PlayerDeath 가 GameManager.RespawnAtHome 호출했으나 정의가 없었음
+- 의도: 사망(몬스터 등) 후 다시하기 시 새 게임과 동일하게 집 안에서 부활
+- TownEntry 에 Respawn 값 추가 (NewGame/DungeonReturn/Respawn 구분)
+- GameManager.RespawnAtHome(): _townEntry=Respawn, 마을 씬 로드
+- HandleSceneLoaded Respawn 분기: 던전에서 오므로 MovePlayerToSpawn('Spawn_House') + MoveCameraToHousePoint
+  - 새 게임은 씬 배치 위치라 플레이어 이동 안 하지만, 부활은 던전 위치를 들고 와서 집 위치로 명시적 이동 필요
+- 자동 저장은 보류 (Respawn 분기에 저장 없음, DungeonReturn 만 자동 저장 유지)
+- PlayerDeath.OnRetryClicked: ReturnToTown -> RespawnAtHome 으로 변경
+- 에디터: 마을 씬에 빈 오브젝트 'Spawn_House' 생성 (집 안 부활 위치), 'HouseCameraPoint' 와 별개
+
+### 던전 재입장 스폰 초기화 (질문 확인)
+- 결론: 초기화 정상. 2층 4번 제한 같은 문제 없음
+- 이유: 던전 입출입이 실제 씬 전환(SceneManager.LoadScene), EnemySpawner/SpawnPoint 가 DontDestroyOnLoad 아님
+  - 씬 나가면 파괴, 재입장 시 새로 생성되어 SpawnedCount=0 / AliveEnemyCount=0 부터 다시 스폰
+- 부수: 재입장마다 몬스터 전부 부활 + 줄기 열쇠 재분배 (로그라이크식 리셋, 의도된 동작)
+
+## 새 게임 집 안 시작 + 카메라 고정 위치 (2026-06-14)
+- 구조 확인: 새 게임은 _townEntry==NewGame 일 때 스폰 이동을 안 함 (씬 배치된 플레이어 초기 위치 사용)
+  - 즉 마을 씬에서 플레이어 오브젝트를 집 안에 배치하면 새 게임 시 집에서 시작
+- 카메라 고정 위치: 씬의 빈 오브젝트 'HouseCameraPoint' 위치 사용, 회전은 마을과 동일(현재 각도 유지)
+- CameraFollow.MoveToFixedPoint(Transform): 지정 위치로 옮기고 _bFollowEnabled=false (추적 정지, 회전 안 건드림)
+- GameManager: 새 게임 마을 진입 시 MoveCameraToHousePoint 호출
+  - GameObject.Find('HouseCameraPoint') + FindFirstObjectByType<CameraFollow>().MoveToFixedPoint
+  - HouseCameraPoint 없으면 경고만 (카메라 고정 생략)
+- 집에서 나가는 문: 기존 HouseDoorInteractable bEntersHouse 체크 해제 시 SetFollowEnabled(true) 로 추적 재개
+- 타이밍: CameraFollow.OnSceneLoaded 는 target 만 재탐색하고 위치 강제 스냅 안 함 -> MoveToFixedPoint 위치 유지됨
+- 에디터: 마을 씬에 빈 오브젝트 'HouseCameraPoint' 생성해 원하는 위치로 배치, 플레이어 시작 위치는 집 안에 배치
+
+## 집 화면 고정 + 대장장이 무기 선택 연결 (2026-06-14)
+
+### 집 안 화면 고정 (방식 A: 들어가는 순간 위치 고정)
+- CameraFollow: _bFollowEnabled 플래그 + SetFollowEnabled(bool). false 면 LateUpdate 추적 스킵
+- HouseDoorInteractable: bEntersHouse 인스펙터 플래그 추가
+  - 집으로 들어가는 문(체크): SnapToTarget 후 SetFollowEnabled(false) - 도착 위치에서 화면 고정
+  - 나오는 문(체크 해제): SetFollowEnabled(true) 후 SnapToTarget - 추적 재개
+- 에디터: 집 입구 문 오브젝트는 bEntersHouse 체크, 실내 나가는 문은 체크 해제
+
+### 대장장이 무기 선택 연결 (끊긴 곳: SelectWeapon 호출 경로 부재)
+- 기존: NPC -> 대화 -> 맡기기 -> BlacksmithSystem.OpenBlacksmith 까지 완성, 강화 버튼 -> EnhancementSystem 완성
+  - 끊김: SelectWeapon(WeaponInstance) 을 호출하는 곳이 전혀 없어 강화 대상 지정 불가였음
+- 해결(상점 판매와 동일 패턴): 대장간 무기선택 화면에서 인벤토리 무기 우클릭 -> SelectWeapon
+- BlacksmithSystem: 싱글턴 Instance 추가(Awake/OnDestroy), IsOpen / IsWeaponSelectMode 공개
+- InventorySlot.OnPointerClick: 상점 판매 분기 다음에 대장간 분기 추가
+  - IsWeaponSelectMode 일 때 CurrentInstance as WeaponInstance 가 null 아니면 SelectWeapon (무기만)
+- 검증: 대장간 열고 강화화면에서 무기 우클릭 -> 무기명/현재강화/성공확률 표시, 강화 버튼 활성
+
 ## 방어 공식 통일 (방어력 100 = 5% 경감) (2026-06-14)
 - 확인: 방어력 기본 100, 100당 5% 경감으로 재조정된 것이 확정 (스탯표 '5% 경감'이 정본)
 - PlayerStats 는 이미 def * 0.05f 단일식이라 수정 불필요 (이미 5% 경감)
