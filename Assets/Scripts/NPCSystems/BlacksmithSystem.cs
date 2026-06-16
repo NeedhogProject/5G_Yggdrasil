@@ -34,6 +34,12 @@ public class BlacksmithSystem : MonoBehaviour
     public TMP_Text costText;           // 강화 비용
     public TMP_Text balanceAfterText;   // 강화 후 잔액
 
+    [Header("재료 칸 (3종 — 재료 미정, 뼈대만)")]
+    // 재료 종류가 확정되면 아이콘/필요량 데이터를 연결한다.
+    // 현재는 보유/필요 표시만 가능하도록 배열로 받아둔다.
+    public Image[] materialIcons;       // 재료 아이콘 3개
+    public TMP_Text[] materialCountTexts; // 보유/필요 텍스트 3개 (예: 12/50)
+
     [Header("시스템 연동")]
     [SerializeField] private EnhancementSystem enhancementSystem;
 
@@ -474,11 +480,34 @@ public class BlacksmithSystem : MonoBehaviour
             balanceAfterText.text = balanceAfter.ToString() + " 달란";
         }
 
+        // 재료 칸 갱신 (재료 미정 — 현재는 0/0 표시)
+        UpdateMaterialSlots();
+
         // 버튼 활성화 (골드 충분 + 최대강 미만)
         bool canAfford = PlayerStats.Instance != null && PlayerStats.Instance.gold >= cost;
         if (enhanceButton != null)
         {
             enhanceButton.interactable = canAfford == true && level < 5;
+        }
+    }
+
+    // 재료 칸 갱신
+    // 재료 시스템이 미정이라 현재는 0/0 으로 표시만 한다.
+    // 재료가 정해지면 여기서 보유량/필요량을 채우고 부족 시 빨간색 처리한다.
+    private void UpdateMaterialSlots()
+    {
+        if (materialCountTexts == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < materialCountTexts.Length; i++)
+        {
+            if (materialCountTexts[i] != null)
+            {
+                materialCountTexts[i].text = "0/0";
+                materialCountTexts[i].color = Color.white;
+            }
         }
     }
 
