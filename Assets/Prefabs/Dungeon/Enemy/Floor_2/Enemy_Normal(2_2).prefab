@@ -417,8 +417,8 @@ MonoBehaviour:
   attackRange: 1.5
   defense: 0
   goldDropChance: 1
-  goldMin: 0
-  goldMax: 0
+  goldMin: 150
+  goldMax: 200
   hpBarObject: {fileID: 4545243540419917737}
   hpBarFill: {fileID: 567703058483191252}
   hpBarHideDelay: 3
