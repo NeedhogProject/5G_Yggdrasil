@@ -248,6 +248,8 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData e)
     {
+        Debug.Log("[InventorySlot] 클릭 감지 버튼: " + e.button + " 점유: " + isOccupied + " 컨테이너: " + container);
+
         if (e.button != PointerEventData.InputButton.Right || isOccupied == false)
         {
             return;
