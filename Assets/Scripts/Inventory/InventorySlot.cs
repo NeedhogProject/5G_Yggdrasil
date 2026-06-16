@@ -93,12 +93,11 @@ public class InventorySlot : MonoBehaviour,
                 return;
             }
 
+            // 창고 데이터 제거 + 슬롯 영역 해제는 RemoveFromStorageData(ReleaseArea)가 모두 처리한다.
             if (StorageUI.Instance != null)
             {
                 StorageUI.Instance.RemoveFromStorageData(draggedInstance);
             }
-            // 창고 출발 슬롯 비우기 (창고는 단일 칸 관리)
-            fromSlot.ClearSlot();
 
             // 드롭한 위치(this 슬롯)에 정확히 배치 시도.
             // 잡은 칸 보정으로 아이템 좌상단이 들어갈 슬롯을 구한다.
