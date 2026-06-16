@@ -754,7 +754,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -157, y: -232.49962}
+  m_AnchoredPosition: {x: -157, y: -232.5}
   m_SizeDelta: {x: 316, y: 256.71}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &42188592
@@ -9639,6 +9639,10 @@ PrefabInstance:
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6010569377580550517, guid: d14914346e2eb374d80dba349d793387, type: 3}
+      propertyPath: weaponHolder
+      value: 
+      objectReference: {fileID: 441214089}
+    - target: {fileID: 6010569377580550517, guid: d14914346e2eb374d80dba349d793387, type: 3}
       propertyPath: inventorySystem
       value: 
       objectReference: {fileID: 0}
@@ -9703,6 +9707,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d14914346e2eb374d80dba349d793387, type: 3}
+--- !u!4 &441214089 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3073418045415624321, guid: d14914346e2eb374d80dba349d793387, type: 3}
+  m_PrefabInstance: {fileID: 441214088}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &450594689 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: bce21033e132a1a48aa318af9b9b7c09, type: 3}
@@ -11558,7 +11567,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1014353130}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.99949306
+  m_Size: 0.9993956
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
