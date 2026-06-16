@@ -1,6 +1,5 @@
 // ShopItemUI.cs
-// 상점 아이템 슬롯 UI — 구매 모드에선 우클릭 시 구매 확인 팝업을 연다
-
+// 상점 아이템 슬롯 UI — 구매 모드에선 좌클릭 시 구매 확인 팝업을 연다
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -60,18 +59,17 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // 우클릭: 구매 모드면 구매 확인 팝업 열기
-    // 우클릭: 구매 모드면 구매 팝업, 판매 모드면 즉시 판매
+    // 좌클릭: 구매 모드면 구매 팝업, 판매 모드면 판매창에서 빼기
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Right)
+        if (eventData.button != PointerEventData.InputButton.Left)
         {
             return;
         }
 
         if (_isBuyMode == true)
         {
-            // 구매 모드: 우클릭 시 구매 확인 팝업
+            // 구매 모드: 좌클릭 시 구매 확인 팝업
             if (_shopSystem != null)
             {
                 _shopSystem.OpenBuyConfirm(_shopItemData);
@@ -79,7 +77,7 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
         else
         {
-            // 판매 모드: 우클릭 시 즉시 판매
+            // 판매 모드: 좌클릭 시 판매창에서 빼기 (마킹 해제)
             if (_shopSystem != null && _sellItemData != null)
             {
                 _shopSystem.UnstageItem(_sellItemData);
