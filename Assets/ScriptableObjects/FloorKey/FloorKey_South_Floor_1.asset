@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 171abef1f86f23049bf6f24c3cfb44e8, type: 3}
   m_Name: FloorKey_South_Floor_1
   m_EditorClassIdentifier: Assembly-CSharp::FloorKeyData
-  _itemName: "\uB0A8\uCABD \uC904\uAE30 \uC5F4\uC1E0"
+  _itemName: "1\uCE35 \uB0A8\uCABD \uC904\uAE30 \uC5F4\uC1E0"
   _description: "\uB0A8\uCABD \uC904\uAE30\uB97C \uC5F4 \uC218 \uC788\uB294 \uC5F4\uC1E0\uC774\uB2E4."
   _itemType: 4
   _rarity: 0

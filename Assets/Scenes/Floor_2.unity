@@ -16267,6 +16267,22 @@ PrefabInstance:
       value: StemManager_Object
       objectReference: {fileID: 0}
     - target: {fileID: 2626631651464971502, guid: 622565fbd7366794fa3dcae098dac01d, type: 3}
+      propertyPath: eastKey
+      value: 
+      objectReference: {fileID: 11400000, guid: d0b9ff8ca44d60a4982d0416083e476e, type: 2}
+    - target: {fileID: 2626631651464971502, guid: 622565fbd7366794fa3dcae098dac01d, type: 3}
+      propertyPath: westKey
+      value: 
+      objectReference: {fileID: 11400000, guid: c7dfcb189dec9c04e86d0279aa1e0257, type: 2}
+    - target: {fileID: 2626631651464971502, guid: 622565fbd7366794fa3dcae098dac01d, type: 3}
+      propertyPath: northKey
+      value: 
+      objectReference: {fileID: 11400000, guid: b84b67f44c450e1498c078c8138919ac, type: 2}
+    - target: {fileID: 2626631651464971502, guid: 622565fbd7366794fa3dcae098dac01d, type: 3}
+      propertyPath: southKey
+      value: 
+      objectReference: {fileID: 11400000, guid: e4d0410b2ad4fc442b3ed83cc2ad3e6b, type: 2}
+    - target: {fileID: 2626631651464971502, guid: 622565fbd7366794fa3dcae098dac01d, type: 3}
       propertyPath: currentFloor
       value: 2
       objectReference: {fileID: 0}

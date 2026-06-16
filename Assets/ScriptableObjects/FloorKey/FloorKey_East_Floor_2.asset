@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 171abef1f86f23049bf6f24c3cfb44e8, type: 3}
-  m_Name: FloorKey_East_Floor_1
+  m_Name: FloorKey_East_Floor_2
   m_EditorClassIdentifier: Assembly-CSharp::FloorKeyData
-  _itemName: "1\uCE35 \uB3D9\uCABD \uC904\uAE30 \uC5F4\uC1E0"
+  _itemName: "2\uCE35 \uB3D9\uCABD \uC904\uAE30 \uC5F4\uC1E0"
   _description: "\uB3D9\uCABD \uC904\uAE30\uB97C \uC5F4 \uC218 \uC788\uB294 \uC5F4\uC1E0\uC774\uB2E4."
   _itemType: 4
   _rarity: 0
