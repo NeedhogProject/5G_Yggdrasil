@@ -409,8 +409,8 @@ MonoBehaviour:
   attackRange: 1.5
   defense: 0
   goldDropChance: 1
-  goldMin: 0
-  goldMax: 0
+  goldMin: 150
+  goldMax: 200
   hpBarObject: {fileID: 4545243540419917737}
   hpBarFill: {fileID: 567703058483191252}
   hpBarHideDelay: 3
@@ -443,9 +443,89 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3a7e97b8fc42644d820cf2880b7d2c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootTable
-  lootEntries: []
+  lootEntries:
+  - item: {fileID: 11400000, guid: ef49df8c0b37d1144bc70c68bf3dcb0e, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 2e007b6345cf51b4283fe70c1c7cbd1a, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 787b3d3f1eecb4346aa2f25ddb5f8efe, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 70b6b1dd173742c4c8f957dd1a2a442b, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 0428ffc72e908c447bb983be6de3a781, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: dd4dc5e9cfbbb194a97b6cbc783c1a82, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: a637f4866bcdc0546ad3ae5cda39cf5d, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: dd6e515b695c5864b8cf73b69e0c0cf7, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: bc3d1a1f055fb03418db2fe8b380e2ef, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 2332ef5009b7a7948af5719961e5a81e, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 63d1a80e2fb9c8742bfa2901438b8b19, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 02b271ea13bc0004c94352fc9aadeb82, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 348797dae4136334ebb4f242a4d4f588, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: c47edc2d0df67f04ca239f8e81fe5edd, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 01bed33365317c34589ff275f96f052f, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 1fcaa464514759e4694fb597081c5c98, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 8d9b7e49031f7624fb2762ecebc5ecc3, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: 7997a3a06e8e4e44faf3e9666a3b0cec, type: 2}
+    weight: 60
+    minCount: 0
+    maxCount: 0
+  - item: {fileID: 11400000, guid: b458edddf1a106e419591cc301168948, type: 2}
+    weight: 40
+    minCount: 0
+    maxCount: 0
   dropCount: 1
-  skipChance: 0
+  skipChance: 40
   droppedItemPrefab: {fileID: 9050273253143957091, guid: 990821102621e1145b36c049befa6795, type: 3}
   dropSpreadRadius: 0.5
 --- !u!1 &7793765603143891439
