@@ -587,14 +587,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7306ca0f7c16f748b1102d5e816a05f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBase
-  maxHealth: 100
-  attackPower: 10
-  moveSpeed: 3
+  maxHealth: 60
+  attackPower: 8
+  moveSpeed: 4
   attackRange: 1.5
   defense: 0
   goldDropChance: 1
-  goldMin: 0
-  goldMax: 0
+  goldMin: 200
+  goldMax: 400
   hpBarObject: {fileID: 4692913881660078295}
   hpBarFill: {fileID: 5975279521211823539}
   hpBarHideDelay: 3
@@ -610,10 +610,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b08c4a9f5dc9684ab45f36feed223fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  detectionRange: 8
-  loseTargetRange: 12
-  patrolRadius: 5
-  patrolWaitTime: 2
+  detectionRange: 10
+  loseTargetRange: 13
+  patrolRadius: 7
+  patrolWaitTime: 1
   attackCooldown: 1.5
 --- !u!114 &3730560237680407195
 MonoBehaviour:
