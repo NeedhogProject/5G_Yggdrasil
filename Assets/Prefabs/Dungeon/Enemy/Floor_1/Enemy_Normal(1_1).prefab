@@ -538,32 +538,32 @@ MonoBehaviour:
     maxCount: 1
   - item: {fileID: 11400000, guid: 04e5452c7ab35f34997e12b6d047e854, type: 2}
     weight: 20
-    minCount: 0
-    maxCount: 0
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 63d1a80e2fb9c8742bfa2901438b8b19, type: 2}
     weight: 100
-    minCount: 0
-    maxCount: 0
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 02b271ea13bc0004c94352fc9aadeb82, type: 2}
     weight: 35
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 551a403f4f26d2246965ceda0ea3d91d, type: 2}
     weight: 20
-    minCount: 0
-    maxCount: 0
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: c053cb4674446044592d53bfc0344f68, type: 2}
     weight: 3
-    minCount: 0
-    maxCount: 0
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: b6b8f259060c5f148a854ba4c92ba660, type: 2}
     weight: 100
     minCount: 1
     maxCount: 1
   - item: {fileID: 11400000, guid: 3417c31e61f428a408a29f9c4921f4ae, type: 2}
     weight: 100
-    minCount: 0
-    maxCount: 0
+    minCount: 1
+    maxCount: 1
   - item: {fileID: 11400000, guid: 2c039901704d7d34a9039bbf7a3c8aba, type: 2}
     weight: 100
     minCount: 0
