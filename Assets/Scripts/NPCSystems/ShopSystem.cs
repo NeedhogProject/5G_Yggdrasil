@@ -54,14 +54,47 @@ public class ShopSystem : MonoBehaviour
     [Header("판매 설정")]
     [SerializeField] private float sellPriceRatio = 0.3f;
 
-    [Header("대화하기 대사")]
+    [Header("벨라 대사 — 일반 (대화하기 버튼)")]
     [TextArea(2, 4)]
     public string[] talkLines = new string[]
     {
-        "세계수 아래 마을은 늘 분주하답니다.",
-        "필요한 게 있으면 언제든 말해요.",
-        "요즘 던전이 험하다던데... 부디 조심해요.",
-        "단골손님껜 가끔 덤도 챙겨드린답니다. 후훗."
+        "정직한 가격으로 모십니다~! 어서오세요!",
+        "필요한 게 있으신가요? 천천히 둘러보세요~",
+        "헤헤, 찾아와 주셔서 감사합니다!"
+    };
+
+    [Header("벨라 대사 — 구매 성공")]
+    [TextArea(2, 4)]
+    public string[] buyLines = new string[]
+    {
+        "일단 한 번 보고 가세요~ 후회 안 한다니까?",
+        "정말 좋은 선택이에요!",
+        "좋은 물건은 좋은 주인을 만나야 하니까요!"
+    };
+
+    [Header("벨라 대사 — 판매 성공")]
+    [TextArea(2, 4)]
+    public string[] sellLines = new string[]
+    {
+        "오~ 그 물건 좋아보이는데요?",
+        "상태가 좋네요! 이 정도면 충분히 값어치를 하겠어요!"
+    };
+
+    [Header("벨라 대사 — 돈 부족")]
+    [TextArea(2, 4)]
+    public string[] noMoneyLines = new string[]
+    {
+        "앗, 조금만 더 모아 오시면 될 것 같아요!",
+        "괜찮아요! 다음에 다시 오시면 되니까요!"
+    };
+
+    [Header("벨라 대사 — 뒤로 가기")]
+    [TextArea(2, 4)]
+    public string[] backLines = new string[]
+    {
+        "오늘도 찾아와 주셔서 감사해요!",
+        "좋은 하루 보내세요! 또 만나요!",
+        "필요한 게 생기면 벨라를 찾아주세요~"
     };
 
     public static ShopSystem Instance { get; private set; }
@@ -274,6 +307,7 @@ public class ShopSystem : MonoBehaviour
         // ShopUI(자기 자신) 끄기 — 다음에 OpenShop 때 다시 켜짐
         gameObject.SetActive(false);
     }
+
     private void ShowMenu()
     {
         // 판매창에 담아둔 것 인벤으로 되돌림 (메뉴로 가면 판매 취소)
@@ -338,11 +372,11 @@ public class ShopSystem : MonoBehaviour
     {
         if (talkLines == null || talkLines.Length == 0)
         {
-            dialogueText.text = "벨라: ...";
+            SetDialogue("벨라: ...");
             return;
         }
 
-        dialogueText.text = "벨라: " + talkLines[_talkIndex];
+        SetDialogue("벨라: " + talkLines[_talkIndex]);
 
         _talkIndex = _talkIndex + 1;
         if (_talkIndex >= talkLines.Length)
@@ -399,6 +433,8 @@ public class ShopSystem : MonoBehaviour
         // 구매/판매 창이 떠 있으면 메뉴로 돌아가기
         if (shopPanel != null && shopPanel.activeSelf == true)
         {
+            // 뒤로 가기 대사 출력 (메뉴 패널에 dialogueText 가 있으면 표시)
+            ShowBackLine();
             ShowMenu();
             return;
         }
@@ -437,7 +473,7 @@ public class ShopSystem : MonoBehaviour
             sellControls.SetActive(false);
         }
 
-        dialogueText.text = "무엇을 구매하시겠어요?";
+        SetDialogue("무엇을 구매하시겠어요?");
     }
 
     private void ShowSellTab()
@@ -448,7 +484,7 @@ public class ShopSystem : MonoBehaviour
         }
 
         RefreshSellStaging();
-        dialogueText.text = "팔 물건을 판매창에 담아주세요.";
+        SetDialogue("팔 물건을 판매창에 담아주세요.");
     }
 
     // 단일 구매 (현재는 팝업 흐름이 대체, 호환용)
@@ -456,21 +492,21 @@ public class ShopSystem : MonoBehaviour
     {
         if (PlayerStats.Instance.gold < shopItem.buyPrice)
         {
-            dialogueText.text = "골드가 부족합니다!";
+            SetDialogue(GetRandomLine(noMoneyLines));
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
             return;
         }
 
         if (InventorySystem.Instance.AddItem(shopItem.itemData) == false)
         {
-            dialogueText.text = "인벤토리가 가득 찼습니다!";
+            SetDialogue("인벤토리가 가득 찼습니다!");
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
             return;
         }
 
         PlayerStats.Instance.gold -= shopItem.buyPrice;
 
-        dialogueText.text = shopItem.itemData.itemName + "을(를) 구매했습니다!";
+        SetDialogue(GetRandomLine(buyLines));
 
         UpdateGoldDisplay();
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
@@ -478,6 +514,10 @@ public class ShopSystem : MonoBehaviour
 
     private void UpdateGoldDisplay()
     {
+        if (goldText == null)
+        {
+            return;
+        }
         goldText.text = "달란: " + PlayerStats.Instance.gold;
     }
 
@@ -644,7 +684,7 @@ public class ShopSystem : MonoBehaviour
 
         if (PlayerStats.Instance.gold < totalPrice)
         {
-            dialogueText.text = "골드가 부족합니다!";
+            SetDialogue(GetRandomLine(noMoneyLines));
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
             return;
         }
@@ -662,7 +702,7 @@ public class ShopSystem : MonoBehaviour
 
         if (boughtCount == 0)
         {
-            dialogueText.text = "인벤토리가 가득 찼습니다!";
+            SetDialogue("인벤토리가 가득 찼습니다!");
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
             return;
         }
@@ -675,7 +715,7 @@ public class ShopSystem : MonoBehaviour
             shopItem.stock -= boughtCount;
         }
 
-        dialogueText.text = shopItem.itemData.itemName + " " + boughtCount + "개 구매!";
+        SetDialogue(GetRandomLine(buyLines));
 
         UpdateGoldDisplay();
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
@@ -762,7 +802,7 @@ public class ShopSystem : MonoBehaviour
     {
         if (_stagedItems.Count == 0)
         {
-            dialogueText.text = "판매할 물건이 없어요.";
+            SetDialogue("판매할 물건이 없어요.");
             return;
         }
 
@@ -775,7 +815,7 @@ public class ShopSystem : MonoBehaviour
         PlayerStats.Instance.gold += total;
         _stagedItems.Clear();
 
-        dialogueText.text = total + " 달란에 판매했어요!";
+        SetDialogue(GetRandomLine(sellLines));
 
         UpdateGoldDisplay();
         RefreshSellStaging();
@@ -821,6 +861,37 @@ public class ShopSystem : MonoBehaviour
         if (sellBalanceText != null)
         {
             sellBalanceText.text = "판매 후 잔액: " + balanceAfter + " 달란";
+        }
+    }
+
+    // 대사 출력 (null 체크 포함)
+    private void SetDialogue(string text)
+    {
+        if (dialogueText == null)
+        {
+            return;
+        }
+        dialogueText.text = text;
+    }
+
+    // 배열에서 랜덤 대사 한 줄 반환 (비어있으면 빈 문자열)
+    private string GetRandomLine(string[] lines)
+    {
+        if (lines == null || lines.Length == 0)
+        {
+            return "";
+        }
+        int index = Random.Range(0, lines.Length);
+        return lines[index];
+    }
+
+    // 뒤로 가기 대사 출력
+    private void ShowBackLine()
+    {
+        string line = GetRandomLine(backLines);
+        if (line.Length > 0)
+        {
+            SetDialogue(line);
         }
     }
 }
