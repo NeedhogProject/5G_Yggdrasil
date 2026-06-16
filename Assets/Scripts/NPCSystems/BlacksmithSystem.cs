@@ -1,6 +1,6 @@
 /*
  * BlacksmithSystem.cs
- * 대장장이 NPC 패널 — 좌측 무기 목록에서 선택 후 EnhancementSystem 패널로 넘겨 코인 플립 강화 진행
+ * 대장장이 NPC 패널 — 좌측 무기 목록에서 선택 후 CoinFlipUI 로 코인 플립 강화 진행
  * 담당: 김보민
  */
 
@@ -71,6 +71,7 @@ public class BlacksmithSystem : MonoBehaviour
     private List<BlacksmithItemUI> _spawnedCards = new List<BlacksmithItemUI>();
 
     private bool _isOpen = false;
+    private bool _isEnhancing = false;
 
     // 대장간이 열려 있는지
     public bool IsOpen => _isOpen;
@@ -569,26 +570,165 @@ public class BlacksmithSystem : MonoBehaviour
     {
         if (_selectedWeapon == null)
         {
-            dialogueText.text = "먼저 강화할 무기를 선택해주게.";
+            if (dialogueText != null)
+            {
+                dialogueText.text = "먼저 강화할 무기를 선택해주게.";
+            }
             return;
         }
 
         if (_selectedWeapon.EnhancementLevel >= 5)
         {
-            dialogueText.text = "이미 최대 강화 단계일세.";
+            if (dialogueText != null)
+            {
+                dialogueText.text = "이미 최대 강화 단계일세.";
+            }
             return;
         }
 
-        if (enhancementSystem == null)
+        if (_isEnhancing == true)
         {
-            Debug.LogWarning("[BlacksmithSystem] EnhancementSystem 참조가 없습니다.");
             return;
         }
 
-        // 대장간 패널 닫고 코인 플립 강화 패널 열기
-        blacksmithPanel.SetActive(false);
-        enhancementSystem.SelectWeapon(_selectedWeapon);
-        enhancementSystem.OpenEnhancement();
+        int cost = CalculateEnhancementCost(_selectedWeapon.EnhancementLevel);
+
+        // 골드 확인
+        if (PlayerStats.Instance == null || PlayerStats.Instance.gold < cost)
+        {
+            if (dialogueText != null)
+            {
+                dialogueText.text = "골드가 부족하군!";
+            }
+            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            return;
+        }
+
+        // 재료 확인 (재료 미정 — 추후 여기서 보유량 검사)
+        // if (HasEnoughMaterials() == false) { ... return; }
+
+        if (CoinFlipUI.Instance == null)
+        {
+            Debug.LogWarning("[BlacksmithSystem] CoinFlipUI 참조가 없습니다.");
+            return;
+        }
+
+        // 골드 차감
+        PlayerStats.Instance.gold = PlayerStats.Instance.gold - cost;
+
+        // 재료 차감 (재료 미정 — 추후 구현)
+        // ConsumeMaterials();
+
+        StartCoinFlip();
+    }
+
+    // 코인 플립 연출 시작
+    private void StartCoinFlip()
+    {
+        _isEnhancing = true;
+
+        if (enhanceButton != null)
+        {
+            enhanceButton.interactable = false;
+        }
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = "코인을 던지는 중...";
+        }
+
+        float rateNormalized = _selectedWeapon.CurrentSuccessRate / 100f;
+
+        // 코인 애니메이션 시작 — 완료 후 OnCoinFlipComplete 콜백 호출
+        bool started = CoinFlipUI.Instance.PlayCoinFlip(rateNormalized, OnCoinFlipComplete);
+
+        if (started == false)
+        {
+            // 코인이 이미 돌고 있으면 골드 환불 후 취소
+            int cost = CalculateEnhancementCost(_selectedWeapon.EnhancementLevel);
+            PlayerStats.Instance.gold = PlayerStats.Instance.gold + cost;
+
+            if (dialogueText != null)
+            {
+                dialogueText.text = "잠시 후 다시 시도해주게.";
+            }
+
+            _isEnhancing = false;
+            if (enhanceButton != null)
+            {
+                enhanceButton.interactable = true;
+            }
+        }
+    }
+
+    // 코인 애니메이션 완료 후 호출되는 콜백
+    // result: true = 앞면(성공), false = 뒷면(실패)
+    private void OnCoinFlipComplete(bool result)
+    {
+        if (_selectedWeapon == null)
+        {
+            _isEnhancing = false;
+            return;
+        }
+
+        EnhanceResult enhanceResult = _selectedWeapon.TryEnhance(result);
+
+        switch (enhanceResult)
+        {
+            case EnhanceResult.Success:
+                if (dialogueText != null)
+                {
+                    dialogueText.text = _selectedWeapon.Data.itemName + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "강이 되었네!";
+                }
+                break;
+
+            case EnhanceResult.MaxReached:
+                if (dialogueText != null)
+                {
+                    dialogueText.text = _selectedWeapon.Data.itemName + "이(가) +5 최대 강화 달성!";
+                }
+                break;
+
+            case EnhanceResult.Downgrade:
+                if (dialogueText != null)
+                {
+                    dialogueText.text = _selectedWeapon.Data.itemName + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "강으로 낮아졌네.";
+                }
+                break;
+
+            case EnhanceResult.ResetToBase:
+                if (dialogueText != null)
+                {
+                    dialogueText.text = _selectedWeapon.Data.itemName + "의 강화가 초기화되었네...";
+                }
+                break;
+
+            case EnhanceResult.Fail:
+                if (dialogueText != null)
+                {
+                    dialogueText.text = "아쉽군. 이번엔 실패했네.";
+                }
+                break;
+
+            case EnhanceResult.AlreadyMax:
+                if (dialogueText != null)
+                {
+                    dialogueText.text = "이미 최대 강화 단계일세.";
+                }
+                break;
+        }
+
+        _isEnhancing = false;
+
+        // 선택된 카드의 강화 단계 표시 갱신
+        if (_selectedCard != null)
+        {
+            _selectedCard.Setup(_selectedWeapon, this);
+            _selectedCard.SetSelected(true);
+        }
+
+        // 미리보기 갱신
+        UpdatePreview();
     }
 
     // ─────────────────────── 유틸 ───────────────────────
