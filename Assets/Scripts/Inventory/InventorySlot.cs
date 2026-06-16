@@ -34,6 +34,15 @@ public class InventorySlot : MonoBehaviour,
         get { return _currentInstance; }
     }
 
+    // 판매창에 담겨 어둡게 표시 중인지 여부 (인벤에선 그대로 두고 표시만 변경)
+    private bool _saleMarked = false;
+
+    // 판매 마킹 상태 외부 읽기용
+    public bool IsSaleMarked
+    {
+        get { return _saleMarked; }
+    }
+
     // 드래그 상태
     private static InventorySlot _draggingSlot = null;
     private static GameObject _dragIcon = null;
@@ -187,6 +196,13 @@ public class InventorySlot : MonoBehaviour,
         _currentInstance = null;
         isOccupied = false;
 
+        // 판매 마킹도 해제하고 색 원복
+        _saleMarked = false;
+        if (itemIcon != null)
+        {
+            itemIcon.color = Color.white;
+        }
+
         if (itemIcon != null)
         {
             itemIcon.gameObject.SetActive(false);
@@ -204,6 +220,28 @@ public class InventorySlot : MonoBehaviour,
     public bool CanPlaceItem(ItemData item)
     {
         return item != null && isOccupied == false;
+    }
+
+    // 판매창에 담긴 표시 (인벤에선 그대로 두고 아이콘만 어둡게)
+    // marked == true 면 어둡게, false 면 원래 흰색으로 복원
+    public void SetSaleMarked(bool marked)
+    {
+        _saleMarked = marked;
+
+        if (itemIcon == null)
+        {
+            return;
+        }
+
+        if (marked == true)
+        {
+            // 어둡게 (회색 톤)
+            itemIcon.color = new Color(0.4f, 0.4f, 0.4f, 1f);
+        }
+        else
+        {
+            itemIcon.color = Color.white;
+        }
     }
 
     // ─────────────────────── Pointer ───────────────────────
@@ -248,8 +286,6 @@ public class InventorySlot : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData e)
     {
-        Debug.Log("[InventorySlot] 클릭 감지 버튼: " + e.button + " 점유: " + isOccupied + " 컨테이너: " + container);
-
         if (e.button != PointerEventData.InputButton.Right || isOccupied == false)
         {
             return;
@@ -274,7 +310,15 @@ public class InventorySlot : MonoBehaviour,
         {
             if (source.currentItem != null)
             {
-                ShopSystem.Instance.StageForSale(source);
+                // 이미 담긴 슬롯이면 다시 우클릭 시 담기 취소
+                if (source.IsSaleMarked == true)
+                {
+                    ShopSystem.Instance.UnstageSlot(source);
+                }
+                else
+                {
+                    ShopSystem.Instance.StageForSale(source);
+                }
             }
             return;
         }
@@ -303,6 +347,12 @@ public class InventorySlot : MonoBehaviour,
         }
 
         if (dragSource.currentItem == null)
+        {
+            return;
+        }
+
+        // 판매창에 담긴(마킹된) 아이템은 드래그로 옮기지 못하게 막는다
+        if (dragSource.IsSaleMarked == true)
         {
             return;
         }

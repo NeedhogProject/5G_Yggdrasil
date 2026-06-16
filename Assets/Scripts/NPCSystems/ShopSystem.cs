@@ -121,6 +121,7 @@ public class ShopSystem : MonoBehaviour
     {
         public ItemData data;
         public ItemInstance instance; // null 이면 데이터 전용
+        public InventorySlot slot;    // 인벤에서 어둡게 마킹한 원본 슬롯
     }
 
     private void Awake()
@@ -569,6 +570,7 @@ public class ShopSystem : MonoBehaviour
             confirmItemNameText.text = shopItem.itemData.itemName;
         }
 
+        SetDialogue(GetRandomLine(buyLines));
         RefreshBuyConfirm();
     }
 
@@ -733,6 +735,7 @@ public class ShopSystem : MonoBehaviour
     }
 
     // 인벤 아이템을 판매창에 담기 (인벤 슬롯 우클릭 시 호출됨)
+    // 인벤에서 빼지 않고 슬롯을 어둡게 마킹만 한다 (실제 제거는 판매 확정 시)
     public void StageForSale(InventorySlot slot)
     {
         if (slot == null || slot.currentItem == null)
@@ -745,17 +748,59 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
+        // 이미 담긴 슬롯이면 무시 (중복 방지)
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            if (_stagedItems[i].slot == slot)
+            {
+                return;
+            }
+        }
+
         StagedSellItem entry = new StagedSellItem();
         entry.data = slot.currentItem;
         entry.instance = slot.CurrentInstance;
+        entry.slot = slot;
 
-        InventorySystem.Instance.RemoveItemAtSlot(slot);
+        // 인벤에선 그대로 두고 어둡게 표시만
+        slot.SetSaleMarked(true);
+
         _stagedItems.Add(entry);
 
         RefreshSellStaging();
     }
 
-    // 판매창에서 빼서 인벤으로 되돌리기 (담긴 카드 우클릭 시)
+    // 인벤 슬롯 우클릭으로 담기 취소 (어둡게 마킹된 슬롯을 다시 누름)
+    public void UnstageSlot(InventorySlot slot)
+    {
+        if (slot == null)
+        {
+            return;
+        }
+
+        int index = -1;
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            if (_stagedItems[i].slot == slot)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        if (index < 0)
+        {
+            return;
+        }
+
+        // 마킹 해제 (인벤 그대로 복원)
+        slot.SetSaleMarked(false);
+        _stagedItems.RemoveAt(index);
+
+        RefreshSellStaging();
+    }
+
+    // 판매창 카드 우클릭으로 빼기 (마킹 해제, 인벤은 원래 그대로라 복원 불필요)
     public void UnstageItem(ItemData data)
     {
         if (data == null)
@@ -778,26 +823,26 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        ReturnStagedToInventory(_stagedItems[index]);
+        // 해당 슬롯 마킹 해제 (인벤에 아이템은 그대로 있음)
+        if (_stagedItems[index].slot != null)
+        {
+            _stagedItems[index].slot.SetSaleMarked(false);
+        }
         _stagedItems.RemoveAt(index);
 
         RefreshSellStaging();
     }
 
-    // 담긴 아이템 하나를 인벤으로 되돌리기 (내부용)
+    // 담긴 표시 해제 (내부용) — 인벤에선 빼지 않았으므로 마킹만 푼다
     private void ReturnStagedToInventory(StagedSellItem entry)
     {
-        if (entry.instance != null)
+        if (entry.slot != null)
         {
-            InventorySystem.Instance.AddItem(entry.instance);
-        }
-        else if (entry.data != null)
-        {
-            InventorySystem.Instance.AddItem(entry.data);
+            entry.slot.SetSaleMarked(false);
         }
     }
 
-    // 판매 확정: 담긴 것 모두 판매
+    // 판매 확정: 담긴 것 모두 판매 (이때 인벤에서 실제 제거)
     public void ConfirmSell()
     {
         if (_stagedItems.Count == 0)
@@ -812,6 +857,18 @@ public class ShopSystem : MonoBehaviour
             total = total + GetSellPrice(_stagedItems[i].data);
         }
 
+        // 마킹된 슬롯들을 인벤에서 실제 제거
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            InventorySlot slot = _stagedItems[i].slot;
+            if (slot != null)
+            {
+                // 제거 전에 마킹 해제 (색 원복 후 비워짐)
+                slot.SetSaleMarked(false);
+                InventorySystem.Instance.RemoveItemAtSlot(slot);
+            }
+        }
+
         PlayerStats.Instance.gold += total;
         _stagedItems.Clear();
 
@@ -822,7 +879,7 @@ public class ShopSystem : MonoBehaviour
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
     }
 
-    // 취소: 담긴 것 모두 인벤으로 되돌리기
+    // 취소: 담긴 것 모두 마킹 해제 (인벤은 그대로라 추가 복원 불필요)
     public void CancelSell()
     {
         for (int i = 0; i < _stagedItems.Count; i++)
