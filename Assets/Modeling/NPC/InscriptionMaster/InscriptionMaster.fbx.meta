@@ -32,7 +32,7 @@ ModelImporter:
     animationDoRetargetingWarnings: 0
     importAnimatedCustomProperties: 0
     importConstraints: 0
-    animationCompression: 1
+    animationCompression: 3
     animationRotationError: 0.5
     animationPositionError: 0.5
     animationScaleError: 0.5
@@ -93,7 +93,277 @@ ModelImporter:
   humanDescription:
     serializedVersion: 3
     human: []
-    skeleton: []
+    skeleton:
+    - name: InscriptionMaster(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Cone
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0.5031773, y: 4.827985, z: -1.3998889}
+      rotation: {x: 0.9160415, y: 0.017428536, z: -0.114317976, w: -0.38405165}
+      scale: {x: 358.2769, y: 358.27698, z: 358.27692}
+    - name: Cube.001
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: -2.3363311, z: 0.21798682}
+      rotation: {x: -0.5, y: 0.49999997, z: 0.5, w: 0.5}
+      scale: {x: 30.34853, y: 30.34853, z: 30.34853}
+    - name: Cube.002
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1141858, z: 1.493785}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.003
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1141858, z: 1.493785}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.004
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0.017314672, y: 2.6124868, z: 1.3714535}
+      rotation: {x: 0.5733754, y: 0.56984997, z: -0.41381136, w: 0.41865486}
+      scale: {x: 29.9534, y: 29.953402, z: 29.953392}
+    - name: Cube.005
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: -2.5649767, z: 0.21798682}
+      rotation: {x: -0.5, y: 0.49999997, z: 0.5, w: 0.5}
+      scale: {x: 30.34853, y: 30.34853, z: 30.34853}
+    - name: Cube.006
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1141858, z: 1.493785}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.007
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: -2.6125216, z: 0.21798682}
+      rotation: {x: -0.5, y: 0.5, z: 0.49999997, w: 0.50000006}
+      scale: {x: 39.078327, y: 30.34853, z: 30.34853}
+    - name: Cube.008
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1141858, z: 1.493785}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.009
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1141858, z: 1.493785}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.010
+      parentName: InscriptionMaster(Clone)
+      position: {x: 0.11895871, y: 4.155589, z: 1.7365028}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.011
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1042726, z: 1.8737924}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.012
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 2.8227549, z: 1.3216798}
+      rotation: {x: 0.56353354, y: -0.5635335, z: -0.4271182, w: -0.42711824}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.013
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: 3.1141858, z: 1.493785}
+      rotation: {x: 0.5, y: -0.49999997, z: -0.5, w: -0.5}
+      scale: {x: 102.14375, y: 102.14375, z: 102.14375}
+    - name: Cube.014
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: -2.5649767, z: 0.21798682}
+      rotation: {x: -0.5, y: 0.5, z: 0.49999997, w: 0.50000006}
+      scale: {x: 36.380707, y: 30.34853, z: 30.34853}
+    - name: Cube.015
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0, y: -2.5649767, z: 0.21798682}
+      rotation: {x: -0.5, y: 0.49999997, z: 0.5, w: 0.5}
+      scale: {x: 30.34853, y: 30.34853, z: 30.34853}
+    - name: Cylinder
+      parentName: InscriptionMaster(Clone)
+      position: {x: -8.974616, y: 0.94321567, z: 3.944782}
+      rotation: {x: -0.6956848, y: 0.12658128, z: -0.12658128, w: 0.6956847}
+      scale: {x: 13.537062, y: 13.537063, z: 13.537062}
+    - name: Cylinder.002
+      parentName: InscriptionMaster(Clone)
+      position: {x: -8.992499, y: 1.0040984, z: 3.5961723}
+      rotation: {x: 0.5, y: 0.49999997, z: 0.5, w: -0.5}
+      scale: {x: 30.96491, y: 30.96491, z: 477.5075}
+    - name: Empty
+      parentName: InscriptionMaster(Clone)
+      position: {x: -16.548597, y: 0, z: -117.79399}
+      rotation: {x: 0.00000008146035, y: 0, z: -0, w: 1}
+      scale: {x: 916.753, y: 916.7526, z: 916.7526}
+    - name: Empty.001
+      parentName: InscriptionMaster(Clone)
+      position: {x: -105.918, y: 0, z: -6.45614}
+      rotation: {x: 0.000000057601177, y: -0.70710677, z: 0.000000057601174, w: 0.7071068}
+      scale: {x: 916.7526, y: 916.7526, z: 916.7526}
+    - name: Empty.002
+      parentName: InscriptionMaster(Clone)
+      position: {x: -16.548597, y: 0, z: -117.79399}
+      rotation: {x: 0.000000081460335, y: 0, z: -0, w: 1}
+      scale: {x: 916.753, y: 916.753, z: 916.753}
+    - name: Empty.003
+      parentName: InscriptionMaster(Clone)
+      position: {x: -95.51208, y: -0.09955442, z: -6.45614}
+      rotation: {x: 0.000000057601167, y: -0.70710677, z: 0.000000057601163, w: 0.7071068}
+      scale: {x: 916.753, y: 916.753, z: 916.753}
+    - name: Plane
+      parentName: InscriptionMaster(Clone)
+      position: {x: 0.008795684, y: -6.86825, z: 0.05310089}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 65.92659, y: 23.225668, z: 79.46321}
+    - name: Plane.001
+      parentName: InscriptionMaster(Clone)
+      position: {x: 0.011531979, y: 0.34587544, z: 1.1096051}
+      rotation: {x: 0.000000021855694, y: 0, z: -0, w: 1}
+      scale: {x: 38.497627, y: 38.497627, z: 38.497627}
+    - name: Plane.002
+      parentName: InscriptionMaster(Clone)
+      position: {x: -8.591734, y: 4.5475945, z: 3.6722336}
+      rotation: {x: -0.27661306, y: -0.054340426, z: -0.18494694, w: 0.9414494}
+      scale: {x: 30.343863, y: 30.343863, z: 30.343864}
+    - name: Plane.003
+      parentName: InscriptionMaster(Clone)
+      position: {x: -8.504087, y: 4.6746483, z: 3.5547273}
+      rotation: {x: -0.1720161, y: 0.14657298, z: 0.38245285, w: 0.8959111}
+      scale: {x: 20.472996, y: 20.472996, z: 20.472996}
+    - name: Plane.004
+      parentName: InscriptionMaster(Clone)
+      position: {x: -9.394995, y: 3.5156143, z: 3.9191551}
+      rotation: {x: 0.5901966, y: 0.8049887, z: 0.034489926, w: -0.04971564}
+      scale: {x: 15.214704, y: 15.214705, z: 15.214705}
+    - name: Sphere
+      parentName: InscriptionMaster(Clone)
+      position: {x: -8.992499, y: 7.3781314, z: 3.5852413}
+      rotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071067}
+      scale: {x: 91.8261, y: 91.8261, z: 91.8261}
+    - name: Sphere.007
+      parentName: InscriptionMaster(Clone)
+      position: {x: 1.3193, y: 1.8935084, z: -1.2398546}
+      rotation: {x: 0.71820015, y: 0.37638485, z: 0.0072130216, w: 0.5852102}
+      scale: {x: 65.03576, y: 65.035774, z: 65.035774}
+    - name: Sphere.002
+      parentName: Sphere.007
+      position: {x: -0.00091395614, y: -0.00000030994414, z: 0.017003817}
+      rotation: {x: 0.6355052, y: 0.3358414, z: -0.600163, w: 0.35092464}
+      scale: {x: 0.9999997, y: 1.0000002, z: 1.0000001}
+    - name: Sphere.003
+      parentName: Sphere.007
+      position: {x: -0.0020096875, y: -0.0017388862, z: 0.057222378}
+      rotation: {x: 0.90373677, y: 0.42225784, z: 0.053536974, w: -0.04573747}
+      scale: {x: 1.7918687, y: 1.3520639, z: 1.3520637}
+    - name: Sphere.004
+      parentName: Sphere.007
+      position: {x: -0.0014406538, y: 0.007227881, z: 0.055336855}
+      rotation: {x: 0.85624427, y: 0.37300372, z: -0.19549364, w: 0.29915923}
+      scale: {x: 0.85127985, y: 0.8806102, z: 0.8624961}
+    - name: Sphere.005
+      parentName: Sphere.007
+      position: {x: -0.0058491323, y: -0.00796785, z: 0.05618839}
+      rotation: {x: 0.7702235, y: 0.55465984, z: 0.25221258, w: -0.18840651}
+      scale: {x: 0.85127985, y: 0.88061017, z: 0.8624961}
+    - name: Sphere.006
+      parentName: Sphere.007
+      position: {x: -0.0014609861, y: -0.0005825859, z: 0.035790645}
+      rotation: {x: 0.06251358, y: 0.049712107, z: 0.0033608174, w: 0.99679965}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Sphere.013
+      parentName: Sphere.007
+      position: {x: -0.051632155, y: -0.037696443, z: 0.0042697196}
+      rotation: {x: 0.6936474, y: 0.5562668, z: 0.45180377, w: -0.07275926}
+      scale: {x: -0.99944985, y: -0.99999744, z: -1.000001}
+    - name: Sphere.014
+      parentName: Sphere.007
+      position: {x: -0.0014609861, y: -0.0005825859, z: 0.035790645}
+      rotation: {x: 0.06251358, y: 0.049712107, z: 0.0033608174, w: 0.99679965}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Sphere.015
+      parentName: Sphere.007
+      position: {x: -0.040076707, y: -0.029198008, z: -0.007634298}
+      rotation: {x: -0.26027334, y: 0.88308537, z: -0.0416942, w: -0.38817474}
+      scale: {x: -1.024118, y: -1.0246792, z: -1.0246822}
+    - name: Sphere.017
+      parentName: Sphere.007
+      position: {x: -0.00091472146, y: -0.00000049948693, z: 0.017003637}
+      rotation: {x: 0.6354981, y: 0.33584273, z: -0.60016775, w: 0.350928}
+      scale: {x: 1.003961, y: 0.99999756, z: 1.0000008}
+    - name: Torus
+      parentName: Sphere.007
+      position: {x: -0.000666368, y: -0.0005042189, z: 0.008589942}
+      rotation: {x: 0.94391006, y: 0.32926178, z: 0.02425318, w: 0.0056820177}
+      scale: {x: 0.6561968, y: 0.6561969, z: 0.7387717}
+    - name: Torus.001
+      parentName: Sphere.007
+      position: {x: -0.0014712882, y: -0.00065931317, z: 0.025855074}
+      rotation: {x: 0.94391006, y: 0.32926178, z: 0.024253191, w: 0.005682014}
+      scale: {x: 0.6561968, y: 0.6561969, z: 0.78359205}
+    - name: Torus.002
+      parentName: Sphere.007
+      position: {x: -0.0025589848, y: -0.0005682999, z: 0.044739503}
+      rotation: {x: 0.94391006, y: 0.32926178, z: 0.024253143, w: 0.0056819045}
+      scale: {x: 0.6561968, y: 0.65619683, z: 0.73620874}
+    - name: Torus.006
+      parentName: Sphere.007
+      position: {x: 0.00034724115, y: -0.0010008495, z: -0.0068315887}
+      rotation: {x: 0.94391006, y: 0.32926178, z: 0.024253171, w: 0.0056820214}
+      scale: {x: 0.72126, y: 0.72126013, z: 0.8120224}
+    - name: Torus.007
+      parentName: Sphere.007
+      position: {x: -0.02453586, y: -0.01948167, z: -0.02248897}
+      rotation: {x: 0.13148168, y: -0.411244, z: 0.26384667, w: 0.86254036}
+      scale: {x: -0.72126, y: -0.72126013, z: -0.81202245}
+    - name: Sphere.012
+      parentName: InscriptionMaster(Clone)
+      position: {x: -1.3193, y: 1.8935084, z: -1.2398546}
+      rotation: {x: -0.5852104, y: 0.0072132233, z: -0.3763848, w: 0.7182}
+      scale: {x: -65.03576, y: -65.035774, z: -65.035774}
+    - name: Sphere.001
+      parentName: Sphere.012
+      position: {x: -0.0020097112, y: -0.0017388945, z: 0.05722237}
+      rotation: {x: 0.9037369, y: 0.42225757, z: 0.05353706, w: -0.045737494}
+      scale: {x: 1.7918684, y: 1.3520639, z: 1.3520637}
+    - name: Sphere.008
+      parentName: Sphere.012
+      position: {x: -0.0014406681, y: 0.007227868, z: 0.055336848}
+      rotation: {x: 0.8562444, y: 0.37300366, z: -0.19549361, w: 0.29915908}
+      scale: {x: 0.85127985, y: 0.8806101, z: 0.86249596}
+    - name: Sphere.009
+      parentName: Sphere.012
+      position: {x: -0.0058491514, y: -0.007967861, z: 0.056188386}
+      rotation: {x: 0.7702235, y: 0.5546597, z: 0.25221282, w: -0.18840656}
+      scale: {x: 0.8512798, y: 0.8806102, z: 0.862496}
+    - name: Sphere.010
+      parentName: Sphere.012
+      position: {x: -0.0014610027, y: -0.00058259186, z: 0.035790637}
+      rotation: {x: 0.062513724, y: 0.04971202, z: 0.0033608833, w: 0.9967996}
+      scale: {x: 1.0000001, y: 0.99999994, z: 0.99999994}
+    - name: Sphere.011
+      parentName: Sphere.012
+      position: {x: -0.0009139657, y: -0.0000003117323, z: 0.017003812}
+      rotation: {x: 0.7640168, y: -0.01640019, z: -0.57784474, w: 0.2865394}
+      scale: {x: 0.99999964, y: 0.99999994, z: 1.0000002}
+    - name: Torus.003
+      parentName: Sphere.012
+      position: {x: -0.00066637516, y: -0.00050421833, z: 0.008589939}
+      rotation: {x: 0.9439101, y: 0.3292617, z: 0.024253283, w: 0.0056818584}
+      scale: {x: 0.6561968, y: 0.6561968, z: 0.7387717}
+    - name: Torus.004
+      parentName: Sphere.012
+      position: {x: -0.0014712954, y: -0.00065931556, z: 0.025855068}
+      rotation: {x: 0.9439101, y: 0.3292617, z: 0.02425329, w: 0.0056818556}
+      scale: {x: 0.6561968, y: 0.6561968, z: 0.78359205}
+    - name: Torus.005
+      parentName: Sphere.012
+      position: {x: -0.002558999, y: -0.0005683088, z: 0.0447395}
+      rotation: {x: 0.9439101, y: 0.3292617, z: 0.02425327, w: 0.005681863}
+      scale: {x: 0.6561968, y: 0.6561967, z: 0.7362086}
+    - name: Torus.016
+      parentName: InscriptionMaster(Clone)
+      position: {x: -0.15259022, y: 0.80256677, z: 0.96655}
+      rotation: {x: 0.7224797, y: -0.35280585, z: 0.407665, w: -0.4328514}
+      scale: {x: -7.3569713, y: -4.5754514, z: -8.998745}
     armTwist: 0.5
     foreArmTwist: 0.5
     upperLegTwist: 0.5
@@ -104,7 +374,7 @@ ModelImporter:
     globalScale: 1
     rootMotionBoneName: 
     hasTranslationDoF: 0
-    hasExtraRoot: 0
+    hasExtraRoot: 1
     skeletonHasParents: 1
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1

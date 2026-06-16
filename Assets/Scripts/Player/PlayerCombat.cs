@@ -115,6 +115,9 @@ public class PlayerCombat : MonoBehaviour
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer -= Time.deltaTime;
 
+        // 상체 Attack 클립 재생 여부로 공격 중 상태 갱신 (레이어 weight 와 CanAttack 가드 공용)
+        _isAttacking = IsUpperBodyAttacking();
+
         bool pointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
                              UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
 
@@ -144,6 +147,27 @@ public class PlayerCombat : MonoBehaviour
         _animator.SetLayerWeight(upperBodyLayerIndex, fNext);
     }
 
+    // 상체 레이어가 현재 Attack 스테이트(또는 그쪽으로 전환 중)인지 판정
+    private bool IsUpperBodyAttacking()
+    {
+        if (_animator == null) return false;
+        if (_animator.layerCount <= upperBodyLayerIndex) return false;
+
+        if (_animator.GetCurrentAnimatorStateInfo(upperBodyLayerIndex).IsName("Attack") == true)
+        {
+            return true;
+        }
+
+        // Any State 에서 Attack 으로 전환되는 구간도 켜 둠 (전환 중 깜빡임 방지)
+        if (_animator.IsInTransition(upperBodyLayerIndex) == true
+            && _animator.GetNextAnimatorStateInfo(upperBodyLayerIndex).IsName("Attack") == true)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     private void TryAttackChecked()
     {
         if (CanAttack == false)
@@ -168,7 +192,6 @@ public class PlayerCombat : MonoBehaviour
     {
         if (CurrentWeapon?.WeaponData == null) return;
 
-        _isAttacking = true;
         _attackCooldownTimer = AttackInterval;
 
         // 공격 애니메이션 트리거 (이번 학기 공통 모션, 다음 학기 무기별 분기 예정)
@@ -182,8 +205,6 @@ public class PlayerCombat : MonoBehaviour
 
         // 판정 실행 — onHit 콜백으로 피격 처리
         _hitbox.PerformAttack(CurrentWeapon, OnHit);
-
-        _isAttacking = false;
     }
 
     /// <summary>
