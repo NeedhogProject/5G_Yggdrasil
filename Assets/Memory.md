@@ -4,6 +4,29 @@
 
 ---
 
+## 상하체 분리 공격 (상체 공격 + 하체 이동, B 방식) (2026-06-14)
+- 목적: 이동 중 공격 시 하체는 걷기/달리기, 상체만 공격 모션
+- 구조: Animator UpperBody 레이어 + Avatar Mask(상체만) + 코드로 레이어 weight 제어(B 방식)
+- 코드(PlayerCombat): upperBodyLayerIndex(기본 1) / upperBodyBlendSpeed(10) 필드
+  - Update 에서 UpdateUpperBodyLayer: _isAttacking 이면 weight 1, 아니면 0 으로 MoveTowards 보간
+  - _isAttacking 은 공격 시작 true, 종료 false 로 이미 추적되던 플래그 재사용
+- 에디터 필수 작업:
+  1. Base Layer 에서 Attack 상태와 관련 전이(Idle/Walk/Run<->Attack) 전부 삭제 (상체 레이어로 이동했으므로)
+  2. UpperBody 레이어: Empty 상태 추가, Entry->Empty, Any State->Attack(Attack 트리거), Attack->Empty(Has Exit Time)
+  3. UpperBody 톱니바퀴: Mask=상체 Avatar Mask, Blending=Override, Weight=0 (코드가 제어)
+  4. Avatar Mask: Humanoid 에서 상체(가슴/머리/양팔)만 체크, 하체/Root 해제
+- 주의: Base 에 Attack 남아있으면 전신 공격이 또 나와 하체까지 움직임 (1번 삭제가 핵심)
+
+## 걷기/달리기/데스/피격 애니메이션 연결 (2026-06-14)
+- 걷기/달리기: 코드 작업 없음 (PlayerController 가 이미 Speed/IsSprinting 전달 중) - Animator Controller 에서 walk/run 클립 연결만
+- 데스 트리거 'Death': PlayerDeath.Die 의 보류 TODO 자리에 _animator.SetTrigger('Death')
+- 피격 트리거 'Attacked': PlayerStats.TakeDamage 에서 실제 체력 피해(healthDamage>0) 있을 때만 발동 (보호막 전부 흡수 시 생략)
+- Animator 참조: PlayerStats/PlayerDeath 둘 다 GetComponentInChildren<Animator>() (모델 자식)
+- 주의: 작업 기준을 outputs 최신본으로 함 (프로젝트 동기화본은 정신력/데스 패치 안 된 옛 버전이었음)
+  - 이 출력본 덮으면 정신력 패치(받는피해 이중적용 제거), 데스 패치(인벤+자원 삭제, RespawnAtHome)도 함께 적용됨
+- 에디터 연결 순서: Animator Controller 에 Walk/Run(Speed/IsSprinting 전이), Death(Trigger, 1회 재생), Attacked(Trigger, 짧게 재생 후 복귀) 상태 추가
+  - Death 는 Has Exit Time 없이 사망 상태 유지(복귀 안 함), Attacked 는 짧게 재생 후 이전 상태 복귀
+
 ## 무기 장착 시 손에 모델 표시 (2026-06-14)
 - 문제: 무기 장착이 데이터/스탯만 처리, 시각적 모델 부착 없음 + WeaponData 에 모델 프리팹 필드 자체가 없었음
 - 방식 A (무기별 다른 모델 확장 대비): WeaponData 에 프리팹 필드, 이번 학기 검 에셋만 연결

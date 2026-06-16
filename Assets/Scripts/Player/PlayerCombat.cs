@@ -26,6 +26,12 @@ public class PlayerCombat : MonoBehaviour
 
     private HitboxSystem _hitbox;
     private Animator _animator;
+
+    [Header("상체 공격 레이어 (B 방식)")]
+    [Tooltip("Animator 의 UpperBody 레이어 인덱스 (보통 1)")]
+    [SerializeField] private int upperBodyLayerIndex = 1;
+    [Tooltip("공격 시 상체 레이어가 켜지고 꺼지는 속도")]
+    [SerializeField] private float upperBodyBlendSpeed = 10f;
     private PlayerStats _stats;
 
     // ─────────────────────── 장착 무기 ───────────────────────
@@ -122,6 +128,20 @@ public class PlayerCombat : MonoBehaviour
 #if UNITY_EDITOR
         _currentAttackInterval = AttackInterval;
 #endif
+
+        UpdateUpperBodyLayer();
+    }
+
+    // 공격 중에만 상체 레이어 weight 를 1 로 (걷기/달리기 하체 유지하며 상체만 공격)
+    private void UpdateUpperBodyLayer()
+    {
+        if (_animator == null) return;
+        if (_animator.layerCount <= upperBodyLayerIndex) return;
+
+        float fTarget = _isAttacking ? 1f : 0f;
+        float fCurrent = _animator.GetLayerWeight(upperBodyLayerIndex);
+        float fNext = Mathf.MoveTowards(fCurrent, fTarget, upperBodyBlendSpeed * Time.deltaTime);
+        _animator.SetLayerWeight(upperBodyLayerIndex, fNext);
     }
 
     private void TryAttackChecked()
