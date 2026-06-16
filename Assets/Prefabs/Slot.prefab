@@ -240,10 +240,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9dfa19b90728017408e3e1a0c9b626fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventorySlot
-  slotIndex: 0
-  slotSize: {x: 1, y: 1}
   itemIcon: {fileID: 8771338860915652047}
   highlightImage: {fileID: 2497710800051305542}
-  occupiedIndicator: {fileID: 0}
+  stackCountText: {fileID: 0}
   currentItem: {fileID: 0}
   isOccupied: 0
+  slotIndex: 0
+  gridPosition: {x: 0, y: 0}
+  ownerSlot: {fileID: 0}
+  container: 0

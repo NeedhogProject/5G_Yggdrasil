@@ -28,7 +28,6 @@ public class InventoryUI : MonoBehaviour
     // 다른 패널(창고/상점)과 같이 열린 상태인지
     private bool _openedBeside = false;
 
-
     private RectTransform _panelRect = null;
     private Vector2 _defaultPanelPosition = Vector2.zero;
 
@@ -45,34 +44,36 @@ public class InventoryUI : MonoBehaviour
     {
         inventoryPanel.SetActive(false);
 
-        if (itemTabButton == null == false)
+        if (itemTabButton != null)
         {
             itemTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
         }
 
-        if (resourceTabButton == null == false)
+        if (resourceTabButton != null)
         {
             resourceTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Resource));
         }
 
-        if (closeButton == null == false)
+        // 닫기 버튼은 단순 CloseInventory 가 아니라 분기 처리 메서드로 연결
+        // (상점과 같이 열린 상태면 상점 전체를 닫아야 함)
+        if (closeButton != null)
         {
-            closeButton.onClick.AddListener(CloseInventory);
+            closeButton.onClick.AddListener(OnCloseButtonClicked);
         }
 
-        if (dropButton == null == false)
+        if (dropButton != null)
         {
             dropButton.onClick.AddListener(OnDropButtonClicked);
         }
 
-        if (outsideCloseButton == null == false)
+        if (outsideCloseButton != null)
         {
-            outsideCloseButton.onClick.AddListener(CloseInventory);
+            outsideCloseButton.onClick.AddListener(OnCloseButtonClicked);
             outsideCloseButton.gameObject.SetActive(false);
         }
 
         _panelRect = inventoryPanel.GetComponent<RectTransform>();
-        if (_panelRect == null == false)
+        if (_panelRect != null)
         {
             _defaultPanelPosition = _panelRect.anchoredPosition;
         }
@@ -98,15 +99,50 @@ public class InventoryUI : MonoBehaviour
             }
         }
 
-        if (Keyboard.current.escapeKey.wasPressedThisFrame && isOpen)
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == true && isOpen == true)
         {
+            // 상점과 같이 열린 상태면 ESC 는 ShopSystem 이 전담한다.
+            // (여기서 닫으면 인벤만 닫히고 상점 패널이 남는 문제 발생)
+            if (IsShopOpen() == true)
+            {
+                return;
+            }
+
             CloseInventory();
         }
     }
 
+    // 상점이 같이 열려있는지 확인
+    private bool IsShopOpen()
+    {
+        if (_openedBeside == false)
+        {
+            return false;
+        }
+        if (ShopSystem.Instance == null)
+        {
+            return false;
+        }
+        return ShopSystem.Instance.IsOpen;
+    }
+
+    // 닫기 버튼(X / 바깥 클릭) 처리
+    // 상점과 같이 열린 상태면 상점 전체를 닫고, 아니면 인벤토리만 닫는다.
+    private void OnCloseButtonClicked()
+    {
+        if (IsShopOpen() == true)
+        {
+            // 상점 전체 닫기 (내부에서 인벤토리도 같이 닫음)
+            ShopSystem.Instance.CloseShop();
+            return;
+        }
+
+        CloseInventory();
+    }
+
     public void ToggleInventory()
     {
-        if (isOpen)
+        if (isOpen == true)
         {
             CloseInventory();
         }
@@ -150,12 +186,12 @@ public class InventoryUI : MonoBehaviour
         inventoryPanel.SetActive(true);
         isOpen = true;
 
-        if (_panelRect == null == false)
+        if (_panelRect != null)
         {
             _panelRect.anchoredPosition = position;
         }
 
-        if (outsideCloseButton == null == false)
+        if (outsideCloseButton != null)
         {
             outsideCloseButton.gameObject.SetActive(showOutsideClose);
         }
@@ -172,12 +208,15 @@ public class InventoryUI : MonoBehaviour
         inventoryPanel.SetActive(false);
         isOpen = false;
 
-        if (outsideCloseButton == null == false)
+        if (outsideCloseButton != null)
         {
             outsideCloseButton.gameObject.SetActive(false);
         }
 
-        if (InputReader.Instance != null) InputReader.Instance.UIBlocking = false;
+        if (InputReader.Instance != null)
+        {
+            InputReader.Instance.UIBlocking = false;
+        }
         Time.timeScale = 1f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }

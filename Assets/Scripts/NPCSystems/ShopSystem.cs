@@ -638,11 +638,11 @@ public class ShopSystem : MonoBehaviour
         }
         if (totalPriceText != null)
         {
-            totalPriceText.text = "구매 금액: " + total + " 달란";
+            totalPriceText.text = total + " 달란";
         }
         if (balanceAfterText != null)
         {
-            balanceAfterText.text = "구매 후 잔액: " + balanceAfter + " 달란";
+            balanceAfterText.text = balanceAfter + " 달란";
         }
     }
 
@@ -913,11 +913,11 @@ public class ShopSystem : MonoBehaviour
 
         if (sellTotalText != null)
         {
-            sellTotalText.text = "판매 금액: " + total + " 달란";
+            sellTotalText.text = total + " 달란";
         }
         if (sellBalanceText != null)
         {
-            sellBalanceText.text = "판매 후 잔액: " + balanceAfter + " 달란";
+            sellBalanceText.text = balanceAfter + " 달란";
         }
     }
 
