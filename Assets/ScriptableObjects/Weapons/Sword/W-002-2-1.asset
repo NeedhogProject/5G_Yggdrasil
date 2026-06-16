@@ -18,7 +18,7 @@ MonoBehaviour:
   _itemType: 0
   _rarity: 1
   _icon: {fileID: 0}
-  _prefab3D: {fileID: 0}
+  _prefab3D: {fileID: 1988220813982816162, guid: 9585a470da26e244bb13bd2122e002f7, type: 3}
   _inventoryWidth: 2
   _inventoryHeight: 3
   _price: 4000
@@ -31,7 +31,7 @@ MonoBehaviour:
   attackSpeed: 1
   reach: 3
   attackWidth: 1.5
-  weaponModelPrefab: {fileID: 919132149155446097, guid: c890aea2bda53e644b18a5c00b46e110, type: 3}
+  weaponModelPrefab: {fileID: 1988220813982816162, guid: 9585a470da26e244bb13bd2122e002f7, type: 3}
   enhancementLevel: 0
   enhanceSuccessRates:
   - 90
