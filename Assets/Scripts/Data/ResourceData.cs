@@ -94,6 +94,23 @@ public class ResourceData : ItemData
         };
     }
 
+    /// <summary>
+    /// ResourceType 에서 InscriptionType 으로 변환
+    /// 자원 인벤토리(ResourceInventory) 추가 시 사용
+    /// </summary>
+    public InscriptionType ToInscriptionType()
+    {
+        return resourceType switch
+        {
+            ResourceType.Fire     => InscriptionType.Fire,
+            ResourceType.Water    => InscriptionType.Water,
+            ResourceType.Wind     => InscriptionType.Wind,
+            ResourceType.Earth    => InscriptionType.Earth,
+            ResourceType.Darkness => InscriptionType.Darkness,
+            _                     => InscriptionType.None
+        };
+    }
+
     // ─────────────────────── 에디터 유효성 검사 ───────────────────────
 #if UNITY_EDITOR
     private void OnValidate()

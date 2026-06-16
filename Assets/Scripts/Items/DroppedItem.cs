@@ -42,7 +42,25 @@ public class DroppedItem : MonoBehaviour
     {
         _itemInstance = item;
         _startPos     = transform.position;
+
+        SpawnModel();
+
         Debug.Log($"[DroppedItem] {item?.Data?.ItemName ?? "아이템"} 바닥에 스폰");
+    }
+
+    // 아이템 데이터의 3D 프리팹을 자식으로 생성 (드롭 비주얼)
+    private void SpawnModel()
+    {
+        GameObject prefab = _itemInstance?.Data?.Prefab3D;
+        if (prefab == null)
+        {
+            Debug.LogWarning($"[DroppedItem] {_itemInstance?.Data?.ItemName ?? "아이템"} 의 Prefab3D 미설정 — 모델 표시 불가");
+            return;
+        }
+
+        GameObject model = Instantiate(prefab, transform);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
     }
 
     private void Update()
@@ -78,6 +96,13 @@ public class DroppedItem : MonoBehaviour
             return;
         }
 
+        // 자원 아이템은 자원 인벤토리로, 그 외에는 장비 인벤토리로
+        if (_itemInstance.Data is ResourceData resourceData)
+        {
+            TryPickupResource(resourceData);
+            return;
+        }
+
         InventorySystem inventory = InventorySystem.Instance;
         if (inventory == null)
         {
@@ -98,6 +123,30 @@ public class DroppedItem : MonoBehaviour
         {
             Debug.LogWarning("[DroppedItem] 인벤토리 가득 참");
         }
+    }
+
+    // 자원 아이템 획득 — 자원 인벤토리에 원소별로 누적
+    private void TryPickupResource(ResourceData resourceData)
+    {
+        ResourceInventory resourceInventory = ResourceInventory.Instance;
+        if (resourceInventory == null)
+        {
+            Debug.LogWarning("[DroppedItem] ResourceInventory.Instance 없음");
+            return;
+        }
+
+        InscriptionType type = resourceData.ToInscriptionType();
+        if (type == InscriptionType.None)
+        {
+            Debug.LogWarning($"[DroppedItem] {resourceData.ItemName} 원소 변환 실패 — 획득 불가");
+            return;
+        }
+
+        int amount = _itemInstance.StackCount;
+        resourceInventory.AddResource(type, amount);
+        AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+        Debug.Log($"[DroppedItem] 자원 획득: {resourceData.ItemName} ({type}) x{amount}");
+        Destroy(gameObject);
     }
 
 #if UNITY_EDITOR

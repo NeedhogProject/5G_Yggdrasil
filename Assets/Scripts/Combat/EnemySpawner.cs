@@ -32,6 +32,10 @@ public class EnemySpawner : MonoBehaviour
     [Tooltip("플레이어 거리 체크 주기. 낮을수록 정확하지만 부하 증가")]
     [SerializeField] private float checkInterval = 0.3f;
 
+    [Header("플레이어 근접 회피")]
+    [Tooltip("적이 플레이어로부터 최소 이 거리 이상에서 스폰되도록 보장. activationRange 보다 작게 둘 것")]
+    [SerializeField] private float minPlayerDistance = 4f;
+
     [Header("난이도 배율 (DungeonDifficultyScaler 연동)")]
     [SerializeField] private float healthMultiplier = 1f;
     [SerializeField] private float attackMultiplier = 1f;
@@ -99,54 +103,71 @@ public class EnemySpawner : MonoBehaviour
 
     private void SpawnEnemy(SpawnPoint _sp)
     {
-        // 포인트의 첫 마리만 열쇠 소유 후보 (포인트당 열쇠 1개 유지)
-        bool bFirstOfPoint = _sp.SpawnedCount == 0;
-
-        // 남은 수만큼 한 번에 스폰 (최대 스폰 수 도달 시 중단, 다음 체크에서 이어서)
-        while (_sp.HasSpawned == false)
+        // 가중치 기반 랜덤 프리팹 선택
+        GameObject prefab = _sp.SelectRandomPrefab();
+        if (prefab == null)
         {
-            if (AliveEnemyCount >= maxSpawnCount)
-            {
-                return;
-            }
-
-            // 가중치 기반 랜덤 프리팹 선택 (마리마다 새로 선택)
-            GameObject prefab = _sp.SelectRandomPrefab();
-            if (prefab == null)
-            {
-                Debug.LogWarning($"[EnemySpawner] {_sp.name} 스폰 프리팹 없음 — 건너뜀");
-                _sp.MarkSpawned(null);
-                return;
-            }
-
-            // 스폰 위치에 살짝 랜덤 오프셋
-            Vector2 vSpread  = Random.insideUnitCircle * _sp.SpawnSpreadRadius;
-            Vector3 vSpawnPos = _sp.transform.position
-                              + new Vector3(vSpread.x, 0f, vSpread.y);
-
-            GameObject enemy = Instantiate(prefab, vSpawnPos,
-                                           Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
-
-            // 난이도 배율 적용
-            EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
-            if (enemyBase != null)
-            {
-                enemyBase.ApplyDifficultyScale(healthMultiplier, attackMultiplier);
-                enemyBase.OnDied += OnEnemyDied;
-            }
-
-            _sp.MarkSpawned(enemy);
-            AliveEnemyCount++;
-
-            // 첫 마리만 열쇠 소유 후보로 등록
-            if (bFirstOfPoint == true)
-            {
-                TryRegisterKeyEnemy(_sp, enemy);
-                bFirstOfPoint = false;
-            }
-
-            Debug.Log($"[EnemySpawner] {enemy.name} 스폰 @ {vSpawnPos}");
+            Debug.LogWarning($"[EnemySpawner] {_sp.name} 스폰 프리팹 없음 — 건너뜀");
+            _sp.MarkSpawned(null);
+            return;
         }
+
+        // 균등 분산 + 플레이어 근접 회피 위치 계산
+        Vector3 vSpawnPos = ComputeSpawnPosition(_sp);
+
+        GameObject enemy = Instantiate(prefab, vSpawnPos,
+                                       Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
+
+        // 난이도 배율 적용
+        EnemyBase enemyBase = enemy.GetComponent<EnemyBase>();
+        if (enemyBase != null)
+        {
+            enemyBase.ApplyDifficultyScale(healthMultiplier, attackMultiplier);
+            enemyBase.OnDied += OnEnemyDied;
+        }
+
+        _sp.MarkSpawned(enemy);
+        AliveEnemyCount++;
+
+        // 열쇠 소유 적 등록 체크
+        TryRegisterKeyEnemy(_sp, enemy);
+
+        Debug.Log($"[EnemySpawner] {enemy.name} 스폰 @ {vSpawnPos}");
+    }
+
+    // ─────────────────────── 스폰 위치 계산 ───────────────────────
+
+    // 순번 기반 균등 각도 분산 + 플레이어 근접 회피
+    private Vector3 ComputeSpawnPosition(SpawnPoint _sp)
+    {
+        int nIndex = _sp.SpawnedCount;              // 이번에 스폰할 적의 0-based 순번
+        int nCount = Mathf.Max(1, _sp.SpawnCount);
+
+        // 순번마다 균등 각도 + 약간의 지터 (기계적인 배치 완화)
+        float fAngleStep = 360f / nCount;
+        float fAngle     = nIndex * fAngleStep + Random.Range(-fAngleStep * 0.25f, fAngleStep * 0.25f);
+        float fRadius    = _sp.SpawnSpreadRadius * Random.Range(0.6f, 1f);
+
+        float fRad = fAngle * Mathf.Deg2Rad;
+        Vector3 vDir       = new Vector3(Mathf.Cos(fRad), 0f, Mathf.Sin(fRad));
+        Vector3 vCandidate = _sp.transform.position + vDir * fRadius;
+
+        // 플레이어와 너무 가까우면 플레이어 반대 방향으로 최소 거리까지 밀어냄
+        if (_player != null)
+        {
+            Vector3 vToCandidate = vCandidate - _player.position;
+            vToCandidate.y = 0f;
+            float fDistToPlayer = vToCandidate.magnitude;
+
+            if (fDistToPlayer < minPlayerDistance)
+            {
+                Vector3 vPushDir = fDistToPlayer > 0.01f ? vToCandidate.normalized : vDir;
+                vCandidate   = _player.position + vPushDir * minPlayerDistance;
+                vCandidate.y = _sp.transform.position.y;   // 지면 높이 유지
+            }
+        }
+
+        return vCandidate;
     }
 
     // ─────────────────────── 열쇠 소유 적 선정 ───────────────────────
