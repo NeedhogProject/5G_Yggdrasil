@@ -173,9 +173,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7306ca0f7c16f748b1102d5e816a05f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBase
-  maxHealth: 100
-  attackPower: 10
-  moveSpeed: 3
+  maxHealth: 80
+  attackPower: 8
+  moveSpeed: 3.5
   attackRange: 1.5
   defense: 0
   goldDropChance: 1

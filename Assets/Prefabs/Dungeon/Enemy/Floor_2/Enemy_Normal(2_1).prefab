@@ -403,10 +403,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7306ca0f7c16f748b1102d5e816a05f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBase
-  maxHealth: 100
-  attackPower: 10
-  moveSpeed: 3
-  attackRange: 1.5
+  maxHealth: 120
+  attackPower: 11
+  moveSpeed: 3.5
+  attackRange: 1.7
   defense: 0
   goldDropChance: 1
   goldMin: 300
@@ -426,11 +426,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6b08c4a9f5dc9684ab45f36feed223fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAI
-  detectionRange: 8
-  loseTargetRange: 12
-  patrolRadius: 5
-  patrolWaitTime: 2
-  attackCooldown: 1.5
+  detectionRange: 9
+  loseTargetRange: 13
+  patrolRadius: 7
+  patrolWaitTime: 1.7
+  attackCooldown: 1.7
 --- !u!114 &8970603543860035411
 MonoBehaviour:
   m_ObjectHideFlags: 0
