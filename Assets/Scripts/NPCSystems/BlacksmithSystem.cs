@@ -99,8 +99,14 @@ public class BlacksmithSystem : MonoBehaviour
             menuPanel.SetActive(false);
         }
 
-        enhanceButton.onClick.AddListener(OnEnhanceClicked);
-        closeButton.onClick.AddListener(CloseBlacksmith);
+        if (enhanceButton != null)
+        {
+            enhanceButton.onClick.AddListener(OnEnhanceClicked);
+        }
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(CloseBlacksmith);
+        }
 
         if (menuEnhanceButton != null)
         {
@@ -125,7 +131,33 @@ public class BlacksmithSystem : MonoBehaviour
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
 
-        ShowMenu();
+        // NPCDialogue 가 메뉴(맡기기/대화하기)를 담당하므로
+        // 여기서는 바로 무기 목록 강화 화면을 띄운다.
+        ShowEnhanceView();
+    }
+
+    // 무기 목록 강화 화면 표시
+    private void ShowEnhanceView()
+    {
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
+        blacksmithPanel.SetActive(true);
+
+        // 인벤토리의 무기들을 목록으로 채움
+        RefreshWeaponList();
+
+        // 선택 초기화
+        _selectedWeapon = null;
+        _selectedCard = null;
+        ClearPreview();
+
+        if (dialogueText != null)
+        {
+            dialogueText.text = "강화할 무기를 골라보게.";
+        }
     }
 
     public void CloseBlacksmith()
@@ -216,10 +248,10 @@ public class BlacksmithSystem : MonoBehaviour
             return;
         }
 
-        // 강화 패널이 떠 있으면 메뉴로 복귀
+        // 강화 패널이 떠 있으면 완전히 닫기 (메뉴는 NPCDialogue 가 담당하므로 복귀 단계 없음)
         if (blacksmithPanel.activeSelf == true)
         {
-            ShowMenu();
+            CloseBlacksmith();
             return;
         }
 
@@ -444,7 +476,10 @@ public class BlacksmithSystem : MonoBehaviour
 
         // 버튼 활성화 (골드 충분 + 최대강 미만)
         bool canAfford = PlayerStats.Instance != null && PlayerStats.Instance.gold >= cost;
-        enhanceButton.interactable = canAfford == true && level < 5;
+        if (enhanceButton != null)
+        {
+            enhanceButton.interactable = canAfford == true && level < 5;
+        }
     }
 
     // 배율 배열에서 안전하게 값 가져오기
@@ -493,7 +528,10 @@ public class BlacksmithSystem : MonoBehaviour
         {
             balanceAfterText.text = "";
         }
-        enhanceButton.interactable = false;
+        if (enhanceButton != null)
+        {
+            enhanceButton.interactable = false;
+        }
     }
 
     // ─────────────────────── 강화 버튼 ───────────────────────
