@@ -481,7 +481,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyBase
   maxHealth: 100
   attackPower: 10
-  moveSpeed: 3
+  moveSpeed: 2.5
   attackRange: 1.5
   defense: 0
   goldDropChance: 1
@@ -548,30 +548,6 @@ MonoBehaviour:
     weight: 3
     minCount: 1
     maxCount: 1
-  - item: {fileID: 11400000, guid: b6b8f259060c5f148a854ba4c92ba660, type: 2}
-    weight: 100
-    minCount: 1
-    maxCount: 1
-  - item: {fileID: 11400000, guid: 3417c31e61f428a408a29f9c4921f4ae, type: 2}
-    weight: 100
-    minCount: 1
-    maxCount: 1
-  - item: {fileID: 11400000, guid: 2c039901704d7d34a9039bbf7a3c8aba, type: 2}
-    weight: 100
-    minCount: 0
-    maxCount: 0
-  - item: {fileID: 11400000, guid: a1f48399179e9884eba42075a5d49f5f, type: 2}
-    weight: 100
-    minCount: 0
-    maxCount: 0
-  - item: {fileID: 11400000, guid: bef1533976a1b7145a424366611ec70d, type: 2}
-    weight: 100
-    minCount: 0
-    maxCount: 0
-  - item: {fileID: 11400000, guid: 1a7e726fec3e81a40ae577b801a6f1f6, type: 2}
-    weight: 100
-    minCount: 0
-    maxCount: 0
   - item: {fileID: 11400000, guid: 348797dae4136334ebb4f242a4d4f588, type: 2}
     weight: 100
     minCount: 0

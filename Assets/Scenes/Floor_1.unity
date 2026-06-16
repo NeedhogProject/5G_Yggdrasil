@@ -1985,18 +1985,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 15
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 60
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 6
-  activationRange: 30
-  spawnSpreadRadius: 1.5
+    weight: 80
+  spawnCount: 5
+  activationRange: 35
+  spawnSpreadRadius: 10
 --- !u!1 &243603067
 GameObject:
   m_ObjectHideFlags: 0
@@ -11129,18 +11129,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 10
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 50
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 8
-  activationRange: 30
-  spawnSpreadRadius: 1.5
+    weight: 80
+  spawnCount: 5
+  activationRange: 35
+  spawnSpreadRadius: 10
 --- !u!1 &901974413
 GameObject:
   m_ObjectHideFlags: 0
@@ -11187,18 +11187,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 15
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 60
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 6
+    weight: 80
+  spawnCount: 5
   activationRange: 30
-  spawnSpreadRadius: 1.5
+  spawnSpreadRadius: 5
 --- !u!1 &907295243
 GameObject:
   m_ObjectHideFlags: 0
@@ -13391,18 +13391,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 15
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 50
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 6
-  activationRange: 30
-  spawnSpreadRadius: 1.5
+    weight: 80
+  spawnCount: 5
+  activationRange: 35
+  spawnSpreadRadius: 10
 --- !u!1 &1213442017
 GameObject:
   m_ObjectHideFlags: 0
@@ -14303,18 +14303,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 15
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 60
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 8
+    weight: 80
+  spawnCount: 6
   activationRange: 30
-  spawnSpreadRadius: 1.5
+  spawnSpreadRadius: 5
 --- !u!1 &1294201991
 GameObject:
   m_ObjectHideFlags: 0
@@ -15903,18 +15903,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 15
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 60
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 8
+    weight: 80
+  spawnCount: 6
   activationRange: 30
-  spawnSpreadRadius: 1.5
+  spawnSpreadRadius: 5
 --- !u!1 &1467527246
 GameObject:
   m_ObjectHideFlags: 0
@@ -18739,18 +18739,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 10
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 80
+    weight: 70
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 80
+    weight: 90
   spawnCount: 3
   activationRange: 30
-  spawnSpreadRadius: 1.5
+  spawnSpreadRadius: 15
 --- !u!1001 &1800961301
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20271,18 +20271,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 10
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 25
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 50
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 6
-  activationRange: 30
-  spawnSpreadRadius: 1.5
+    weight: 80
+  spawnCount: 5
+  activationRange: 35
+  spawnSpreadRadius: 10
 --- !u!1001 &1946018502
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21728,18 +21728,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
-    weight: 20
+    weight: 15
   - prefab: {fileID: 2770785134313033920, guid: 4f246fabdfe617343b6d83c560e14fb8, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
-    weight: 40
+    weight: 30
   - prefab: {fileID: 8754129031435178782, guid: 85c8d8f2e50bb834c9295da6b26fcec0, type: 3}
-    weight: 100
+    weight: 60
   - prefab: {fileID: 2532894022216980509, guid: d12fa61654062864b99b06d2687053e5, type: 3}
-    weight: 100
-  spawnCount: 8
+    weight: 80
+  spawnCount: 6
   activationRange: 30
-  spawnSpreadRadius: 1.5
+  spawnSpreadRadius: 5
 --- !u!1 &2064454420 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8416272007918961125, guid: e69288704008d2144abfd701234ba3ee, type: 3}
