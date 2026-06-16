@@ -17,11 +17,10 @@ MonoBehaviour:
   _itemType: 0
   _rarity: 2
   _icon: {fileID: 0}
-  _prefab3D: {fileID: 0}
+  _prefab3D: {fileID: 3774701284560263630, guid: 7db6870cb0142024283f232f51681565, type: 3}
   _inventoryWidth: 2
   _inventoryHeight: 2
-  _buyPrice: 0
-  _sellPrice: 0
+  _price: 0
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1

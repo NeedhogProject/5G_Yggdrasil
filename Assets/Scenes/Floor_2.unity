@@ -1146,7 +1146,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StemConnector
   direction: 3
-  stemMode: 0
+  stemMode: 3
   interactRange: 4
   holeVFX: {fileID: 0}
   transitionDelay: 1.5
