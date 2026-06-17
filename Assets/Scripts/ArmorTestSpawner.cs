@@ -1,7 +1,8 @@
 // ArmorTestSpawner.cs
 // [임시 디버그] 각인 시스템 테스트용.
 //   F9  = 지정한 테스트 방어구들을 인벤토리에 추가
-//   F10 = 모든 원소 자원 +50, 골드 +99999 지급
+//   F10 = 모든 원소 자원 +50, 골드 +99999, 각인 초기화권 +1
+//   F11 = 각인 초기화 화면 바로 열기 (NPC 메뉴 없이 테스트)
 // 테스트가 끝나면 이 스크립트와 붙인 오브젝트를 삭제한다.
 // 담당: 김보민 (임시)
 
@@ -12,6 +13,9 @@ public class ArmorTestSpawner : MonoBehaviour
 {
     [Header("인벤토리에 추가할 테스트 방어구 (ArmorData 에셋 드래그)")]
     [SerializeField] private ArmorData[] testArmors;
+
+    [Header("각인 초기화권 (ConsumableData — ResetScroll 에셋 드래그)")]
+    [SerializeField] private ConsumableData resetScroll;
 
     [Header("F10 지급량")]
     [SerializeField] private int resourceAmount = 50;
@@ -32,6 +36,11 @@ public class ArmorTestSpawner : MonoBehaviour
         if (Keyboard.current.f10Key.wasPressedThisFrame == true)
         {
             GiveResourcesAndGold();
+        }
+
+        if (Keyboard.current.f11Key.wasPressedThisFrame == true)
+        {
+            OpenResetScreenForTest();
         }
     }
 
@@ -62,7 +71,7 @@ public class ArmorTestSpawner : MonoBehaviour
         }
     }
 
-    // 모든 원소 자원과 골드를 테스트용으로 지급
+    // 모든 원소 자원, 골드, 초기화권을 테스트용으로 지급
     private void GiveResourcesAndGold()
     {
         if (ResourceInventory.Instance != null)
@@ -87,6 +96,30 @@ public class ArmorTestSpawner : MonoBehaviour
         else
         {
             Debug.LogWarning("[ArmorTestSpawner] PlayerStats 가 없습니다.");
+        }
+
+        if (resetScroll != null && InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.AddItem(resetScroll);
+            Debug.Log("[ArmorTestSpawner] 각인 초기화권 +1 지급");
+        }
+        else
+        {
+            Debug.LogWarning("[ArmorTestSpawner] resetScroll 에 ResetScroll ConsumableData 를 넣어주세요.");
+        }
+    }
+
+    // 각인 초기화 화면 바로 열기 (테스트용)
+    private void OpenResetScreenForTest()
+    {
+        if (InscriptionMasterSystem.Instance != null)
+        {
+            InscriptionMasterSystem.Instance.OpenResetScreen();
+            Debug.Log("[ArmorTestSpawner] 초기화 화면 열기");
+        }
+        else
+        {
+            Debug.LogWarning("[ArmorTestSpawner] InscriptionMasterSystem 이 없습니다.");
         }
     }
 }
