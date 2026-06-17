@@ -254,6 +254,8 @@ public class NPCInteractable : MonoBehaviour
                 return;
             }
             inscriptionMasterSystem.OpenInscribeScreen();
+            // ESC 로 닫으면 이 메뉴로 다시 돌아오게 연결
+            inscriptionMasterSystem.onBackToMenu = OpenInscriptionMaster;
         };
 
         System.Action openReset = delegate ()
@@ -264,6 +266,8 @@ public class NPCInteractable : MonoBehaviour
                 return;
             }
             inscriptionMasterSystem.OpenResetScreen();
+            // ESC 로 닫으면 이 메뉴로 다시 돌아오게 연결
+            inscriptionMasterSystem.onBackToMenu = OpenInscriptionMaster;
         };
 
         string[] labels = new string[] { inscriptionEngraveLabel, inscriptionResetLabel };
