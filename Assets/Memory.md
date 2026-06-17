@@ -4,6 +4,14 @@
 
 ---
 
+## 장비 교체 시 강화/룬 데이터 소실 수정 (2026-06-17)
+- 증상: 장착 무기/방어구를 다른 장비로 교체하면, 인벤토리로 반환된 기존 장비의 강화 단계/룬이 소실
+- 근본 원인: PlayerEquipment.EquipItem 이 교체분을 AddItem(replaced.Data) 로 반환
+  - ItemData 전용 오버로드라 런타임 정보 없이 기본 데이터만 새로 배치됨
+- 수정: AddItem(replaced) 로 변경 - AddItem(ItemInstance) 오버로드로 인스턴스(강화/룬) 보존. 한 줄 변경
+- 적용 방식: 동기화본 PlayerEquipment.cs 에 수술적 1줄 패치 (6/14 weaponHolder 작업 보존 위해 전체 파일 교체 금지)
+- 검증: 강화/룬 박은 무기 장착 후 교체 - 반환 아이템 툴팁에 강화 단계/룬 유지 확인
+
 ## 상하체 분리 공격 (상체 공격 + 하체 이동, B 방식) (2026-06-14)
 - 목적: 이동 중 공격 시 하체는 걷기/달리기, 상체만 공격 모션
 - 구조: Animator UpperBody 레이어 + Avatar Mask(상체만) + 코드로 레이어 weight 제어(B 방식)

@@ -59,10 +59,10 @@ public class WeaponData : ItemData
     private static readonly float[] EnhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
 
     // 강화 단계별 공격력 배율 (기획서 기준: 0/2/4/7/9/15%)
-    private static readonly float[] AttackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
+    private static readonly float[] attackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
 
     // 강화 단계별 공격속도 배율 (기획서 기준: 3강부터 2/3/7%)
-    private static readonly float[] SpeedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
+    private static readonly float[] speedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
@@ -90,11 +90,17 @@ public class WeaponData : ItemData
 
     /// <summary>강화 단계가 반영된 실제 공격력 (기획서 배율 적용)</summary>
     public float FinalDamage =>
-        baseDamage * AttackMultipliers[Mathf.Clamp(enhancementLevel, 0, AttackMultipliers.Length - 1)];
+        baseDamage * attackMultipliers[Mathf.Clamp(enhancementLevel, 0, attackMultipliers.Length - 1)];
 
     /// <summary>강화 단계가 반영된 실제 공격속도 (기획서 배율 적용)</summary>
     public float FinalAttackSpeed =>
-        attackSpeed * SpeedMultipliers[Mathf.Clamp(enhancementLevel, 0, SpeedMultipliers.Length - 1)];
+        attackSpeed * speedMultipliers[Mathf.Clamp(enhancementLevel, 0, speedMultipliers.Length - 1)];
+
+    /// <summary>강화 단계별 공격력 배율 표 (대장간 미리보기에서 참조)</summary>
+    public float[] AttackMultipliers => attackMultipliers;
+
+    /// <summary>강화 단계별 공격속도 배율 표 (대장간 미리보기에서 참조)</summary>
+    public float[] SpeedMultipliers => speedMultipliers;
 
     // ─────────────────────── 런타임 메서드 (무기 복사본에서 사용) ───────────────────────
 
