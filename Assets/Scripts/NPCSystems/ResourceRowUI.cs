@@ -15,6 +15,10 @@ public class ResourceRowUI : MonoBehaviour, IPointerClickHandler
     [Header("이 줄이 나타내는 원소")]
     [SerializeField] private RuneElement element = RuneElement.Fire;
 
+    [Header("옵션")]
+    // 켜면 아이콘을 원소색으로 칠한다. 색이 있는 보석 스프라이트를 쓰면 꺼둔다(원본 색 유지).
+    [SerializeField] private bool tintIconByElement = false;
+
     [Header("UI References")]
     [SerializeField] private Image icon;
     [SerializeField] private TMP_Text nameText;
@@ -36,7 +40,7 @@ public class ResourceRowUI : MonoBehaviour, IPointerClickHandler
             nameText.color = RuneInscriptionSystem.GetElementColor(element);
         }
 
-        if (icon != null)
+        if (icon != null && tintIconByElement == true)
         {
             icon.color = RuneInscriptionSystem.GetElementColor(element);
         }

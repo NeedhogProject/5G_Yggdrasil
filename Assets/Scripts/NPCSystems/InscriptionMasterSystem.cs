@@ -66,6 +66,13 @@ public class InscriptionMasterSystem : MonoBehaviour
         "한 번 새긴 각인은 초기화권 없이는 지울 수 없으이."
     };
 
+    [Header("대사 타이핑 효과")]
+    // 글자 하나당 대기 시간(초). 작을수록 빠르게 타이핑된다.
+    [SerializeField] private float dialogueTextSpeed = 0.03f;
+
+    // 현재 진행 중인 타이핑 코루틴
+    private Coroutine _typingCoroutine = null;
+
     // 화면 모드
     private enum ViewMode
     {
@@ -820,10 +827,47 @@ public class InscriptionMasterSystem : MonoBehaviour
 
     private void SetDialogue(string text)
     {
-        if (dialogueText != null)
+        if (dialogueText == null)
+        {
+            return;
+        }
+
+        // 이전 타이핑이 진행 중이면 멈추고 새로 시작
+        if (_typingCoroutine != null)
+        {
+            StopCoroutine(_typingCoroutine);
+            _typingCoroutine = null;
+        }
+
+        // 비활성 상태면 코루틴이 안 돌아가므로 즉시 표시
+        if (isActiveAndEnabled == false || dialogueTextSpeed <= 0f)
         {
             dialogueText.text = text;
+            return;
         }
+
+        _typingCoroutine = StartCoroutine(TypeDialogue(text));
+    }
+
+    // 대사를 글자 하나씩 출력하는 타이핑 효과
+    private IEnumerator TypeDialogue(string text)
+    {
+        dialogueText.text = "";
+
+        if (text == null)
+        {
+            yield break;
+        }
+
+        int i = 0;
+        while (i < text.Length)
+        {
+            dialogueText.text = dialogueText.text + text[i];
+            i = i + 1;
+            yield return new WaitForSeconds(dialogueTextSpeed);
+        }
+
+        _typingCoroutine = null;
     }
 
     private void PlaySFX(SFXClip clip)

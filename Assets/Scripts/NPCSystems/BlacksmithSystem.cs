@@ -4,6 +4,7 @@
  * 담당: 김보민
  */
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -51,6 +52,10 @@ public class BlacksmithSystem : MonoBehaviour
     public Button menuEnhanceButton;
     public Button menuTalkButton;
 
+    [Header("대사 타이핑 효과")]
+    // 글자 하나당 대기 시간(초). 0 이면 즉시 표시.
+    [SerializeField] private float dialogueTextSpeed = 0.03f;
+
     [Header("대화하기 대사")]
     [TextArea(2, 4)]
     public string[] talkLines = new string[]
@@ -60,6 +65,12 @@ public class BlacksmithSystem : MonoBehaviour
         "위로 올라갈수록 쇠도 단단해지더군. 좋은 재료를 가져오게.",
         "무리한 강화는 무기를 잃게 만들지. 욕심은 금물이야."
     };
+
+    // 무기 강화 배율 (WeaponData 의 값과 동일하게 유지한다)
+    // WeaponData 의 배열이 private 이라 미리보기 계산용으로 여기에 복사해 둔다.
+    // 정건희가 WeaponData 의 배율을 바꾸면 이 두 줄도 같이 맞춰야 한다.
+    private static readonly float[] AttackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
+    private static readonly float[] SpeedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
 
     private int _talkIndex = 0;
 
@@ -72,6 +83,9 @@ public class BlacksmithSystem : MonoBehaviour
 
     private bool _isOpen = false;
     private bool _isEnhancing = false;
+
+    // 현재 진행 중인 타이핑 코루틴
+    private Coroutine _typingCoroutine = null;
 
     // 대장간이 열려 있는지
     public bool IsOpen => _isOpen;
@@ -161,10 +175,7 @@ public class BlacksmithSystem : MonoBehaviour
         _selectedCard = null;
         ClearPreview();
 
-        if (dialogueText != null)
-        {
-            dialogueText.text = "강화할 무기를 골라보게.";
-        }
+        SetDialogue("강화할 무기를 골라보게.");
     }
 
     public void CloseBlacksmith()
@@ -197,7 +208,7 @@ public class BlacksmithSystem : MonoBehaviour
 
         blacksmithPanel.SetActive(false);
 
-        dialogueText.text = "어서오게! 무기를 벼릴 준비가 됐나?";
+        SetDialogue("어서오게! 무기를 벼릴 준비가 됐나?");
     }
 
     // 강화하기 선택
@@ -218,7 +229,7 @@ public class BlacksmithSystem : MonoBehaviour
         _selectedCard = null;
         ClearPreview();
 
-        dialogueText.text = "강화할 무기를 골라보게.";
+        SetDialogue("강화할 무기를 골라보게.");
     }
 
     // 대화하기 선택 (누를 때마다 대사가 바뀜)
@@ -226,11 +237,11 @@ public class BlacksmithSystem : MonoBehaviour
     {
         if (talkLines == null || talkLines.Length == 0)
         {
-            dialogueText.text = "대장장이: ...";
+            SetDialogue("대장장이: ...");
             return;
         }
 
-        dialogueText.text = "대장장이: " + talkLines[_talkIndex];
+        SetDialogue("대장장이: " + talkLines[_talkIndex]);
 
         _talkIndex = _talkIndex + 1;
         if (_talkIndex >= talkLines.Length)
@@ -379,7 +390,7 @@ public class BlacksmithSystem : MonoBehaviour
     {
         if (weapon == null)
         {
-            dialogueText.text = "무기를 선택해주게.";
+            SetDialogue("무기를 선택해주게.");
             return;
         }
 
@@ -417,9 +428,9 @@ public class BlacksmithSystem : MonoBehaviour
             currentLevelText.text = level.ToString() + "강";
         }
 
-        // 현재 스탯 (공격력 / 공격속도) — WeaponData 배율 배열로 계산
-        float currentDamage = data.BaseDamage * GetMultiplier(data.AttackMultipliers, level);
-        float currentSpeed = data.AttackSpeed * GetMultiplier(data.SpeedMultipliers, level);
+        // 현재 스탯 (공격력 / 공격속도) — 자체 배율 배열로 계산
+        float currentDamage = data.BaseDamage * GetMultiplier(AttackMultipliers, level);
+        float currentSpeed = data.AttackSpeed * GetMultiplier(SpeedMultipliers, level);
         if (currentStatsText != null)
         {
             currentStatsText.text = "공격력 " + currentDamage.ToString("F0")
@@ -433,9 +444,9 @@ public class BlacksmithSystem : MonoBehaviour
                 nextLevelText.text = (level + 1).ToString() + "강";
             }
 
-            // 다음 강 스탯 미리보기 — 배율 직접 계산 (원본 변경 없이)
-            float nextDamage = data.BaseDamage * GetMultiplier(data.AttackMultipliers, level + 1);
-            float nextSpeed = data.AttackSpeed * GetMultiplier(data.SpeedMultipliers, level + 1);
+            // 다음 강 스탯 미리보기 — 자체 배율 배열로 계산 (WeaponData 원본 변경 없이)
+            float nextDamage = data.BaseDamage * GetMultiplier(AttackMultipliers, level + 1);
+            float nextSpeed = data.AttackSpeed * GetMultiplier(SpeedMultipliers, level + 1);
 
             if (nextStatsText != null)
             {
@@ -570,19 +581,13 @@ public class BlacksmithSystem : MonoBehaviour
     {
         if (_selectedWeapon == null)
         {
-            if (dialogueText != null)
-            {
-                dialogueText.text = "먼저 강화할 무기를 선택해주게.";
-            }
+            SetDialogue("먼저 강화할 무기를 선택해주게.");
             return;
         }
 
         if (_selectedWeapon.EnhancementLevel >= 5)
         {
-            if (dialogueText != null)
-            {
-                dialogueText.text = "이미 최대 강화 단계일세.";
-            }
+            SetDialogue("이미 최대 강화 단계일세.");
             return;
         }
 
@@ -596,10 +601,7 @@ public class BlacksmithSystem : MonoBehaviour
         // 골드 확인
         if (PlayerStats.Instance == null || PlayerStats.Instance.gold < cost)
         {
-            if (dialogueText != null)
-            {
-                dialogueText.text = "골드가 부족하군!";
-            }
+            SetDialogue("골드가 부족하군!");
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
             return;
         }
@@ -632,10 +634,7 @@ public class BlacksmithSystem : MonoBehaviour
             enhanceButton.interactable = false;
         }
 
-        if (dialogueText != null)
-        {
-            dialogueText.text = "코인을 던지는 중...";
-        }
+        SetDialogue("코인을 던지는 중...");
 
         float rateNormalized = _selectedWeapon.CurrentSuccessRate / 100f;
 
@@ -648,10 +647,7 @@ public class BlacksmithSystem : MonoBehaviour
             int cost = CalculateEnhancementCost(_selectedWeapon.EnhancementLevel);
             PlayerStats.Instance.gold = PlayerStats.Instance.gold + cost;
 
-            if (dialogueText != null)
-            {
-                dialogueText.text = "잠시 후 다시 시도해주게.";
-            }
+            SetDialogue("잠시 후 다시 시도해주게.");
 
             _isEnhancing = false;
             if (enhanceButton != null)
@@ -676,45 +672,27 @@ public class BlacksmithSystem : MonoBehaviour
         switch (enhanceResult)
         {
             case EnhanceResult.Success:
-                if (dialogueText != null)
-                {
-                    dialogueText.text = _selectedWeapon.Data.itemName + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "강이 되었네!";
-                }
+                SetDialogue(_selectedWeapon.Data.itemName + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "강이 되었네!");
                 break;
 
             case EnhanceResult.MaxReached:
-                if (dialogueText != null)
-                {
-                    dialogueText.text = _selectedWeapon.Data.itemName + "이(가) +5 최대 강화 달성!";
-                }
+                SetDialogue(_selectedWeapon.Data.itemName + "이(가) +5 최대 강화 달성!");
                 break;
 
             case EnhanceResult.Downgrade:
-                if (dialogueText != null)
-                {
-                    dialogueText.text = _selectedWeapon.Data.itemName + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "강으로 낮아졌네.";
-                }
+                SetDialogue(_selectedWeapon.Data.itemName + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "강으로 낮아졌네.");
                 break;
 
             case EnhanceResult.ResetToBase:
-                if (dialogueText != null)
-                {
-                    dialogueText.text = _selectedWeapon.Data.itemName + "의 강화가 초기화되었네...";
-                }
+                SetDialogue(_selectedWeapon.Data.itemName + "의 강화가 초기화되었네...");
                 break;
 
             case EnhanceResult.Fail:
-                if (dialogueText != null)
-                {
-                    dialogueText.text = "아쉽군. 이번엔 실패했네.";
-                }
+                SetDialogue("아쉽군. 이번엔 실패했네.");
                 break;
 
             case EnhanceResult.AlreadyMax:
-                if (dialogueText != null)
-                {
-                    dialogueText.text = "이미 최대 강화 단계일세.";
-                }
+                SetDialogue("이미 최대 강화 단계일세.");
                 break;
         }
 
@@ -729,6 +707,54 @@ public class BlacksmithSystem : MonoBehaviour
 
         // 미리보기 갱신
         UpdatePreview();
+    }
+
+    // ─────────────────────── 대사 타이핑 ───────────────────────
+
+    // 대사를 타이핑 효과로 출력 (대장장이 대사 공통 경로)
+    private void SetDialogue(string text)
+    {
+        if (dialogueText == null)
+        {
+            return;
+        }
+
+        // 이전 타이핑이 진행 중이면 멈추고 새로 시작
+        if (_typingCoroutine != null)
+        {
+            StopCoroutine(_typingCoroutine);
+            _typingCoroutine = null;
+        }
+
+        // 비활성 상태이거나 속도 0 이면 즉시 표시
+        if (isActiveAndEnabled == false || dialogueTextSpeed <= 0f)
+        {
+            dialogueText.text = text;
+            return;
+        }
+
+        _typingCoroutine = StartCoroutine(TypeDialogue(text));
+    }
+
+    // 대사를 글자 하나씩 출력하는 타이핑 효과
+    private IEnumerator TypeDialogue(string text)
+    {
+        dialogueText.text = "";
+
+        if (text == null)
+        {
+            yield break;
+        }
+
+        int i = 0;
+        while (i < text.Length)
+        {
+            dialogueText.text = dialogueText.text + text[i];
+            i = i + 1;
+            yield return new WaitForSeconds(dialogueTextSpeed);
+        }
+
+        _typingCoroutine = null;
     }
 
     // ─────────────────────── 유틸 ───────────────────────
