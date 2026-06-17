@@ -4,6 +4,7 @@
 // 학자/대장장이/각인술사: 디자인 시안 형태의 메뉴형 대화창을 연다.
 //   선택지 0 = 기능 패널 열기, 선택지 1 = 대화하기 (창 유지, 하단 대사만 순환)
 // 상인은 자체 메뉴(ShopMenuPanel)가 있어 기존 동작 유지.
+// 각인술사: 장비 각인하기 / 각인 초기화하기 선택지가 각각 다른 화면을 연다.
 
 using UnityEngine;
 
@@ -78,7 +79,7 @@ public class NPCInteractable : MonoBehaviour
         _playerInRange = true;
 
         SetHintVisible(true);
-        Debug.Log($"[NPCInteractable] {npcName} — E키로 상호작용");
+        Debug.Log("[NPCInteractable] " + npcName + " — E키로 상호작용");
     }
 
     private void OnTriggerExit(Collider other)
@@ -110,8 +111,24 @@ public class NPCInteractable : MonoBehaviour
             return;
         }
 
+        // 기능 패널(각인 등)이 이미 열려있으면 E키 무시 (패널 위에 대화창 재오픈 방지)
+        if (IsFunctionPanelOpen() == true)
+        {
+            return;
+        }
+
         SetHintVisible(false);
         OpenNPC();
+    }
+
+    // 연결된 기능 패널이 열려 있는지 확인 (열려 있으면 E키로 다시 열지 않는다)
+    private bool IsFunctionPanelOpen()
+    {
+        if (inscriptionMasterSystem != null && inscriptionMasterSystem.IsOpen == true)
+        {
+            return true;
+        }
+        return false;
     }
 
     // 힌트 표시 또는 숨김 (중복 호출 방지)
@@ -158,7 +175,7 @@ public class NPCInteractable : MonoBehaviour
         {
             if (shopSystem == null)
             {
-                Debug.LogWarning($"[NPCInteractable] {npcName}: ShopSystem 미연결");
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": ShopSystem 미연결");
                 return;
             }
             shopSystem.OpenShop();
@@ -185,7 +202,7 @@ public class NPCInteractable : MonoBehaviour
         {
             if (scholarSystem == null)
             {
-                Debug.LogWarning($"[NPCInteractable] {npcName}: ScholarSystem 미연결");
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": ScholarSystem 미연결");
                 return;
             }
             scholarSystem.OpenScholar();
@@ -209,7 +226,7 @@ public class NPCInteractable : MonoBehaviour
         {
             if (blacksmithSystem == null)
             {
-                Debug.LogWarning($"[NPCInteractable] {npcName}: BlacksmithSystem 미연결");
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": BlacksmithSystem 미연결");
                 return;
             }
             blacksmithSystem.OpenBlacksmith();
@@ -228,27 +245,41 @@ public class NPCInteractable : MonoBehaviour
 
     private void OpenInscriptionMaster()
     {
-        // 각인하기 / 각인 초기화하기 둘 다 각인 패널을 연다.
-        // (패널 내부에 각인 기능과 초기화 버튼이 함께 있으므로 같은 패널을 연다)
-        System.Action openFunction = delegate ()
+        // 장비 각인하기 = 각인 부여 화면, 각인 초기화하기 = 초기화 화면 (각각 다른 동작)
+        System.Action openEngrave = delegate ()
         {
             if (inscriptionMasterSystem == null)
             {
-                Debug.LogWarning($"[NPCInteractable] {npcName}: InscriptionMasterSystem 미연결");
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": InscriptionMasterSystem 미연결");
                 return;
             }
-            inscriptionMasterSystem.OpenInscriptionMaster();
+            inscriptionMasterSystem.OpenInscribeScreen();
+            // ESC 로 닫으면 이 메뉴로 다시 돌아오게 연결
+            inscriptionMasterSystem.onBackToMenu = OpenInscriptionMaster;
+        };
+
+        System.Action openReset = delegate ()
+        {
+            if (inscriptionMasterSystem == null)
+            {
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": InscriptionMasterSystem 미연결");
+                return;
+            }
+            inscriptionMasterSystem.OpenResetScreen();
+            // ESC 로 닫으면 이 메뉴로 다시 돌아오게 연결
+            inscriptionMasterSystem.onBackToMenu = OpenInscriptionMaster;
         };
 
         string[] labels = new string[] { inscriptionEngraveLabel, inscriptionResetLabel };
-        System.Action[] actions = new System.Action[] { openFunction, openFunction };
+        System.Action[] actions = new System.Action[] { openEngrave, openReset };
 
         if (TryStartMenuDialogue(labels, actions) == true)
         {
             return;
         }
 
-        openFunction();
+        // 대화 흐름을 못 쓰면 기본으로 각인하기 화면을 연다
+        openEngrave();
     }
 
     private void OpenBackgroundDialogue()
@@ -256,7 +287,7 @@ public class NPCInteractable : MonoBehaviour
         NPCDialogue dialogue = ResolveDialogue();
         if (dialogue == null)
         {
-            Debug.LogWarning($"[NPCInteractable] {npcName}: NPCDialogue 미연결");
+            Debug.LogWarning("[NPCInteractable] " + npcName + ": NPCDialogue 미연결");
             return;
         }
 
@@ -286,7 +317,7 @@ public class NPCInteractable : MonoBehaviour
         }
         if (functionLabels.Length != functionActions.Length)
         {
-            Debug.LogWarning($"[NPCInteractable] {npcName}: 선택지 라벨과 동작 개수가 다름");
+            Debug.LogWarning("[NPCInteractable] " + npcName + ": 선택지 라벨과 동작 개수가 다름");
             return false;
         }
 

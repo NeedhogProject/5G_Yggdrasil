@@ -9,6 +9,7 @@
  * 담당: 김보민
  */
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -90,6 +91,9 @@ public class InscriptionMasterSystem : MonoBehaviour
 
     // 각인술사 패널이 열려 있는지
     public bool IsOpen => _isOpen;
+
+    // ESC 로 패널을 닫을 때 돌아갈 동작 (NPC 대화 메뉴 재오픈). NPCInteractable 가 설정한다.
+    public System.Action onBackToMenu = null;
 
     private void Awake()
     {
@@ -219,6 +223,7 @@ public class InscriptionMasterSystem : MonoBehaviour
         _isOpen = false;
         _selectedArmor = null;
         _selectedCard = null;
+        onBackToMenu = null;
 
         ClearArmorList();
 
@@ -244,7 +249,33 @@ public class InscriptionMasterSystem : MonoBehaviour
             return;
         }
 
+        GoBackToMenu();
+    }
+
+    // ESC: 패널을 닫고 이전 화면(NPC 대화 메뉴)으로 돌아간다.
+    private void GoBackToMenu()
+    {
+        // 콜백을 먼저 보관 (CloseInscriptionMaster 에서 비우므로)
+        System.Action back = onBackToMenu;
+
         CloseInscriptionMaster();
+
+        if (back != null)
+        {
+            // 같은 프레임에 대화창이 ESC 로 다시 닫히는 것을 막기 위해 한 프레임 뒤에 연다.
+            StartCoroutine(ReopenMenuNextFrame(back));
+        }
+    }
+
+    // 한 프레임 뒤에 NPC 대화 메뉴를 다시 연다.
+    private IEnumerator ReopenMenuNextFrame(System.Action back)
+    {
+        yield return null;
+
+        if (back != null)
+        {
+            back();
+        }
     }
 
     // ─────────────────────── 방어구 목록 ───────────────────────
