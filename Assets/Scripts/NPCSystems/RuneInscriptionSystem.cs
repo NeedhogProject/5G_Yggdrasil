@@ -1,4 +1,4 @@
-// RuneInscriptionSystem.cs
+﻿// RuneInscriptionSystem.cs
 // 각인 핵심 로직 — 자원과 골드를 소모하여 방어구(ArmorInstance)에 각인을 부여하고 초기화권으로 제거한다.
 // UI 는 InscriptionMasterSystem 이 담당하고, 실제 처리는 이 클래스가 맡는다.
 // 자원 비용: 투구 5 / 갑옷 7 / 각반 6 / 장화 5 (속성 무관 동일)
