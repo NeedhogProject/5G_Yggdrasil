@@ -537,17 +537,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
     weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
-  spawnCount: 6
-  activationRange: 32.7
-  spawnSpreadRadius: 5
+  spawnCount: 7
+  activationRange: 31
+  spawnSpreadRadius: 7
 --- !u!136 &48702583
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -773,17 +771,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!136 &102993714
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -854,17 +850,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
     weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
-  spawnCount: 6
-  activationRange: 32.7
-  spawnSpreadRadius: 5
+  spawnCount: 7
+  activationRange: 31
+  spawnSpreadRadius: 7
 --- !u!136 &146032922
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1894,17 +1888,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
     weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
-  spawnCount: 6
-  activationRange: 32.7
-  spawnSpreadRadius: 5
+  spawnCount: 5
+  activationRange: 31
+  spawnSpreadRadius: 10
 --- !u!136 &307945845
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -2370,17 +2362,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!1 &366868938 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3559817854460706613, guid: 6de823b166bd7884a811f7c6ea1e5c76, type: 3}
@@ -2478,17 +2468,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!1 &379158306
 GameObject:
   m_ObjectHideFlags: 0
@@ -4467,17 +4455,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!136 &604557826
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -5772,17 +5758,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!1 &807344217 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -6733177361254619370, guid: 304cc06adbedebf41915518c958651bd, type: 3}
@@ -6121,17 +6105,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!136 &870526446
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -14797,17 +14779,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
     weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
-  spawnCount: 6
-  activationRange: 32.7
-  spawnSpreadRadius: 5
+  spawnCount: 7
+  activationRange: 31
+  spawnSpreadRadius: 7
 --- !u!1 &1333115151
 GameObject:
   m_ObjectHideFlags: 0
@@ -14982,17 +14962,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!1001 &1357896637
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18830,17 +18808,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
+    weight: 50
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
   spawnCount: 6
   activationRange: 40
-  spawnSpreadRadius: 5
+  spawnSpreadRadius: 10
 --- !u!136 &2063795940
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -19075,17 +19051,15 @@ MonoBehaviour:
   enemyEntries:
   - prefab: {fileID: 416181612846535914, guid: fdf6c35cbc36c61468a6f92e5a6eab3a, type: 3}
     weight: 15
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
-    weight: 30
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 5001620204204295080, guid: 536b793a6e9b2954d82d016d711264dc, type: 3}
+    weight: 25
+  - prefab: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
     weight: 60
-  - prefab: {fileID: 0}
+  - prefab: {fileID: 6103401226807309565, guid: 92d68a1366a8a354698eb5df755eb012, type: 3}
     weight: 80
-  spawnCount: 6
-  activationRange: 32.7
-  spawnSpreadRadius: 5
+  spawnCount: 7
+  activationRange: 31
+  spawnSpreadRadius: 7
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
