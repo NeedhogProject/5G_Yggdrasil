@@ -1483,6 +1483,25 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 106029619}
   m_CullTransparentMesh: 1
+--- !u!1 &112320529 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2905941660573076432, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+  m_PrefabInstance: {fileID: 990032076}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &112320538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 112320529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcd90053f139d77418af2deb8e45f5b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyWalkAnimator
+  walkParameterName: IsWalking
+  walkSpeedThreshold: 0.1
 --- !u!1 &117151227
 GameObject:
   m_ObjectHideFlags: 0
@@ -8812,74 +8831,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 681248678}
   m_CullTransparentMesh: 1
---- !u!1001 &695121362
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_Name
-      value: Enemy_Normal(2_1)
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8330987600908247860, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8970603543860035411, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: lootEntries.Array.data[0].maxCount
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8970603543860035411, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      propertyPath: lootEntries.Array.data[0].minCount
-      value: 1
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1415717943}
-  m_SourcePrefab: {fileID: 100100000, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
 --- !u!1 &702312587
 GameObject:
   m_ObjectHideFlags: 0
@@ -11922,22 +11873,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InscriptionMasterSystem
   inscriptionPanel: {fileID: 1227670351}
+  inscribeView: {fileID: 0}
+  resetView: {fileID: 0}
   dialogueText: {fileID: 1490281989}
-  inscribeButton: {fileID: 401986480}
-  resetButton: {fileID: 41501518}
+  npcNameText: {fileID: 0}
   closeButton: {fileID: 990272033}
-  inscriptionTypeDropdown: {fileID: 332391198}
-  resourceCostText: {fileID: 0}
-  currentInscriptionText: {fileID: 1651400712}
-  fireResourceText: {fileID: 0}
-  waterResourceText: {fileID: 0}
-  windResourceText: {fileID: 0}
-  earthResourceText: {fileID: 0}
-  darknessResourceText: {fileID: 0}
-  menuPanel: {fileID: 0}
-  menuInscribeButton: {fileID: 0}
-  menuResetButton: {fileID: 0}
-  menuTalkButton: {fileID: 0}
+  armorListContainer: {fileID: 0}
+  armorCardPrefab: {fileID: 0}
+  inscribeArmorIcon: {fileID: 0}
+  inscribeArmorNameText: {fileID: 0}
+  inscribeArmorSlotText: {fileID: 0}
+  selectedElementIcon: {fileID: 0}
+  selectedElementNameText: {fileID: 0}
+  elementResourceText: {fileID: 0}
+  goldCostText: {fileID: 0}
+  goldBalanceText: {fileID: 0}
+  inscribeButton: {fileID: 401986480}
+  resourceRows: []
+  resetArmorIcon: {fileID: 0}
+  resetArmorNameText: {fileID: 0}
+  resetArmorSlotText: {fileID: 0}
+  resetScrollIcon: {fileID: 0}
+  resetScrollCountText: {fileID: 0}
+  confirmButton: {fileID: 0}
   talkLines:
   - "\uAC01\uC778\uC774\uB780 \uC138\uACC4\uC218\uC758 \uC18D\uC0AD\uC784\uC744 \uBC29\uC5B4\uAD6C\uC5D0
     \uC0C8\uAE30\uB294 \uC77C\uC774\uC9C0."
@@ -11947,6 +11905,66 @@ MonoBehaviour:
     \uC9C0\uC6B8 \uC218 \uC788\uB124."
   - "\uC18D\uC131\uC758 \uC870\uD654\uB97C \uC78A\uC9C0 \uB9D0\uAC8C. \uADF8\uAC83\uC774
     \uACE7 \uC0DD\uC874\uC758 \uC5F4\uC1E0\uC57C."
+--- !u!1001 &990032076
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2905941660573076432, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_Name
+      value: Enemy_Water
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7301398702644744285, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2905941660573076432, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 112320538}
+  m_SourcePrefab: {fileID: 100100000, guid: 99fdccc58eca37c4c87c23028a60f89a, type: 3}
 --- !u!1 &990272031
 GameObject:
   m_ObjectHideFlags: 0
@@ -17178,25 +17196,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1415490924}
   m_CullTransparentMesh: 1
---- !u!1 &1415717942 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3361609839415898183, guid: b243ab9f10aa8f94ead028b1a0a18704, type: 3}
-  m_PrefabInstance: {fileID: 695121362}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1415717943
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1415717942}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcd90053f139d77418af2deb8e45f5b6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyWalkAnimator
-  walkParameterName: IsWalking
-  walkSpeedThreshold: 0.1
 --- !u!1 &1421180322
 GameObject:
   m_ObjectHideFlags: 0
@@ -18272,22 +18271,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InscriptionMasterSystem
   inscriptionPanel: {fileID: 1227670351}
+  inscribeView: {fileID: 0}
+  resetView: {fileID: 0}
   dialogueText: {fileID: 1490281989}
-  inscribeButton: {fileID: 401986480}
-  resetButton: {fileID: 41501518}
+  npcNameText: {fileID: 0}
   closeButton: {fileID: 990272033}
-  inscriptionTypeDropdown: {fileID: 0}
-  resourceCostText: {fileID: 0}
-  currentInscriptionText: {fileID: 1651400712}
-  fireResourceText: {fileID: 0}
-  waterResourceText: {fileID: 0}
-  windResourceText: {fileID: 0}
-  earthResourceText: {fileID: 0}
-  darknessResourceText: {fileID: 0}
-  menuPanel: {fileID: 0}
-  menuInscribeButton: {fileID: 0}
-  menuResetButton: {fileID: 0}
-  menuTalkButton: {fileID: 0}
+  armorListContainer: {fileID: 0}
+  armorCardPrefab: {fileID: 0}
+  inscribeArmorIcon: {fileID: 0}
+  inscribeArmorNameText: {fileID: 0}
+  inscribeArmorSlotText: {fileID: 0}
+  selectedElementIcon: {fileID: 0}
+  selectedElementNameText: {fileID: 0}
+  elementResourceText: {fileID: 0}
+  goldCostText: {fileID: 0}
+  goldBalanceText: {fileID: 0}
+  inscribeButton: {fileID: 401986480}
+  resourceRows: []
+  resetArmorIcon: {fileID: 0}
+  resetArmorNameText: {fileID: 0}
+  resetArmorSlotText: {fileID: 0}
+  resetScrollIcon: {fileID: 0}
+  resetScrollCountText: {fileID: 0}
+  confirmButton: {fileID: 0}
   talkLines:
   - "\uAC01\uC778\uC774\uB780 \uC138\uACC4\uC218\uC758 \uC18D\uC0AD\uC784\uC744 \uBC29\uC5B4\uAD6C\uC5D0
     \uC0C8\uAE30\uB294 \uC77C\uC774\uC9C0."
@@ -25235,4 +25241,4 @@ SceneRoots:
   - {fileID: 1084575247}
   - {fileID: 729948450}
   - {fileID: 1071149060}
-  - {fileID: 695121362}
+  - {fileID: 990032076}
