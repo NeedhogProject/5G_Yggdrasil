@@ -16,7 +16,7 @@ MonoBehaviour:
   _description: 
   _itemType: 1
   _rarity: 3
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 0aa1e84a2d75dc347ad59cf3965719ab, type: 3}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
