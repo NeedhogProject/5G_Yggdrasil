@@ -829,7 +829,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -157, y: -232.49947}
+  m_AnchoredPosition: {x: -157, y: -232.49998}
   m_SizeDelta: {x: 316, y: 256.71}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &42188592
@@ -13423,7 +13423,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1014353130}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99947643
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -20796,6 +20796,7 @@ GameObject:
   - component: {fileID: 1009216931}
   - component: {fileID: 1009216930}
   - component: {fileID: 1009216934}
+  - component: {fileID: 1009216935}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -20921,6 +20922,18 @@ MonoBehaviour:
   playerEquipment: {fileID: 0}
   slots: []
   items: []
+--- !u!114 &1009216935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1009216929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54e465938b66ecd4495e4f4a6e68e869, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResourceInventory
 --- !u!1 &1014353129
 GameObject:
   m_ObjectHideFlags: 0

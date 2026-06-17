@@ -158,6 +158,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f68f627b74db72a46b2bb5cafae784b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
+  upperBodyLayerIndex: 1
+  upperBodyBlendSpeed: 10
   daggerAttackSpeed: 1
   swordAttackSpeed: 0.5
   spearAttackSpeed: 0.2
@@ -182,7 +184,7 @@ MonoBehaviour:
   armorSetManager: {fileID: 7483592433788517892}
   inventorySystem: {fileID: 0}
   inscriptionColorHelper: {fileID: 0}
-  weaponHolder: {fileID: 0}
+  weaponHolder: {fileID: 3073418045415624321}
 --- !u!114 &3731365602666153022
 MonoBehaviour:
   m_ObjectHideFlags: 0
