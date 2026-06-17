@@ -48,10 +48,6 @@ public class WeaponData : ItemData
     [Tooltip("공격 판정 너비(호/원 반경). 찌르기 계열(창/단검)은 좁게, 장검은 넓게")]
     [SerializeField] [Range(0.1f, 2f)]  private float attackWidth = 0.5f;
 
-    [Header("손에 드는 무기 모델")]
-    // 장착 시 플레이어 손에 표시할 모델 프리팹 (이번 학기 검만, 무기별로 다른 모델 예정)
-    [SerializeField] private GameObject weaponModelPrefab;
-
     // ─────────────────────── 강화 시스템 ───────────────────────
     // 기획: 최대 5강, 1→4는 실패 시 등급 하락, 4→5는 성공 아니면 태초마을(초기화)
     // 각인을 넣으면 강화 단계 1로 초기화
@@ -59,20 +55,14 @@ public class WeaponData : ItemData
     [Header("강화 단계 (0 ~ 5)")]
     [SerializeField] [Range(0, 5)] private int enhancementLevel = 0;
 
-    [Header("강화 밸런스 (인덱스 = 강화 단계)")]
-    // 0강부터 4강 시도 시 성공 확률 % (기획 기본값: 90/75/45/25/10)
-    [SerializeField] private float[] enhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
+    // 0강부터 4강 시도 시 성공 확률 (기획서 수치: 90/75/45/25/10%)
+    private static readonly float[] EnhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
 
-    // 강화 단계별 공격력 배율 (기획 기본값: 0/2/4/7/9/15%)
-    [SerializeField] private float[] attackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
+    // 강화 단계별 공격력 배율 (기획서 기준: 0/2/4/7/9/15%)
+    private static readonly float[] AttackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
 
-    // 강화 단계별 공격속도 배율 (기획 기본값: 3강부터 2/3/7%)
-    [SerializeField] private float[] speedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
-
-    // WeaponInstance 가 참조하는 외부 읽기용 프로퍼티
-    public float[] EnhanceSuccessRates => enhanceSuccessRates;
-    public float[] AttackMultipliers => attackMultipliers;
-    public float[] SpeedMultipliers => speedMultipliers;
+    // 강화 단계별 공격속도 배율 (기획서 기준: 3강부터 2/3/7%)
+    private static readonly float[] SpeedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
@@ -80,7 +70,6 @@ public class WeaponData : ItemData
     public WeaponRarity WeaponRarity => _weaponRarity;
     public float        BaseDamage       => baseDamage;
     public float        AttackSpeed      => attackSpeed;
-    public GameObject   WeaponModelPrefab => weaponModelPrefab;
 
     /// <summary>공격 리치 (Unity 단위). 단검 ≈ 1.2, 장검 ≈ 2.0, 창 ≈ 3.5</summary>
     public float Reach       => reach;
@@ -184,8 +173,8 @@ public enum EnhanceResult
 {
     Success,      // 성공 (최대강 미만)
     MaxReached,   // 5강 달성
-    Downgrade,    // 4강 실패 시 1강으로 하락
-    Fail,         // 0~3강 실패 시 단계 변동 없음
-    ResetToBase,  // (미사용) 과거 태초마을 방식
+    Fail,         // 실패, 등급 변동 없음 (0~3강)
+    Downgrade,    // 실패, 1강 하락 (4강에서만)
+    ResetToBase,  // 4→5 실패 → 태초마을(완전 초기화)
     AlreadyMax    // 이미 5강
 }

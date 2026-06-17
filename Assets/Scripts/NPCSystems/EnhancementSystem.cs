@@ -108,7 +108,7 @@ public class EnhancementSystem : MonoBehaviour
             // 4강에서 실패하면 0강으로 초기화되므로 경고 표시
             if (_selectedWeapon.IsLastEnhance == true)
             {
-                nextStatsText.text += "\n※ 실패 시 +1강으로 하락!";
+                nextStatsText.text += "\n※ 실패 시 강화 단계 초기화!";
             }
         }
         else
@@ -211,13 +211,13 @@ public class EnhancementSystem : MonoBehaviour
                 dialogueText.text = _selectedWeapon.WeaponData.ItemName + "이(가) +5 최대 강화 달성!";
                 break;
 
+            case EnhanceResult.Fail:
+                dialogueText.text = _selectedWeapon.WeaponData.ItemName + " 강화에 실패했네. 다행히 등급은 그대로일세.";
+                break;
+
             case EnhanceResult.Downgrade:
                 dialogueText.text = _selectedWeapon.WeaponData.ItemName
                     + "이(가) +" + _selectedWeapon.EnhancementLevel.ToString() + "으로 낮아졌네.";
-                break;
-
-            case EnhanceResult.Fail:
-                dialogueText.text = "아쉽군. 이번엔 실패했지만 무기는 그대로일세.";
                 break;
 
             case EnhanceResult.ResetToBase:
