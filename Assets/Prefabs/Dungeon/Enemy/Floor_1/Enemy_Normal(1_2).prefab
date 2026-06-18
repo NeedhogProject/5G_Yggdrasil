@@ -181,7 +181,7 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 100
   goldMax: 150
-  hpBarObject: {fileID: 2532894022216980509}
+  hpBarObject: {fileID: 7945547156959038637}
   hpBarFill: {fileID: 7032314511127212868}
   hpBarHideDelay: 3
 --- !u!114 &3239755964600238864

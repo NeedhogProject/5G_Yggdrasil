@@ -62,9 +62,14 @@ public class PlayerInteractionLock : MonoBehaviour
             return true;
         }
 
-        // 상인/학자 패널은 각 시스템에 공개 IsOpen 을 추가한 뒤 여기에 같은 형태로 더한다.
-        // if (ShopSystem.Instance != null && ShopSystem.Instance.IsOpen == true) { return true; }
-        // if (ScholarSystem.Instance != null && ScholarSystem.Instance.IsOpen == true) { return true; }
+        // 상인 패널 (ShopSystem 수정 없이 패널 활성 상태로 직접 판단)
+        if (ShopSystem.Instance != null && ShopSystem.Instance.shopPanel != null && ShopSystem.Instance.shopPanel.activeSelf == true)
+        {
+            return true;
+        }
+
+        // 학자 패널은 ScholarSystem 에 공개 Instance/패널 참조를 확인한 뒤 같은 형태로 더한다.
+        // if (ScholarSystem.Instance != null && ScholarSystem.Instance.scholarPanel != null && ScholarSystem.Instance.scholarPanel.activeSelf == true) { return true; }
 
         return false;
     }
