@@ -48,6 +48,10 @@ public class WeaponData : ItemData
     [Tooltip("공격 판정 너비(호/원 반경). 찌르기 계열(창/단검)은 좁게, 장검은 넓게")]
     [SerializeField] [Range(0.1f, 2f)]  private float attackWidth = 0.5f;
 
+    [Header("무기 모델")]
+    [Tooltip("손에 장착될 무기 3D 모델 프리팹")]
+    [SerializeField] private GameObject weaponModelPrefab = null;
+
     // ─────────────────────── 강화 시스템 ───────────────────────
     // 기획: 최대 5강, 1→4는 실패 시 등급 하락, 4→5는 성공 아니면 태초마을(초기화)
     // 각인을 넣으면 강화 단계 1로 초기화
@@ -76,6 +80,9 @@ public class WeaponData : ItemData
     public float AttackWidth => attackWidth;
 
     public int EnhancementLevel => enhancementLevel;
+
+    /// <summary>손에 장착될 무기 모델 프리팹</summary>
+    public GameObject WeaponModelPrefab => weaponModelPrefab;
 
     /// <summary>현재 강화 단계의 성공 확률 (%)</summary>
     public float CurrentSuccessRate =>

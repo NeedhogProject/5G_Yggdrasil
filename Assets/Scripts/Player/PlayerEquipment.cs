@@ -27,6 +27,11 @@ public class PlayerEquipment : MonoBehaviour
     [SerializeField] private InventorySystem  inventorySystem;
     [SerializeField] private InscriptionColorHelper inscriptionColorHelper;
 
+    [Header("무기 모델")]
+    [SerializeField] private Transform weaponHolder;   // 오른손 본 아래 빈 오브젝트(WeaponHolder)
+
+    private GameObject _objWeaponModel;   // 현재 손에 부착된 무기 모델 인스턴스
+
     // ─────────────────────── 장비 슬롯 ───────────────────────
 
     /// <summary>현재 장착 무기</summary>
@@ -105,6 +110,7 @@ public class PlayerEquipment : MonoBehaviour
         // 새 무기 장착
         EquippedWeapon = newWeapon;
         playerCombat?.EquipWeapon(newWeapon);
+        AttachWeaponModel(newWeapon);   // 손에 무기 모델 부착
 
         Debug.Log($"[PlayerEquipment] 무기 장착: {newWeapon.WeaponData?.ItemName}");
         OnEquipmentChanged?.Invoke();
@@ -116,7 +122,36 @@ public class PlayerEquipment : MonoBehaviour
     private void DetachWeapon(WeaponInstance weapon)
     {
         playerCombat?.UnequipWeapon();
+        RemoveWeaponModel();   // 부착된 무기 모델 제거
         EquippedWeapon = null;
+    }
+
+    // 무기 모델 부착/제거
+
+    /// <summary>무기 모델을 weaponHolder 자식으로 부착</summary>
+    private void AttachWeaponModel(WeaponInstance weapon)
+    {
+        RemoveWeaponModel();
+
+        if (weaponHolder == null) return;
+        if (weapon == null || weapon.WeaponData == null) return;
+
+        GameObject prefab = weapon.WeaponData.WeaponModelPrefab;
+        if (prefab == null) return;
+
+        _objWeaponModel = Instantiate(prefab, weaponHolder);
+        _objWeaponModel.transform.localPosition = Vector3.zero;
+        _objWeaponModel.transform.localRotation = Quaternion.identity;
+    }
+
+    /// <summary>부착된 무기 모델 제거</summary>
+    private void RemoveWeaponModel()
+    {
+        if (_objWeaponModel != null)
+        {
+            Destroy(_objWeaponModel);
+            _objWeaponModel = null;
+        }
     }
 
     // ─────────────────────── 방어구 장착 ───────────────────────
