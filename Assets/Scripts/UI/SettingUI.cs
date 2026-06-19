@@ -268,6 +268,17 @@ public class SettingsUI : MonoBehaviour
         {
             AudioManager.Instance.SaveSettings();
         }
+
+        // 설정창은 일시정지(timeScale=0) 상태로 열리므로, 닫을 때 게임을 반드시 재개한다.
+        // 이걸 안 하면 패널만 사라지고 게임이 멈춘 채로 남아 클릭/이동이 먹지 않는다.
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Paused)
+        {
+            GameManager.Instance.Resume();
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
     }
 
     public bool IsOpen
