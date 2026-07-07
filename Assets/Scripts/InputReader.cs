@@ -19,8 +19,8 @@ public class InputReader : MonoBehaviour
 
     // ─────────────────────── 이동 / 달리기 ───────────────────────
 
-    /// <summary>이동 입력 (WASD / 스틱)</summary>
-    public Vector2 MoveInput { get; private set; }
+    /// <summary>이동 홀드 여부 (마우스 우클릭, 누르는 동안 커서 방향 이동)</summary>
+    public bool MoveHeld { get; private set; }
 
     /// <summary>달리기 홀드 여부</summary>
     public bool SprintHeld { get; private set; }
@@ -51,6 +51,7 @@ public class InputReader : MonoBehaviour
 
     private PlayerInput _playerInput;
     private InputAction _sprintAction;
+    private InputAction _moveHoldAction;
 
     private void Awake()
     {
@@ -62,10 +63,13 @@ public class InputReader : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Sprint 는 홀드 판정을 위해 액션을 직접 polling
+        // Sprint / MoveHold 는 홀드 판정을 위해 액션을 직접 polling
         _playerInput = GetComponent<PlayerInput>();
         if (_playerInput != null)
-            _sprintAction = _playerInput.actions["Sprint"];
+        {
+            _sprintAction   = _playerInput.actions["Sprint"];
+            _moveHoldAction = _playerInput.actions["MoveHold"];
+        }
     }
 
     private void OnDestroy()
@@ -75,9 +79,12 @@ public class InputReader : MonoBehaviour
 
     private void Update()
     {
-        // 달리기는 홀드 판정 — 액션을 매 프레임 직접 읽어 누르는 동안만 true
+        // 홀드성 입력은 액션을 매 프레임 직접 읽어 누르는 동안만 true
         if (_sprintAction != null)
             SprintHeld = _sprintAction.ReadValue<float>() > 0.5f;
+
+        if (_moveHoldAction != null)
+            MoveHeld = _moveHoldAction.ReadValue<float>() > 0.5f;
     }
 
     private void LateUpdate()
@@ -91,11 +98,6 @@ public class InputReader : MonoBehaviour
     }
 
     // ─────────────────────── PlayerInput 콜백 (Send Messages) ───────────────────────
-
-    public void OnMove(InputValue value)
-    {
-        MoveInput = value.Get<Vector2>();
-    }
 
     public void OnAttack(InputValue value)
     {

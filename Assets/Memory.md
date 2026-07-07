@@ -4,6 +4,65 @@
 
 ---
 
+## 회전 규칙 변경: 상시 커서 추적 제거 (2026-07-07)
+- 기획: 이동 시 커서를 바라보는 동작 제거, 마우스 방향을 보는 건 공격만 유지
+- 회전 분기 (PlayerController.UpdateRotation):
+  - 공격 중: 커서 방향 추적 (단검 다단히트가 시간차 판정이라 조준 유지 필요)
+  - 이동 중: 진행 방향(경로 방향)으로 회전
+  - 정지 시: 마지막 회전 유지, 커서 추적 없음
+- 공격 시작 순간 커서 방향 즉시 회전 (PlayerController.SnapRotationToCursor, PlayerCombat.TryAttack 에서 호출)
+  - 이유: 장검/창 판정이 PerformAttack 호출 프레임에 transform.forward 기준으로 즉시 실행됨
+  - 스냅 없이는 이동하다 옆의 적을 클릭하면 몸이 돌기 전에 판정이 나가 빗나감
+  - 커서가 몸 위(minAimDistance 이내)면 회전 생략하고 현재 방향으로 공격
+- 부수 효과: 경로가 장애물을 우회할 때 보이던 게걸음 현상 해소 (이동 중 진행 방향을 보므로)
+
+## 이동 방식 B 확정: 우클릭 NavMesh 경로 탐색 이동 (2026-07-07)
+- 기획 확정: 이동 방식 B (경로 탐색), 달리기는 현행 유지 (홀드+이동 중 판정, 정신력 소모 무변경)
+- 동작 (디아블로식 표준):
+  - 우클릭 탭: 클릭 지점까지 경로 이동 (버튼 떼도 도착까지 진행, 떼면 정지 원하면 한 줄 수정)
+  - 우클릭 홀드: 커서를 따라 목적지 계속 갱신
+  - 공격 시작: 경로/목적지 즉시 폐기 (홀드 중이었다면 공격 종료 후 자동 재개)
+- 구현 방식: NavMeshAgent 미사용, NavMesh.CalculatePath 로 경로만 계산하고 기존 Rigidbody 속도 이동으로 코너 추종
+  - 이유: Agent 는 GameManager 스폰 이동/집 문 텔레포트/낙하 복귀의 transform.position 직접 대입과 충돌 (Warp 수정이 여러 파일로 번짐)
+  - 낭떠러지 차단, 낙하 복귀, 이동속도 보너스, 공격 정지 전부 무수정 유지
+- PlayerController 만 변경:
+  - UpdateDestinationFromCursor: 커서 지점을 SamplePosition(반경 2m)으로 NavMesh 스냅, 목적지 변화 0.25m 미만이면 재계산 생략
+  - CalculatePathTo: 시작점도 NavMesh 스냅 후 계산, 부분 경로(PathPartial) 허용
+  - FollowPath: 코너 0.2m 도착 판정으로 순차 추종, 최종 도착 시 경로 폐기
+  - DetectTeleport: 한 프레임 3m 이상 이동이면 텔레포트로 보고 경로 폐기 (옛 목적지 회귀 방지)
+  - TryGetCursorPoint: 커서 지면 지점 공용 계산 (회전은 기존 minAimDistance 검사 유지)
+- 에디터 필수 작업: 플레이어가 다니는 모든 씬에 NavMesh 베이크 필요
+  1. 던전(Floor_1/2)은 적 AI 용으로 베이크돼 있을 가능성 높음 - 확인만
+  2. 마을(Town) 씬은 적이 없어 베이크 안 돼 있으면 플레이어 이동 불가 - 베이크 필수
+  3. 집 내부(같은 씬 텔레포트 영역)도 걸을 수 있는 바닥이 NavMesh 에 포함돼야 함
+  4. 기존 규칙 준수: Include Layers 방식, 풀/덤불은 Ground 레이어 제외 (Memory 2026-06 항목 참고)
+- 알려진 특성: 캐릭터는 항상 커서를 바라보므로(조준 유지) 경로가 장애물을 우회할 때 게걸음이 보일 수 있음 - 기획 판단 필요 시 회전을 이동 방향 기준으로 바꾸는 후속 작업 가능
+
+## 이동 조작 전면 교체: WASD 를 우클릭 홀드로 (2026-07-06)
+- 2학기 1순위 기획: WASD 이동 완전 제거, 마우스 우클릭을 누르는 동안 커서 방향으로 이동 (떼면 정지)
+- 방식: 방향 홀드형 (커서 지점 경로 탐색 아님) - 경로 탐색(B) 여부는 기획 미정이라 단순한 쪽 선택
+  - 기존 Rigidbody 이동 파이프라인(낭떠러지 차단, 낙하 복귀, 이동속도 보너스) 전부 그대로 재사용
+  - B 로 확정되면 UpdateMoveDirection 의 방향 계산부만 교체하면 됨
+- PlayerInputActions.inputactions: Move(Vector2)+WASD 컴포지트 삭제, MoveHold(Button, 우클릭) 추가
+- InputReader: MoveInput/OnMove 삭제, MoveHeld 프로퍼티 추가 (Sprint 와 같은 매 프레임 폴링)
+- PlayerController:
+  - UpdateMoveDirection: 우클릭 홀드 중 커서 방향을 _vMoveDirection 에 기록, 공격 중이면 zero
+  - TryGetCursorDirection: 커서의 지면 평면 방향 계산 공용 메서드 (회전과 이동이 공유, minAimDistance 이내면 정지)
+  - Move: 카메라 forward/right 투영 코드 삭제 (커서 방향이 이미 월드 기준)
+  - 애니메이터 Speed 는 이동 방향 유무로 0/1 전달
+- Shift 달리기: 기획 미정이라 일절 미수정 (홀드+이동 중 판정, 정신력 소모 그대로)
+
+## 공격 시 이동 정지 (2026-07-06)
+- 기획 변경: 기존 '이동하며 상체만 공격'에서 '공격 시작 즉시 이동 상태 탈출, 애니메이션 종료 후 이동 재개'로
+- PlayerCombat: IsAttacking 공개 프로퍼티 추가, TryAttack 에서 _isAttacking 을 즉시 true 로 선반영
+  (다음 프레임부터는 기존처럼 상체 Attack 스테이트 재생 여부로 갱신되므로 종료 시점 자동 감지)
+- PlayerController: 공격 중이면 이동 방향 zero + FixedUpdate 에서 수평 속도 즉시 0
+  - 우클릭을 계속 누르고 있었다면 공격 종료 프레임부터 자동으로 이동 재개
+- 애니메이터 구조는 무변경: 공격 중 Speed 가 0 이라 하체는 idle, 상체 레이어가 공격 재생 (상하체 분리 셋업 유지)
+- 에디터 후속 작업:
+  1. 키 설정 UI(KeySettingUI) keySlots 에 Move(WASD) 슬롯이 씬에 있으면 제거 필요 - 액션이 삭제돼 이름 조회 실패함 (UI 씬은 김보민 담당, 협의 필요)
+  2. 우클릭 이동도 리바인딩 대상으로 노출하려면 MoveHold 슬롯 추가 (선택)
+
 ## 장비 교체 시 강화/룬 데이터 소실 수정 (2026-06-17)
 - 증상: 장착 무기/방어구를 다른 장비로 교체하면, 인벤토리로 반환된 기존 장비의 강화 단계/룬이 소실
 - 근본 원인: PlayerEquipment.EquipItem 이 교체분을 AddItem(replaced.Data) 로 반환

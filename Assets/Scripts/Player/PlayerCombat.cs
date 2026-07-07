@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 ///
 /// [기획 반영]
 /// - 공격 버튼: 마우스 좌클릭
-/// - 공격 중 이동 가능
+/// - 공격 시작 시 이동 정지, 공격 애니메이션 종료 후 이동 재개
 /// - 콤보 없음
 /// - 기본 공격 속도 (초당 공격 횟수)
 ///   · 단검: 1.0 (1초에 1회)
@@ -26,6 +26,7 @@ public class PlayerCombat : MonoBehaviour
 
     private HitboxSystem _hitbox;
     private Animator _animator;
+    private PlayerController _controller;
 
     [Header("상체 공격 레이어 (B 방식)")]
     [Tooltip("Animator 의 UpperBody 레이어 인덱스 (보통 1)")]
@@ -94,6 +95,9 @@ public class PlayerCombat : MonoBehaviour
     private float _attackCooldownTimer = 0f;
     private bool _isAttacking = false;
 
+    /// <summary>공격 애니메이션 재생 중 여부 (PlayerController 이동 정지 판정용)</summary>
+    public bool IsAttacking => _isAttacking;
+
     /// <summary>공격 가능 여부 (쿨다운 + 무기 장착 확인)</summary>
     public bool CanAttack => _attackCooldownTimer <= 0f
                           && !_isAttacking
@@ -106,6 +110,7 @@ public class PlayerCombat : MonoBehaviour
         _hitbox = GetComponentInChildren<HitboxSystem>();
         _stats = GetComponent<PlayerStats>();
         _animator = GetComponentInChildren<Animator>();
+        _controller = GetComponent<PlayerController>();
     }
 
     // ─────────────────────── 업데이트 ───────────────────────
@@ -191,6 +196,15 @@ public class PlayerCombat : MonoBehaviour
     private void TryAttack()
     {
         if (CurrentWeapon?.WeaponData == null) return;
+
+        // 클릭 프레임에 즉시 이동 정지되도록 선반영 (다음 프레임부터는 Update 가 애니메이터 상태로 갱신)
+        _isAttacking = true;
+
+        // 같은 프레임에 forward 기준 판정이 나가므로 커서 방향으로 즉시 회전
+        if (_controller != null)
+        {
+            _controller.SnapRotationToCursor();
+        }
 
         _attackCooldownTimer = AttackInterval;
 
