@@ -5,10 +5,14 @@ using UnityEngine.SceneManagement;
 /// 게임 전체 상태 및 씬 전환 관리 싱글턴
 ///
 /// [기획 반영]
-/// - 게임 흐름: 타이틀 → 마을 → 던전(1~4층) → 엔딩
+/// - 게임 흐름: 타이틀에서 마을, 던전(1~4층), 엔딩 순서로 진행
 /// - 게임 상태: Playing / Paused / GameOver / Ending
-/// - 플레이어 사망 시 인벤 드롭 → 마을 복귀
+/// - 플레이어 사망 시 인벤 드롭 후 마을 복귀
 /// - DontDestroyOnLoad 로 씬 전환에도 유지
+///
+/// [저장 시스템 제거]
+/// - 이어하기 및 저장/불러오기 기능을 완전히 제거함
+/// - IsNewGame, CurrentSlot 프로퍼티는 다른 파일 호환을 위해 남겨둠
 ///
 /// [씬 이름 설정]
 /// 인스펙터에서 각 씬 이름을 프로젝트에 맞게 설정
@@ -92,128 +96,26 @@ public class GameManager : MonoBehaviour
     /// <summary>새 게임 여부 — StartingEquipment 가 참조</summary>
     public bool IsNewGame { get; private set; }
 
-    /// <summary>현재 플레이 중인 세이브 슬롯 (수동 저장 시 사용)</summary>
+    /// <summary>
+    /// 저장 슬롯 개념은 제거되었으나 다른 파일 호환을 위해 프로퍼티만 남겨둔다.
+    /// 항상 -1 을 유지한다.
+    /// </summary>
     public int CurrentSlot { get; private set; } = -1;
 
     /// <summary>
-    /// 새 게임 시작 — 지정 슬롯을 비우고 마을부터 시작
-    /// 타이틀의 "새게임" 버튼에서 슬롯 선택 후 호출
+    /// 새 게임 시작 — 마을부터 시작
+    /// 타이틀의 "게임 시작" 버튼에서 호출
     /// </summary>
-    public void StartNewGame(int slotIndex)
+    public void StartNewGame()
     {
         _townEntry = TownEntry.NewGame;
         IsNewGame = true;
-        CurrentSlot = slotIndex;
         CurrentFloor = 0;
 
         // 이전 플레이의 영속 상태가 남지 않도록 정리 (씬에 배치된 새 오브젝트가 깨끗하게 시작)
         DestroyPersistentPlayerObjects();
 
-        // 해당 슬롯에 기존 세이브가 있으면 삭제
-        if (SaveSystem.Instance != null && SaveSystem.Instance.HasSave(slotIndex))
-        {
-            SaveSystem.Instance.DeleteSave(slotIndex);
-        }
-
         LoadScene(townSceneName, GameState.Town);
-    }
-
-    /// <summary>
-    /// 이어하기 — 지정 슬롯의 세이브를 로드
-    /// 저장된 층의 씬을 먼저 로드한 뒤, 씬 로드 완료 시점에 데이터 복원
-    /// </summary>
-    public void ContinueGame(int slotIndex)
-    {
-        if (SaveSystem.Instance == null || SaveSystem.Instance.HasSave(slotIndex) == false)
-        {
-            Debug.LogWarning("[GameManager] 슬롯 " + slotIndex + " 에 세이브 없음");
-            return;
-        }
-
-        IsNewGame = false;
-        CurrentSlot = slotIndex;
-
-        // 이전 플레이의 영속 상태가 남지 않도록 정리 (세이브는 새 인스턴스에 복원)
-        DestroyPersistentPlayerObjects();
-
-        // 저장된 층 정보 읽기
-        SaveData meta = SaveSystem.Instance.GetSaveMeta(slotIndex);
-        int savedFloor = meta != null ? meta.currentFloor : 0;
-        CurrentFloor = savedFloor;
-
-        string sceneName;
-
-        if (savedFloor == 1)
-        {
-            sceneName = floor1SceneName;
-        }
-        else if (savedFloor == 2)
-        {
-            sceneName = floor2SceneName;
-        }
-        else if (savedFloor == 3)
-        {
-            sceneName = floor3SceneName;
-        }
-        else if (savedFloor == 4)
-        {
-            sceneName = floor4SceneName;
-        }
-        else
-        {
-            sceneName = townSceneName;
-        }
-
-        // 씬 로드 완료 후 데이터 복원하도록 예약
-        _pendingLoadSlot = slotIndex;
-        SceneManager.sceneLoaded += OnContinueSceneLoaded;
-
-        LoadScene(sceneName, savedFloor == 0 ? GameState.Town : GameState.Dungeon);
-    }
-
-    private int _pendingLoadSlot = -1;
-
-    private void OnContinueSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        SceneManager.sceneLoaded -= OnContinueSceneLoaded;
-
-        if (_pendingLoadSlot >= 0)
-        {
-            // 씬의 Player/Inventory 가 준비된 뒤 복원
-            StartCoroutine(LoadDataNextFrame(_pendingLoadSlot));
-            _pendingLoadSlot = -1;
-        }
-    }
-
-    private System.Collections.IEnumerator LoadDataNextFrame(int slotIndex)
-    {
-        yield return null;
-
-        if (SaveSystem.Instance != null)
-        {
-            SaveSystem.Instance.Load(slotIndex);
-        }
-    }
-
-    /// <summary>현재 슬롯에 수동 저장 (PauseMenu 에서 호출)</summary>
-    public void SaveCurrentGame()
-    {
-        if (CurrentSlot < 0)
-        {
-            Debug.LogWarning("[GameManager] 저장할 슬롯이 지정되지 않음");
-            return;
-        }
-
-        if (SaveSystem.Instance != null)
-        {
-            SaveSystem.Instance.Save(CurrentSlot);
-        }
-    }
-
-    /// <summary>타이틀 → 마을 (새 게임 시작, 기본 슬롯 0) — 하위호환</summary>
-    public void StartNewGame()
-    {
-        StartNewGame(0);
     }
 
     /// <summary>마을 → 던전 1층</summary>
@@ -340,7 +242,7 @@ public class GameManager : MonoBehaviour
         LoadScene(townSceneName, GameState.Town);
     }
 
-    // 씬 로드 완료 시 스폰 위치 조정 + 자동 저장
+    // 씬 로드 완료 시 스폰 위치 조정
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         // 어떤 경로로 진입해도 층 번호를 씬 이름 기준으로 동기화
@@ -373,24 +275,6 @@ public class GameManager : MonoBehaviour
         {
             MovePlayerToSpawn("Spawn_House");
             StartCoroutine(MoveCameraToHouseNextFrame());
-        }
-
-        // 마을 도착 시 자동 저장 (던전 복귀 + 슬롯 지정된 경우)
-        if (_townEntry == TownEntry.DungeonReturn && CurrentSlot >= 0)
-        {
-            StartCoroutine(AutoSaveNextFrame());
-        }
-    }
-
-    // 한 프레임 뒤 저장 (씬 완전히 로드된 후)
-    private System.Collections.IEnumerator AutoSaveNextFrame()
-    {
-        yield return null;
-
-        if (SaveSystem.Instance != null)
-        {
-            SaveSystem.Instance.Save(CurrentSlot);
-            Debug.Log("[GameManager] 마을 도착 자동 저장 완료");
         }
     }
 
@@ -462,7 +346,7 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>영속(DontDestroyOnLoad) 플레이어 단위 오브젝트 파괴</summary>
-    // 새 게임/이어하기/타이틀 복귀 시 호출. 다음 씬에 배치된 오브젝트가 새 인스턴스가 된다
+    // 새 게임/타이틀 복귀 시 호출. 다음 씬에 배치된 오브젝트가 새 인스턴스가 된다
     // 주의: 지연 파괴(Destroy)를 쓰면 새 씬의 싱글턴 Awake 가 아직 살아있는 이전 인스턴스를 보고
     // 자기 자신을 파괴해 인벤토리/플레이어가 사라진다. 즉시 파괴(DestroyImmediate)가 필수
     private void DestroyPersistentPlayerObjects()
@@ -525,7 +409,7 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 플레이어 사망 처리 — PlayerDeath 에서 호출
-    /// 인벤토리 드롭 → GameOver 상태 → 마을 복귀
+    /// 인벤토리 드롭 후 GameOver 상태로 전환하고 마을 복귀
     /// </summary>
     public void OnPlayerDeath()
     {
@@ -537,7 +421,7 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.GameOver);
         Time.timeScale = 0f;
 
-        Debug.Log("[GameManager] 플레이어 사망 → GameOver");
+        Debug.Log("[GameManager] 플레이어 사망 후 GameOver 로 전환");
 
         // 임시: 3초 후 자동 복귀
         Invoke(nameof(GameOverToTown), 3f);
@@ -551,7 +435,7 @@ public class GameManager : MonoBehaviour
 
     // 엔딩
 
-    /// <summary>니드호그 처치 → 엔딩. BossNidhogg 에서 호출</summary>
+    /// <summary>니드호그 처치 후 엔딩으로 전환. BossNidhogg 에서 호출</summary>
     public void TriggerEnding()
     {
         ChangeState(GameState.Ending);
@@ -564,7 +448,7 @@ public class GameManager : MonoBehaviour
     {
         ChangeState(nextState);
         SceneManager.LoadScene(sceneName);
-        Debug.Log("[GameManager] 씬 전환 → " + sceneName + " (" + nextState + ")");
+        Debug.Log("[GameManager] 씬 전환 후 로드: " + sceneName + " (" + nextState + ")");
     }
 
     private void ChangeState(GameState newState)
@@ -595,8 +479,8 @@ public class GameManager : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    [ContextMenu("테스트: 마을로")]   private void TestTown()    { ReturnToTown(); }
+    [ContextMenu("테스트: 마을로")] private void TestTown() { ReturnToTown(); }
     [ContextMenu("테스트: 던전으로")] private void TestDungeon() { EnterDungeon(); }
-    [ContextMenu("테스트: 사망")]     private void TestDeath()   { OnPlayerDeath(); }
+    [ContextMenu("테스트: 사망")] private void TestDeath() { OnPlayerDeath(); }
 #endif
 }

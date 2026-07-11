@@ -2,8 +2,7 @@
 // 오디오 설정 패널 (마스터/BGM/효과음 볼륨)
 // 슬라이더 변경 시 AudioManager/AudioListener 에 반영, 라벨과 수치를 별도 텍스트로 표시
 // 탭 모드(부모가 SetActive 토글) 와 팝업 모드(Open/Close) 둘 다 지원
-// 게임 저장 버튼 추가 — SaveSlotPanel 을 열어줌 (마을에서만 활성화)
-// 마을 판단은 CurrentFloor == 0 으로 함 (설정창 열 때 Paused 상태가 되므로 CurrentState 못 씀)
+// 저장 시스템 제거로 게임 저장 버튼 관련 기능은 삭제됨
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -39,10 +38,6 @@ public class SettingsUI : MonoBehaviour
 
     [Header("팝업 전체 루트 (있으면 그걸 닫고 없으면 자기 자신)")]
     [SerializeField] private GameObject popupRoot;
-
-    [Header("게임 저장 버튼 (마을에서만 활성화)")]
-    [SerializeField] private Button saveGameButton;
-    [SerializeField] private SaveSlotPanelUI saveSlotPanel;
 
     [Header("타이틀로 나가기 버튼")]
     [SerializeField] private Button exitToTitleButton;
@@ -80,12 +75,6 @@ public class SettingsUI : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(Close);
-        }
-
-        // 게임 저장 버튼 — SaveSlotPanel 열기
-        if (saveGameButton != null)
-        {
-            saveGameButton.onClick.AddListener(OnSaveGameClicked);
         }
 
         // 타이틀로 나가기 버튼
@@ -126,40 +115,6 @@ public class SettingsUI : MonoBehaviour
 #endif
     }
 
-    // 게임 저장 버튼 클릭 — 저장 슬롯 패널 열기
-    private void OnSaveGameClicked()
-    {
-        // 마을(0층)에서만 저장 가능
-        // 설정창 열 때 일시정지(Paused) 되므로 CurrentState 대신 CurrentFloor 로 판단
-        if (GameManager.Instance != null && GameManager.Instance.CurrentFloor != 0)
-        {
-            Debug.Log("[SettingsUI] 마을에서만 저장할 수 있습니다.");
-            return;
-        }
-
-        if (saveSlotPanel != null)
-        {
-            saveSlotPanel.Open();
-        }
-        else
-        {
-            Debug.LogWarning("[SettingsUI] SaveSlotPanel 이 연결되지 않음");
-        }
-    }
-
-    // 게임 저장 버튼 활성화 상태 갱신 (마을에서만 활성화)
-    private void UpdateSaveButtonState()
-    {
-        if (saveGameButton == null)
-        {
-            return;
-        }
-
-        // 마을(0층)에서만 활성화
-        bool isInTown = GameManager.Instance != null && GameManager.Instance.CurrentFloor == 0;
-        saveGameButton.interactable = isInTown;
-    }
-
     // 오디오 설정을 기본값(100%) 으로 초기화
     // 슬라이더 값을 바꾸면 onValueChanged 가 자동으로 호출돼서
     // AudioManager / AudioListener / 수치 텍스트가 같이 갱신됨
@@ -181,7 +136,7 @@ public class SettingsUI : MonoBehaviour
         }
     }
 
-    // ── 여기부터 오디오 저장/복원 기능 ──
+    // 여기부터 오디오 저장 및 복원 기능
 
     // 스냅샷 보관용 변수 (설정창 열 때 찍어둔 볼륨)
     private float _snapMaster = 1f;
@@ -230,11 +185,10 @@ public class SettingsUI : MonoBehaviour
         }
     }
 
-    // 탭이 켜질 때마다 현재 볼륨으로 슬라이더 동기화 + 저장 버튼 상태 갱신
+    // 탭이 켜질 때마다 현재 볼륨으로 슬라이더 동기화
     private void OnEnable()
     {
         SyncSlidersToCurrentVolume();
-        UpdateSaveButtonState();
     }
 
     // 팝업 모드용 열기
@@ -247,7 +201,6 @@ public class SettingsUI : MonoBehaviour
 
         isOpen = true;
         SyncSlidersToCurrentVolume();
-        UpdateSaveButtonState();
     }
 
     // 팝업 모드용 닫기
