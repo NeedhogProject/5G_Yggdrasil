@@ -30849,7 +30849,7 @@ MonoBehaviour:
     \uC9C0\uCF1C\uC900\uB2E4\uB124."
   npcPortrait: {fileID: 21300000, guid: fbeb8f5d323c5804483137b9378783af, type: 3}
   useDialogueBeforeFunction: 1
-  functionChoiceLabel: "\uC7A5\uBE44 \uAC15\uD654\uD558"
+  functionChoiceLabel: "\uC7A5\uBE44 \uAC15\uD654\uD558\uAE30 "
   talkChoiceLabel: "\uB300\uD654\uD558\uAE30"
   merchantBuyLabel: "\uAD6C\uB9E4"
   merchantSellLabel: "\uD310\uB9E4"
