@@ -2,8 +2,10 @@
 // 상인 NPC(벨라) 패널
 // 시작 메뉴(구매/판매/대화) → 구매 화면(우클릭 확인 팝업) / 판매 화면(판매창 스테이징)
 // ESC: 팝업 닫기 -> 메뉴로 돌아가기 -> 상점 완전히 닫기 순서
-// ★버튼 연결을 EnsureSetup 으로 분리 — ShopUI 가 꺼진 채 시작해도 OpenShop 때 보장됨
+// 버튼 연결을 EnsureSetup 으로 분리 — ShopUI 가 꺼진 채 시작해도 OpenShop 때 보장됨
+// 대사 출력은 SetDialogue 를 통해 한 글자씩 타이핑 (대장장이/각인술사와 동일 방식)
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +21,9 @@ public class ShopSystem : MonoBehaviour
     public Button buyTabButton;
     public Button sellTabButton;
     public Button closeButton;
+
+    [Header("대사 타이핑 효과 (초당 간격, 0이면 즉시)")]
+    [SerializeField] private float dialogueTextSpeed = 0.03f;
 
     [Header("상품 목록")]
     public Transform itemListContainer;
@@ -106,6 +111,9 @@ public class ShopSystem : MonoBehaviour
     private List<StagedSellItem> _stagedItems = new List<StagedSellItem>();
     private bool isOpen = false;
     private ShopTab currentTab = ShopTab.Buy;
+
+    // 진행 중인 타이핑 코루틴 (새 대사 나오면 멈추고 새로 시작)
+    private Coroutine _typingCoroutine = null;
 
     // 버튼 연결이 끝났는지 (중복 연결 방지)
     private bool _isSetup = false;
@@ -921,14 +929,55 @@ public class ShopSystem : MonoBehaviour
         }
     }
 
-    // 대사 출력 (null 체크 포함)
+    // 대사 출력 (타이핑 효과, null 체크 포함)
+    // 기존 호출부는 그대로 두고 이 메서드만 바꿔서 모든 대사에 타이핑 적용
     private void SetDialogue(string text)
     {
         if (dialogueText == null)
         {
             return;
         }
-        dialogueText.text = text;
+
+        // 이전 타이핑이 진행 중이면 멈춘다
+        if (_typingCoroutine != null)
+        {
+            StopCoroutine(_typingCoroutine);
+            _typingCoroutine = null;
+        }
+
+        // 속도가 0 이하면 즉시 표시
+        if (dialogueTextSpeed <= 0f)
+        {
+            dialogueText.text = text;
+            return;
+        }
+
+        // 오브젝트가 비활성이면 코루틴을 못 돌리므로 즉시 표시
+        if (gameObject.activeInHierarchy == false)
+        {
+            dialogueText.text = text;
+            return;
+        }
+
+        _typingCoroutine = StartCoroutine(TypeDialogue(text));
+    }
+
+    // 한 글자씩 출력하는 코루틴 (WaitForSecondsRealtime 로 일시정지 영향 없음)
+    private IEnumerator TypeDialogue(string text)
+    {
+        dialogueText.text = "";
+
+        int i = 0;
+        int length = text.Length;
+
+        while (i < length)
+        {
+            dialogueText.text = dialogueText.text + text[i];
+            i = i + 1;
+            yield return new WaitForSecondsRealtime(dialogueTextSpeed);
+        }
+
+        _typingCoroutine = null;
     }
 
     // 배열에서 랜덤 대사 한 줄 반환 (비어있으면 빈 문자열)

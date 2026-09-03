@@ -10,6 +10,8 @@ using UnityEngine.InputSystem;
 /// - 마을에서 E키 → 1층 입장
 /// - 1층에서 E키 → 마을 복귀
 /// - 각 씬(마을/1층)에 1개씩 배치
+///
+/// [변경] E키 입력 시 바로 입장하지 않고 ConfirmDialogUI 로 예/아니오 확인 후 입장
 /// </summary>
 public class YggdrasilPortal : MonoBehaviour
 {
@@ -45,12 +47,24 @@ public class YggdrasilPortal : MonoBehaviour
     private void Update()
     {
         if (_playerInRange == false) return;
-        if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
+        if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
 
         Interact();
     }
 
     private void Interact()
+    {
+        // 던전 입장 전 확인창 표시 (예 선택 시에만 입장)
+        string msg = isTownSide ? "던전에 입장하시겠습니까?" : "마을로 돌아가시겠습니까?";
+
+        if (ConfirmDialogUI.Instance != null)
+            ConfirmDialogUI.Instance.Show(msg, OnConfirmEnter, null);
+        else
+            OnConfirmEnter();
+    }
+
+    // 확인창에서 "예" 선택 시 실제 입장 처리
+    private void OnConfirmEnter()
     {
         if (enterVFX != null)
             Instantiate(enterVFX, transform.position, Quaternion.identity);
