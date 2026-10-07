@@ -60,7 +60,7 @@ public class WeaponData : ItemData
     [SerializeField] [Range(0, 5)] private int enhancementLevel = 0;
 
     // 0강부터 4강 시도 시 성공 확률 (기획서 수치: 90/75/45/25/10%)
-    private static readonly float[] EnhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
+    private static readonly float[] enhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
 
     // 강화 단계별 공격력 배율 (기획서 기준: 0/2/4/7/9/15%)
     private static readonly float[] attackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
@@ -86,8 +86,8 @@ public class WeaponData : ItemData
 
     /// <summary>현재 강화 단계의 성공 확률 (%)</summary>
     public float CurrentSuccessRate =>
-        enhancementLevel < EnhanceSuccessRates.Length
-            ? EnhanceSuccessRates[enhancementLevel]
+        enhancementLevel < enhanceSuccessRates.Length
+            ? enhanceSuccessRates[enhancementLevel]
             : 0f;
 
     /// <summary>4→5강 여부 (성공 or 태초마을)</summary>
@@ -108,6 +108,9 @@ public class WeaponData : ItemData
 
     /// <summary>강화 단계별 공격속도 배율 표 (대장간 미리보기에서 참조)</summary>
     public float[] SpeedMultipliers => speedMultipliers;
+
+    /// <summary>강화 단계별 성공 확률 표 (WeaponInstance 에서 참조)</summary>
+    public float[] EnhanceSuccessRates => enhanceSuccessRates;
 
     // ─────────────────────── 런타임 메서드 (무기 복사본에서 사용) ───────────────────────
 
@@ -142,27 +145,6 @@ public class WeaponData : ItemData
         }
     }
 
-    // ─────────────────────── 에디터 기본값 자동 설정 ───────────────────────
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        // 무기 종류별 권장 리치·너비 자동 세팅 (처음 생성 시 참고용)
-        switch (weaponType)
-        {
-            case WeaponType.Dagger:
-                if (reach      > 1.5f) reach       = 1.2f;
-                if (attackWidth > 0.5f) attackWidth = 0.3f;
-                break;
-            case WeaponType.Sword:
-                // 기본값 유지
-                break;
-            case WeaponType.Spear:
-                if (reach < 3f) reach = 3.5f;
-                if (attackWidth > 0.6f) attackWidth = 0.4f;
-                break;
-        }
-    }
-#endif
 }
 
 // ─────────────────────── 보조 열거형 / 구조체 ───────────────────────

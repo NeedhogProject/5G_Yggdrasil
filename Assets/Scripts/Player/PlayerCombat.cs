@@ -8,10 +8,7 @@ using UnityEngine.InputSystem;
 /// - 공격 버튼: 마우스 좌클릭
 /// - 공격 시작 시 이동 정지, 공격 애니메이션 종료 후 이동 재개
 /// - 콤보 없음
-/// - 기본 공격 속도 (초당 공격 횟수)
-///   · 단검: 1.0 (1초에 1회)
-///   · 장검: 0.5 (2초에 1회)
-///   · 창  : 0.2 (5초에 1회)
+/// - 공격 속도 (초당 공격 횟수) = WeaponInstance.FinalAttackSpeed (무기 에셋 값, 강화 배율 반영)
 /// - 공격력 = WeaponInstance.FinalDamage * PlayerStats.MentalMultiplier
 /// - 세트 공격력/공격속도/흡혈 보너스는 ArmorSetManager 가 설정
 ///
@@ -39,13 +36,6 @@ public class PlayerCombat : MonoBehaviour
 
     /// <summary>현재 장착 무기 — PlayerEquipment 에서 설정</summary>
     public WeaponInstance CurrentWeapon { get; private set; }
-
-    // ─────────────────────── 공격 속도 ───────────────────────
-
-    [Header("무기별 기본 공격 속도 (초당 공격 횟수)")]
-    [SerializeField] private float daggerAttackSpeed = 1.0f;  // 1초에 1회
-    [SerializeField] private float swordAttackSpeed = 0.5f;  // 2초에 1회
-    [SerializeField] private float spearAttackSpeed = 0.2f;  // 5초에 1회
 
     // ─────────────────────── 세트 효과 보너스 ───────────────────────
 
@@ -75,13 +65,8 @@ public class PlayerCombat : MonoBehaviour
         {
             if (CurrentWeapon?.WeaponData == null) return 1f;
 
-            float speed = CurrentWeapon.WeaponData.WeaponType switch
-            {
-                WeaponType.Dagger => daggerAttackSpeed,
-                WeaponType.Sword => swordAttackSpeed,
-                WeaponType.Spear => spearAttackSpeed,
-                _ => 1f
-            };
+            // 무기 에셋 공격속도 (강화 배율 반영)
+            float speed = CurrentWeapon.FinalAttackSpeed;
 
             // 바람 세트 공격속도 보너스 반영
             speed *= (1f + _attackSpeedBonus);

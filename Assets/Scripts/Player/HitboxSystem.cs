@@ -10,10 +10,10 @@ using System.Collections.Generic;
 /// - 장검 : OverlapSphere + 각도 필터 — 앞쪽 부채꼴 (1회 판정)
 /// - 창   : 관통 찌르기 — OverlapBox 직선상 모든 적 히트 (1회, 중복 없음)
 ///
-/// [기본 수치]
-/// - 단검: 리치 1.2, 너비 0.4, 3회 히트, 간격 0.08초
-/// - 장검: 반경 2.0, 부채꼴 110도
-/// - 창  : 리치 3.5, 너비 0.35 (관통)
+/// [범위 수치]
+/// - 리치/너비는 장착 무기의 WeaponData(Reach, AttackWidth)에서 읽음
+/// - 장검은 Reach 를 부채꼴 반경으로 사용, 각도는 swordAngle
+/// - 단검 히트 횟수/간격, 높이 제한은 이 컴포넌트 인스펙터 값
 ///
 /// [사용법]
 /// PlayerCombat 에서 PerformAttack(weapon, onHit) 호출
@@ -36,12 +36,6 @@ public class HitboxSystem : MonoBehaviour
     // ─────────────────────── 단검 설정 ───────────────────────
 
     [Header("단검 — 연속 다단히트")]
-    [Tooltip("판정 박스 길이")]
-    [SerializeField] private float daggerReach = 1.2f;
-
-    [Tooltip("판정 박스 너비")]
-    [SerializeField] private float daggerWidth = 0.4f;
-
     [Tooltip("총 히트 횟수")]
     [SerializeField][Range(1, 10)] private int daggerHitCount = 3;
 
@@ -57,9 +51,6 @@ public class HitboxSystem : MonoBehaviour
     // ─────────────────────── 장검 설정 ───────────────────────
 
     [Header("장검 — 부채꼴")]
-    [Tooltip("부채꼴 반경")]
-    [SerializeField] private float swordReach = 2.0f;
-
     [Tooltip("부채꼴 전체 각도 (좌우 대칭). 110 = 앞 55도씩")]
     [SerializeField][Range(10f, 360f)] private float swordAngle = 110f;
 
@@ -69,12 +60,6 @@ public class HitboxSystem : MonoBehaviour
     // ─────────────────────── 창 설정 ───────────────────────
 
     [Header("창 — 관통 찌르기")]
-    [Tooltip("관통 박스 길이 (긴 리치)")]
-    [SerializeField] private float spearReach = 3.5f;
-
-    [Tooltip("관통 박스 너비 (좁게 유지)")]
-    [SerializeField] private float spearWidth = 0.35f;
-
     [Tooltip("최대 높이 차이")]
     [SerializeField] private float spearMaxHeight = 2.0f;
 
@@ -103,16 +88,20 @@ public class HitboxSystem : MonoBehaviour
         _lastWeaponType = weapon.ResolvedWeaponType;
         _lastAttackTime = Time.time;
 
+        // 무기 에셋 범위 값
+        float reach = weapon.WeaponData.Reach;
+        float width = weapon.WeaponData.AttackWidth;
+
         switch (weapon.ResolvedWeaponType)
         {
             case WeaponType.Dagger:
-                StartCoroutine(AttackDagger(onHit));
+                StartCoroutine(AttackDagger(reach, width, onHit));
                 break;
             case WeaponType.Sword:
-                AttackSword(onHit);
+                AttackSword(reach, onHit);
                 break;
             case WeaponType.Spear:
-                AttackSpear(onHit);
+                AttackSpear(reach, width, onHit);
                 break;
         }
     }
@@ -123,7 +112,7 @@ public class HitboxSystem : MonoBehaviour
     /// 단검 다단히트 — 짧은 간격으로 여러 번 판정
     /// 같은 적이 여러 회차에 맞을 수 있음 (회차별 중복은 방지)
     /// </summary>
-    private IEnumerator AttackDagger(System.Action<GameObject, int> onHit)
+    private IEnumerator AttackDagger(float reach, float width, System.Action<GameObject, int> onHit)
     {
         HashSet<GameObject> hitTargetsPerWave = new HashSet<GameObject>();
         int totalHits = 0;
@@ -132,8 +121,8 @@ public class HitboxSystem : MonoBehaviour
         {
             hitTargetsPerWave.Clear();
 
-            Vector3 center = GetBoxCenter(daggerReach);
-            Vector3 halfExtents = new Vector3(daggerWidth * 0.5f, 0.5f, daggerReach * 0.5f);
+            Vector3 center = GetBoxCenter(reach);
+            Vector3 halfExtents = new Vector3(width * 0.5f, 0.5f, reach * 0.5f);
 
             Collider[] hits = Physics.OverlapBox(
                 center, halfExtents, transform.rotation, CombinedLayer);
@@ -179,10 +168,10 @@ public class HitboxSystem : MonoBehaviour
     /// <summary>
     /// 장검 부채꼴 공격 — 앞쪽 일정 각도 내 모든 적 히트
     /// </summary>
-    private void AttackSword(System.Action<GameObject, int> onHit)
+    private void AttackSword(float reach, System.Action<GameObject, int> onHit)
     {
         Vector3 origin = transform.position + Vector3.up * 0.5f;
-        Collider[] hits = Physics.OverlapSphere(origin, swordReach, CombinedLayer);
+        Collider[] hits = Physics.OverlapSphere(origin, reach, CombinedLayer);
         float halfAngle = swordAngle * 0.5f;
         int hitCount = 0;
 
@@ -218,10 +207,10 @@ public class HitboxSystem : MonoBehaviour
     /// <summary>
     /// 창 관통 공격 — 직선상 모든 적을 거리순으로 히트
     /// </summary>
-    private void AttackSpear(System.Action<GameObject, int> onHit)
+    private void AttackSpear(float reach, float width, System.Action<GameObject, int> onHit)
     {
-        Vector3 center = GetBoxCenter(spearReach);
-        Vector3 halfExtents = new Vector3(spearWidth * 0.5f, 0.5f, spearReach * 0.5f);
+        Vector3 center = GetBoxCenter(reach);
+        Vector3 halfExtents = new Vector3(width * 0.5f, 0.5f, reach * 0.5f);
 
         Collider[] hits = Physics.OverlapBox(
             center, halfExtents, transform.rotation, CombinedLayer);
@@ -286,11 +275,6 @@ public class HitboxSystem : MonoBehaviour
         }
 
         // 음수 방지
-        daggerReach = Mathf.Max(0.1f, daggerReach);
-        daggerWidth = Mathf.Max(0.1f, daggerWidth);
-        swordReach = Mathf.Max(0.1f, swordReach);
-        spearReach = Mathf.Max(0.1f, spearReach);
-        spearWidth = Mathf.Max(0.1f, spearWidth);
         daggerMaxHeight = Mathf.Max(0.1f, daggerMaxHeight);
         swordMaxHeight = Mathf.Max(0.1f, swordMaxHeight);
         spearMaxHeight = Mathf.Max(0.1f, spearMaxHeight);
@@ -302,22 +286,24 @@ public class HitboxSystem : MonoBehaviour
 #if UNITY_EDITOR
     [Header("기즈모 (에디터 전용)")]
     [SerializeField] private bool showGizmos = true;
-    [SerializeField] private WeaponType previewWeaponType = WeaponType.Sword;
+    [Tooltip("범위를 미리 볼 무기 에셋")]
+    [SerializeField] private WeaponData previewWeapon;
 
     private void OnDrawGizmosSelected()
     {
         if (showGizmos == false) return;
+        if (previewWeapon == null) return;
 
-        switch (previewWeaponType)
+        switch (previewWeapon.WeaponType)
         {
             case WeaponType.Dagger:
-                DrawBoxGizmo(daggerReach, daggerWidth, new Color(1f, 0.5f, 0f, 0.4f));
+                DrawBoxGizmo(previewWeapon.Reach, previewWeapon.AttackWidth, new Color(1f, 0.5f, 0f, 0.4f));
                 break;
             case WeaponType.Sword:
-                DrawSwordGizmo();
+                DrawSwordGizmo(previewWeapon.Reach);
                 break;
             case WeaponType.Spear:
-                DrawBoxGizmo(spearReach, spearWidth, new Color(0f, 1f, 0.3f, 0.4f));
+                DrawBoxGizmo(previewWeapon.Reach, previewWeapon.AttackWidth, new Color(0f, 1f, 0.3f, 0.4f));
                 break;
         }
     }
@@ -334,7 +320,7 @@ public class HitboxSystem : MonoBehaviour
         // 높이 제한 표시
         Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
         Vector3 playerPos = transform.position;
-        float maxHeight = previewWeaponType == WeaponType.Dagger ? daggerMaxHeight : spearMaxHeight;
+        float maxHeight = previewWeapon.WeaponType == WeaponType.Dagger ? daggerMaxHeight : spearMaxHeight;
         
         // 상단 평면
         Gizmos.DrawWireCube(
@@ -347,7 +333,7 @@ public class HitboxSystem : MonoBehaviour
             new Vector3(width * 2f, 0.1f, reach));
     }
 
-    private void DrawSwordGizmo()
+    private void DrawSwordGizmo(float reach)
     {
         Gizmos.color = new Color(0f, 0.7f, 1f, 0.3f);
         Vector3 origin = transform.position + Vector3.up * 0.5f;
@@ -361,23 +347,23 @@ public class HitboxSystem : MonoBehaviour
             float t = (float)i / segments;
             float angle = Mathf.Lerp(-halfAngle, halfAngle, t);
             Vector3 dir = Quaternion.AngleAxis(angle, Vector3.up) * transform.forward;
-            Vector3 cur = origin + dir * swordReach;
+            Vector3 cur = origin + dir * reach;
             if (i > 0) Gizmos.DrawLine(prevPoint, cur);
             prevPoint = cur;
         }
 
         // 부채꼴 양쪽 경계선
-        Gizmos.DrawLine(origin, origin + Quaternion.AngleAxis(-halfAngle, Vector3.up) * transform.forward * swordReach);
-        Gizmos.DrawLine(origin, origin + Quaternion.AngleAxis(halfAngle, Vector3.up) * transform.forward * swordReach);
+        Gizmos.DrawLine(origin, origin + Quaternion.AngleAxis(-halfAngle, Vector3.up) * transform.forward * reach);
+        Gizmos.DrawLine(origin, origin + Quaternion.AngleAxis(halfAngle, Vector3.up) * transform.forward * reach);
 
         // 높이 제한 표시
         Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
         
         // 상단 원
-        DrawHeightCircle(origin + Vector3.up * swordMaxHeight, swordReach, halfAngle);
+        DrawHeightCircle(origin + Vector3.up * swordMaxHeight, reach, halfAngle);
         
         // 하단 원
-        DrawHeightCircle(origin - Vector3.up * swordMaxHeight, swordReach, halfAngle);
+        DrawHeightCircle(origin - Vector3.up * swordMaxHeight, reach, halfAngle);
     }
 
     private void DrawHeightCircle(Vector3 center, float radius, float halfAngle)
