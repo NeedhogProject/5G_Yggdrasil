@@ -160,9 +160,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCombat
   upperBodyLayerIndex: 1
   upperBodyBlendSpeed: 10
-  daggerAttackSpeed: 1
-  swordAttackSpeed: 0.5
-  spearAttackSpeed: 0.2
   _attackSpeedBonus: 0
   _attackDamageBonus: 0
   _lifeStealPercent: 0
@@ -201,7 +198,7 @@ MonoBehaviour:
   playerEquipment: {fileID: 0}
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
-  gameOverPanel: {fileID: 0}
+  gameOverPanel: {fileID: 1498313830821749391, guid: 9743a67ed68ff88409ca62d394ea4c7a, type: 3}
   gameOverPanelName: GameOverPanel
   retryButtonName: RetryButton
   quitButtonName: QuitButton
@@ -292,8 +289,6 @@ MonoBehaviour:
   resourceLayer:
     serializedVersion: 2
     m_Bits: 4294967295
-  daggerReach: 1.2
-  daggerWidth: 0.4
   daggerHitCount: 3
   daggerHitInterval: 0.08
   daggerHitMultipliers:
@@ -301,17 +296,14 @@ MonoBehaviour:
   - 0.8
   - 1.2
   daggerMaxHeight: 2
-  swordReach: 2
   swordAngle: 110
   swordMaxHeight: 2
-  spearReach: 3.5
-  spearWidth: 0.35
   spearMaxHeight: 2
   _lastHitCount: 0
   _lastAttackTime: 0
   _lastWeaponType: 0
   showGizmos: 1
-  previewWeaponType: 1
+  previewWeapon: {fileID: 0}
 --- !u!1 &6189683974433071512
 GameObject:
   m_ObjectHideFlags: 0

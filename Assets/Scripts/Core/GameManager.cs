@@ -438,16 +438,13 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void OnPlayerDeath()
     {
-        if (CurrentState == GameState.GameOver)
-        {
-            return;
-        }
+        if (CurrentState == GameState.GameOver) return;
 
         ChangeState(GameState.GameOver);
         Time.timeScale = 0f;
 
         Debug.Log("[GameManager] 플레이어 사망 후 GameOver 로 전환");
-    }
+    }   // ← 여기서 끝 (Invoke 없음)
 
     // 엔딩
 
