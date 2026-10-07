@@ -1,6 +1,6 @@
 /*
  * HUDManager.cs
- * 체력 / 정신력 바 실시간 갱신
+ * 체력 / 방어력 / 정신력 바 실시간 갱신
  * 데미지 비네트 / 정신력 맥동 / 세트 효과 표시
  * 담당: 김보민
  */
@@ -34,6 +34,13 @@ public class HUDManager : MonoBehaviour
     [SerializeField] private Color hpColorLow = new Color(0.90f, 0.20f, 0.20f);
     [SerializeField][Range(0f, 1f)] private float hpLowThreshold = 0.3f;
 
+    // ── 방어력 바 ─────────────────────────────────
+    [Header("방어력 바")]
+    [SerializeField] private Slider defSlider;
+    [SerializeField] private Image defFill;
+    [SerializeField] private TMP_Text defText;
+    [SerializeField] private Color defColor = new Color(0.40f, 0.70f, 1.00f);
+
     // ── 정신력 바 ─────────────────────────────────
     [Header("정신력 바")]
     [SerializeField] private Slider sanitySlider;
@@ -65,11 +72,15 @@ public class HUDManager : MonoBehaviour
 
     // ── 내부 상태 ─────────────────────────────────
     private float hpRatio = 1f;
+    private float defRatio = 1f;
     private float sanityRatio = 1f;
     private float hpDelayRatio = 1f;
 
     private Coroutine vignetteCoroutine;
     private Coroutine sanityPulseCoroutine;
+
+    // 현재 연결된 PlayerStats (씬 전환으로 바뀌면 자동으로 다시 연결)
+    private PlayerStats _boundStats = null;
 
     // ──────────────────────────────────────────────
 
@@ -85,11 +96,12 @@ public class HUDManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // 씬 전환/오브젝트 파괴 시 PlayerStats 이벤트에서 안전하게 해제
-        if (PlayerStats.Instance != null)
+        // 연결돼 있던 PlayerStats 이벤트에서 안전하게 해제
+        if (_boundStats != null)
         {
-            PlayerStats.Instance.OnHealthChanged -= HandlePlayerHealthChanged;
-            PlayerStats.Instance.OnMentalChanged -= HandlePlayerMentalChanged;
+            _boundStats.OnHealthChanged -= HandlePlayerHealthChanged;
+            _boundStats.OnDefenseChanged -= HandlePlayerDefenseChanged;
+            _boundStats.OnMentalChanged -= HandlePlayerMentalChanged;
         }
 
         if (Instance == this)
@@ -106,6 +118,11 @@ public class HUDManager : MonoBehaviour
             vignetteImage.raycastTarget = false;
         }
 
+        if (defFill != null)
+        {
+            defFill.color = defColor;
+        }
+
         foreach (SetEffectSlotUI slot in setEffectSlots)
         {
             if (slot != null)
@@ -114,16 +131,48 @@ public class HUDManager : MonoBehaviour
             }
         }
 
-        // PlayerStats 이벤트 구독 및 초기값 반영
-        // PlayerStats 가 [DefaultExecutionOrder(-100)] 으로 먼저 Awake 됨이 보장됨
-        if (PlayerStats.Instance != null)
-        {
-            PlayerStats.Instance.OnHealthChanged += HandlePlayerHealthChanged;
-            PlayerStats.Instance.OnMentalChanged += HandlePlayerMentalChanged;
+        // PlayerStats 에 연결 (없으면 Update 에서 생길 때 자동 연결)
+        BindToPlayerStats();
+    }
 
-            UpdateHP(PlayerStats.Instance.Health, PlayerStats.MAX_STAT);
-            UpdateSanity(PlayerStats.Instance.Mental, PlayerStats.MAX_STAT);
+    // PlayerStats 에 이벤트를 연결한다. 같은 대상에 이미 연결돼 있으면 아무것도 안 한다.
+    // 씬이 바뀌어 PlayerStats 가 새로 생기면 이전 것은 끊고 새 것에 다시 연결한다.
+    // (타이틀 → 타운으로 시작했을 때 HUD 가 안 보이던 문제 해결)
+    private void BindToPlayerStats()
+    {
+        PlayerStats stats = PlayerStats.Instance;
+
+        // 이미 같은 대상에 연결돼 있으면 중복 연결하지 않는다
+        if (stats == _boundStats)
+        {
+            return;
         }
+
+        // 이전 대상 구독 해제
+        if (_boundStats != null)
+        {
+            _boundStats.OnHealthChanged -= HandlePlayerHealthChanged;
+            _boundStats.OnDefenseChanged -= HandlePlayerDefenseChanged;
+            _boundStats.OnMentalChanged -= HandlePlayerMentalChanged;
+        }
+
+        _boundStats = stats;
+
+        if (_boundStats == null)
+        {
+            return;
+        }
+
+        // 새 대상 구독 + 현재 값으로 즉시 갱신
+        _boundStats.OnHealthChanged += HandlePlayerHealthChanged;
+        _boundStats.OnDefenseChanged += HandlePlayerDefenseChanged;
+        _boundStats.OnMentalChanged += HandlePlayerMentalChanged;
+
+        UpdateHP(_boundStats.Health, PlayerStats.MAX_STAT);
+        UpdateDef(_boundStats.Defense, PlayerStats.MAX_STAT);
+        UpdateSanity(_boundStats.Mental, PlayerStats.MAX_STAT);
+
+        Debug.Log("[HUDManager] PlayerStats 연결 완료");
     }
 
     // ── PlayerStats 이벤트 핸들러 ─────────────────
@@ -133,6 +182,11 @@ public class HUDManager : MonoBehaviour
         UpdateHP(hp, PlayerStats.MAX_STAT);
     }
 
+    private void HandlePlayerDefenseChanged(float def)
+    {
+        UpdateDef(def, PlayerStats.MAX_STAT);
+    }
+
     private void HandlePlayerMentalChanged(float men)
     {
         UpdateSanity(men, PlayerStats.MAX_STAT);
@@ -140,6 +194,13 @@ public class HUDManager : MonoBehaviour
 
     private void Update()
     {
+        // 씬 전환(타이틀 → 타운 등)으로 PlayerStats 가 새로 생기면 자동으로 다시 연결한다.
+        // 이게 없으면 타이틀에서 시작했을 때 HUD 가 새 PlayerStats 에 연결되지 않아 안 보인다.
+        if (PlayerStats.Instance != _boundStats)
+        {
+            BindToPlayerStats();
+        }
+
         UpdateDelayBar();
     }
 
@@ -173,6 +234,14 @@ public class HUDManager : MonoBehaviour
         {
             TriggerDamageVignette();
         }
+    }
+
+    // 방어력 바 갱신 (OnDefenseChanged 이벤트 수신)
+    public void UpdateDef(float current, float max)
+    {
+        defRatio = Mathf.Clamp01(current / max);
+        SetSlider(defSlider, defRatio);
+        SetText(defText, current, max);
     }
 
     // 정신력 바 갱신 (PlayerStats에서 호출)

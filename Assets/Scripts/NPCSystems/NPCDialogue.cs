@@ -57,9 +57,17 @@ public class NPCDialogue : MonoBehaviour, IPointerClickHandler
 
     private void Awake()
     {
-        // 대화창은 마을 전용이라 씬마다 새로 생긴다.
-        // 씬을 다시 로드하면 새 인스턴스가 자신을 등록한다.
-        // 이전 씬의 인스턴스는 함께 파괴되므로 자기 자신을 파괴하지 않는다.
+        // 대화창은 씬에 하나만 있어야 한다.
+        // DontDestroyOnLoad 영구 캔버스에 있는 대화창과 씬에 새로 생긴 대화창이
+        // 겹쳐 2개가 되면, 실제로 쓰이는 쪽이 엉켜 타이핑이 안 되는 것처럼 보였다.
+        // 이미 등록된 NPCDialogue 가 있으면 이 오브젝트는 중복이므로 제거한다.
+        if (Instance != null && Instance != this)
+        {
+            Debug.Log("[NPCDialogue] 중복 대화창 발견 — 제거: " + gameObject.name);
+            Destroy(gameObject);
+            return;
+        }
+
         Instance = this;
     }
 
@@ -262,25 +270,43 @@ public class NPCDialogue : MonoBehaviour, IPointerClickHandler
         isTyping = true;
         dialogueText.text = "";
 
-        foreach (char letter in sentence.ToCharArray())
+        // 타이핑 속도 보정 — 0 이하이면 기본값(0.03)을 사용한다 (인스펙터 0 실수 방지)
+        float speed = textSpeed;
+        if (speed <= 0f)
         {
-            dialogueText.text += letter;
+            speed = 0.03f;
+        }
+
+        // 진단용 로그 — 타이핑이 실제로 도는지/속도가 몇인지 확인 (문제 해결 후 제거 가능)
+        Debug.Log("[NPCDialogue] 타이핑 시작 — speed: " + speed.ToString("F3") + " / 글자수: " + sentence.Length);
+
+        int i = 0;
+        while (i < sentence.Length)
+        {
+            char letter = sentence[i];
+            dialogueText.text = dialogueText.text + letter;
 
             // 타이핑 사운드
             if (letter != ' ')
             {
-                AudioManager.Instance?.PlaySFX(SFXClip.UIClick);
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX(SFXClip.UIClick);
+                }
             }
 
-            yield return new WaitForSeconds(textSpeed);
+            i = i + 1;
+
+            // timeScale 영향을 받지 않도록 Realtime 사용 (일시정지/배속 중에도 정상 타이핑)
+            yield return new WaitForSecondsRealtime(speed);
         }
 
         isTyping = false;
 
         // 자동 닫기
-        if (autoClose && dialogueQueue.Count == 0)
+        if (autoClose == true && dialogueQueue.Count == 0)
         {
-            yield return new WaitForSeconds(autoCloseDelay);
+            yield return new WaitForSecondsRealtime(autoCloseDelay);
             EndDialogue();
         }
     }

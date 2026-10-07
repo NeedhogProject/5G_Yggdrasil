@@ -312,7 +312,8 @@ public class ShopSystem : MonoBehaviour
         {
             inventoryUI.CloseInventory();
         }
-
+        // 메뉴 인사 대사 (타이핑 효과로 출력)
+        SetDialogue(GetRandomLine(talkLines));
         // ShopUI(자기 자신) 끄기 — 다음에 OpenShop 때 다시 켜짐
         gameObject.SetActive(false);
     }

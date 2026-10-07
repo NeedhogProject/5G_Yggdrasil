@@ -153,7 +153,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 75, y: -67}
+  m_AnchoredPosition: {x: 75, y: -94}
   m_SizeDelta: {x: 300, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &17643137
@@ -203,8 +203,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
-  m_fontSizeBase: 20
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -12311,7 +12311,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 20, y: -20}
+  m_AnchoredPosition: {x: 780, y: -780}
   m_SizeDelta: {x: 220, y: 110}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1088448276
@@ -12332,6 +12332,10 @@ MonoBehaviour:
   hpColorFull: {r: 1, g: 1, b: 1, a: 1}
   hpColorLow: {r: 1, g: 1, b: 1, a: 1}
   hpLowThreshold: 0.3
+  defSlider: {fileID: 0}
+  defFill: {fileID: 0}
+  defText: {fileID: 0}
+  defColor: {r: 0.4, g: 0.7, b: 1, a: 1}
   sanitySlider: {fileID: 776161835}
   sanityFill: {fileID: 985080069}
   sanityText: {fileID: 17643137}
@@ -16878,7 +16882,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 75, y: 11}
+  m_AnchoredPosition: {x: 75, y: -10}
   m_SizeDelta: {x: 300, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1520615161
@@ -16928,8 +16932,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
-  m_fontSizeBase: 20
+  m_fontSize: 16
+  m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
