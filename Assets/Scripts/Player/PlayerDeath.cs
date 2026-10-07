@@ -96,6 +96,17 @@ public class PlayerDeath : MonoBehaviour
         {
             playerStats.OnHealthChanged -= OnHealthChanged;
         }
+
+        // 파괴된 중복 플레이어가 다시하기 버튼에 남지 않도록 콜백 해제
+        if (buttonsHooked == true && gameOverPanel != null)
+        {
+            Button[] buttons = gameOverPanel.GetComponentsInChildren<Button>(true);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                buttons[i].onClick.RemoveListener(OnRetryClicked);
+                buttons[i].onClick.RemoveListener(OnQuitClicked);
+            }
+        }
     }
 
     // ─────────────────────── GameOverPanel 자동 탐색 ───────────────────────
@@ -285,6 +296,13 @@ public class PlayerDeath : MonoBehaviour
         }
 
         IsDead = false;
+
+        // 사망 패널티로 비워진 장비 대신 기본 무기 재지급
+        StartingEquipment startingEquipment = GetComponent<StartingEquipment>();
+        if (startingEquipment != null)
+        {
+            startingEquipment.GrantOnRespawn();
+        }
 
         // 입력 다시 활성화
         EnablePlayerInput();

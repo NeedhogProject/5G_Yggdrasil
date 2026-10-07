@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -91,10 +93,13 @@ public class GameManager : MonoBehaviour
     /// <summary>일시정지 이전 상태 (Resume 시 복귀용)</summary>
     private GameState _stateBeforePause;
 
+    // 씬 로드 진행 중 여부 (로드 완료 전 중복 요청 차단)
+    private bool _bSceneLoading = false;
+
     // 게임 시작 흐름
 
-    /// <summary>새 게임 여부 — StartingEquipment 가 참조</summary>
-    public bool IsNewGame { get; private set; }
+    /// <summary>새 게임 여부 — StartingEquipment 가 참조 (타이틀을 거치지 않고 씬에서 바로 시작해도 지급되도록 기본 true)</summary>
+    public bool IsNewGame { get; private set; } = true;
 
     /// <summary>
     /// 저장 슬롯 개념은 제거되었으나 다른 파일 호환을 위해 프로퍼티만 남겨둔다.
@@ -245,8 +250,14 @@ public class GameManager : MonoBehaviour
     // 씬 로드 완료 시 스폰 위치 조정
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        // 로드 완료, 다음 전환 요청 허용
+        _bSceneLoading = false;
+
         // 어떤 경로로 진입해도 층 번호를 씬 이름 기준으로 동기화
         SyncFloor(scene.name);
+
+        // EventSystem 이 없는 씬이면 생성 (없으면 UI 버튼 클릭 불가)
+        EnsureEventSystem();
 
         if (scene.name != townSceneName)
         {
@@ -276,6 +287,20 @@ public class GameManager : MonoBehaviour
             MovePlayerToSpawn("Spawn_House");
             StartCoroutine(MoveCameraToHouseNextFrame());
         }
+    }
+
+    // 씬에 EventSystem 이 없을 때만 New Input System 용으로 생성 (씬 소속이라 씬 전환 시 함께 제거)
+    private void EnsureEventSystem()
+    {
+        if (FindFirstObjectByType<EventSystem>() != null)
+        {
+            return;
+        }
+
+        GameObject objEventSystem = new GameObject("EventSystem");
+        objEventSystem.AddComponent<EventSystem>();
+        objEventSystem.AddComponent<InputSystemUIInputModule>();
+        Debug.LogWarning("[GameManager] 씬에 EventSystem 이 없어 생성함. 씬에 직접 배치 권장");
     }
 
     // 플레이어를 지정한 이름의 스폰 지점으로 이동 (Rigidbody 기반)
@@ -409,7 +434,7 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// 플레이어 사망 처리 — PlayerDeath 에서 호출
-    /// 인벤토리 드롭 후 GameOver 상태로 전환하고 마을 복귀
+    /// GameOver 상태로 전환. 마을 복귀는 PlayerDeath 다시하기 버튼에서 RespawnAtHome 호출
     /// </summary>
     public void OnPlayerDeath()
     {
@@ -422,15 +447,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
 
         Debug.Log("[GameManager] 플레이어 사망 후 GameOver 로 전환");
-
-        // 임시: 3초 후 자동 복귀
-        Invoke(nameof(GameOverToTown), 3f);
-    }
-
-    private void GameOverToTown()
-    {
-        Time.timeScale = 1f;
-        ReturnToTown();
     }
 
     // 엔딩
@@ -446,6 +462,21 @@ public class GameManager : MonoBehaviour
 
     private void LoadScene(string sceneName, GameState nextState)
     {
+        // 위험: 로드 완료 전 같은 씬을 다시 로드하면 마을 씬이 겹쳐 NPC 시스템 싱글턴이 자기 파괴됨
+        if (_bSceneLoading == true)
+        {
+            Debug.LogWarning("[GameManager] 씬 로드 중 중복 요청 무시: " + sceneName);
+            return;
+        }
+
+        // 빌드 설정에 없는 씬이면 로드가 안 되어 플래그가 풀리지 않으므로 먼저 확인
+        if (Application.CanStreamedLevelBeLoaded(sceneName) == false)
+        {
+            Debug.LogError("[GameManager] 로드할 수 없는 씬: " + sceneName);
+            return;
+        }
+
+        _bSceneLoading = true;
         ChangeState(nextState);
         SceneManager.LoadScene(sceneName);
         Debug.Log("[GameManager] 씬 전환 후 로드: " + sceneName + " (" + nextState + ")");
