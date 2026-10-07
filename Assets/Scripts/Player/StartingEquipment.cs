@@ -63,6 +63,17 @@ public class StartingEquipment : MonoBehaviour
         bAlreadyGranted = true;
     }
 
+    /// <summary>사망 후 부활 시 기본 무기 재지급 (PlayerDeath 다시하기에서 호출)</summary>
+    public void GrantOnRespawn()
+    {
+        if (_equipment == null)
+        {
+            _equipment = GetComponent<PlayerEquipment>();
+        }
+
+        GrantStartingWeapons();
+    }
+
     private void GrantStartingWeapons()
     {
         InventorySystem inventory = InventorySystem.Instance;
