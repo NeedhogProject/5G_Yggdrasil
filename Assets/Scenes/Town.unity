@@ -23342,6 +23342,7 @@ MonoBehaviour:
   buyTabButton: {fileID: 2011146806}
   sellTabButton: {fileID: 1973794061}
   closeButton: {fileID: 0}
+  dialogueTextSpeed: 0.03
   itemListContainer: {fileID: 823715202}
   shopItemPrefab: {fileID: 3030648952199626990, guid: 5a97f6ad5323b544cab186a89b7b1e5f, type: 3}
   shopItems:
