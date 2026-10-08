@@ -195,6 +195,12 @@ public class KeySettingUI : MonoBehaviour
         {
             gameObject.SetActive(false);
         }
+
+        // 설정창은 일시정지 상태로 열리므로 닫을 때 게임 재개 (ESC 로 닫을 때와 동일)
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Paused)
+        {
+            GameManager.Instance.Resume();
+        }
     }
 
     // 진행 중인 리바인딩이 있으면 취소

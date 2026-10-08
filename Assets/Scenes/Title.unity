@@ -4050,9 +4050,8 @@ GameObject:
   m_Component:
   - component: {fileID: 760380765}
   - component: {fileID: 760380764}
-  - component: {fileID: 760380766}
   m_Layer: 0
-  m_Name: TttleSceneUI
+  m_Name: TitleSceneUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4087,18 +4086,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &760380766
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 760380763}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 50aa1779ee534fa4fa9ec043a0036029, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClickDebugger
 --- !u!1 &776327087
 GameObject:
   m_ObjectHideFlags: 0
@@ -4339,7 +4326,7 @@ MonoBehaviour:
   bgmValueText: {fileID: 584497185}
   sfxValueText: {fileID: 486469171}
   closeButton: {fileID: 0}
-  popupRoot: {fileID: 970625857}
+  popupRoot: {fileID: 575199422}
   exitToTitleButton: {fileID: 1912285499}
 --- !u!1 &852847130
 GameObject:

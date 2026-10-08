@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 /// 플레이어 이동 컨트롤러 — 하데스/디아블로2 스타일 탑뷰
 ///
 /// - 이동  : 마우스 우클릭 (클릭/홀드 지점으로 NavMesh 경로 탐색 이동)
-/// - 회전  : 이동 중에는 진행 방향, 공격 시에는 마우스 커서 방향
+/// - 회전  : 이동 중에는 진행 방향, 공격 시작 순간에만 마우스 커서 방향 (공격 중에는 고정)
 /// - 달리기: Shift 홀드 (누르는 동안만 유지, 정신력 소모)
 ///
 /// [컴포넌트 설정]
@@ -428,13 +428,12 @@ public class PlayerController : MonoBehaviour
 
     // ─────────────────────── 회전 ───────────────────────
 
-    // 회전 분기: 공격 중에는 커서 방향, 이동 중에는 진행 방향, 정지 시 회전 유지
+    // 회전 분기: 공격 중에는 시작 순간 방향 고정, 이동 중에는 진행 방향, 정지 시 회전 유지
     private void UpdateRotation()
     {
         bool bAttacking = _combat != null && _combat.IsAttacking == true;
         if (bAttacking == true)
         {
-            RotateTowardsMouse();
             return;
         }
 
@@ -472,21 +471,6 @@ public class PlayerController : MonoBehaviour
         }
 
         transform.rotation = Quaternion.LookRotation(vDirection.normalized);
-    }
-
-    private void RotateTowardsMouse()
-    {
-        if (TryGetCursorPoint(out Vector3 vCursorPoint) == false) return;
-
-        Vector3 vDirection = vCursorPoint - transform.position;
-        vDirection.y = 0f;
-
-        // 너무 가까우면 회전 무시 (떨림 방지)
-        if (vDirection.sqrMagnitude < minAimDistance * minAimDistance) return;
-
-        Quaternion targetRot  = Quaternion.LookRotation(vDirection);
-        transform.rotation    = Quaternion.Slerp(
-            transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
     }
 
     // ─────────────────────── 달리기 정신력 소모 ───────────────────────
