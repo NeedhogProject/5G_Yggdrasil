@@ -93,7 +93,10 @@ public class LootTable : MonoBehaviour
             LootEntry entry = SelectEntry();
             if (entry == null || entry.item == null) continue;
 
-            int count = Random.Range(entry.minCount, entry.maxCount + 1);
+            // 수량 0 은 인스펙터 범위(1~99) 밖의 잘못된 값이라 최소 1 로 보정 (0 이면 아무것도 생성되지 않음)
+            int nMin = Mathf.Max(1, entry.minCount);
+            int nMax = Mathf.Max(nMin, entry.maxCount);
+            int count = Random.Range(nMin, nMax + 1);
             results.Add((entry.item, count));
 
             // 월드에 아이템 스폰 (프리팹 있을 경우)

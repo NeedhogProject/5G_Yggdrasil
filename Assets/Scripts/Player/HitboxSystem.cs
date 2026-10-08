@@ -153,6 +153,9 @@ public class HitboxSystem : MonoBehaviour
 #endif
     }
 
+    /// <summary>단검 다단히트 첫 판정부터 마지막 판정까지 걸리는 시간 (초)</summary>
+    public float DaggerAttackDuration => (daggerHitCount - 1) * daggerHitInterval;
+
     /// <summary>
     /// 단검 히트 회차별 데미지 배율 반환
     /// </summary>

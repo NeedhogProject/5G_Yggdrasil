@@ -115,12 +115,21 @@ public class PlayerDeath : MonoBehaviour
     // 평소 꺼져 있는 패널도 찾기 위해 비활성 포함 검색을 사용한다.
     private void ResolveGameOverPanel()
     {
+        // 위험: 프리팹 에셋 원본이 연결되면 SetActive 해도 화면에 안 보임, 씬 오브젝트만 사용
+        if (gameOverPanel != null && gameOverPanel.scene.IsValid() == false)
+        {
+            gameOverPanel = null;
+        }
+
         // 이미 연결되어 있으면 버튼 연결만 확인하고 사용
         if (gameOverPanel != null)
         {
             HookButtons();
             return;
         }
+
+        // 이전 패널이 씬 전환으로 사라졌으면 새 패널 버튼을 다시 연결해야 함
+        buttonsHooked = false;
 
         if (string.IsNullOrEmpty(gameOverPanelName) == true)
         {

@@ -234,14 +234,18 @@ public class PlayerController : MonoBehaviour
     {
         _vMoveDirection = Vector3.zero;
 
-        // 공격 시작 즉시 이동 상태 완전 탈출 (홀드 중이었다면 공격 종료 후 재입력으로 자동 재개)
+        bool bMoveHeld = InputReader.Instance != null && InputReader.Instance.MoveHeld;
+
+        // 공격 중: 경직 동안은 정지, 경직 이후 이동 입력이 있으면 공격 캔슬 후 이동
         if (_combat != null && _combat.IsAttacking == true)
         {
-            ClearPath();
-            return;
+            if (_combat.IsAttackLocked == true || bMoveHeld == false)
+            {
+                ClearPath();
+                return;
+            }
+            _combat.CancelAttack();
         }
-
-        bool bMoveHeld = InputReader.Instance != null && InputReader.Instance.MoveHeld;
         if (bMoveHeld == true)
         {
             UpdateDestinationFromCursor();

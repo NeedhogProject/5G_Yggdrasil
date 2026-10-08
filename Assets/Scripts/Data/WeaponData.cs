@@ -48,6 +48,9 @@ public class WeaponData : ItemData
     [Tooltip("공격 판정 너비(호/원 반경). 찌르기 계열(창/단검)은 좁게, 장검은 넓게")]
     [SerializeField] [Range(0.1f, 2f)]  private float attackWidth = 0.5f;
 
+    [Tooltip("공격 후 이동할 수 없는 경직 시간 (초). 이후 이동 입력으로 공격 모션 캔슬 가능")]
+    [SerializeField] [Range(0f, 2f)]    private float attackLockTime = 0.25f;
+
     [Header("무기 모델")]
     [Tooltip("손에 장착될 무기 3D 모델 프리팹")]
     [SerializeField] private GameObject weaponModelPrefab = null;
@@ -78,6 +81,9 @@ public class WeaponData : ItemData
     /// <summary>공격 리치 (Unity 단위). 단검 ≈ 1.2, 장검 ≈ 2.0, 창 ≈ 3.5</summary>
     public float Reach       => reach;
     public float AttackWidth => attackWidth;
+
+    /// <summary>공격 경직 시간 (초)</summary>
+    public float AttackLockTime => attackLockTime;
 
     public int EnhancementLevel => enhancementLevel;
 

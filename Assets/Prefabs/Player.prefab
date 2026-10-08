@@ -198,7 +198,7 @@ MonoBehaviour:
   playerEquipment: {fileID: 0}
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
-  gameOverPanel: {fileID: 1498313830821749391, guid: 9743a67ed68ff88409ca62d394ea4c7a, type: 3}
+  gameOverPanel: {fileID: 0}
   gameOverPanelName: GameOverPanel
   retryButtonName: RetryButton
   quitButtonName: QuitButton

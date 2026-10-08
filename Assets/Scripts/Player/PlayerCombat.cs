@@ -6,7 +6,7 @@ using UnityEngine.InputSystem;
 ///
 /// [기획 반영]
 /// - 공격 버튼: 마우스 좌클릭
-/// - 공격 시작 시 이동 정지, 공격 애니메이션 종료 후 이동 재개
+/// - 공격 시작 시 이동 정지, 경직(WeaponData.AttackLockTime) 이후 이동 입력이 들어오면 공격 모션 캔슬 후 이동
 /// - 콤보 없음
 /// - 공격 속도 (초당 공격 횟수) = WeaponInstance.FinalAttackSpeed (무기 에셋 값, 강화 배율 반영)
 /// - 공격력 = WeaponInstance.FinalDamage * PlayerStats.MentalMultiplier
@@ -80,8 +80,26 @@ public class PlayerCombat : MonoBehaviour
     private float _attackCooldownTimer = 0f;
     private bool _isAttacking = false;
 
-    /// <summary>공격 애니메이션 재생 중 여부 (PlayerController 이동 정지 판정용)</summary>
-    public bool IsAttacking => _isAttacking;
+    // 경직 남은 시간
+    private float _fAttackLockTimer = 0f;
+    // 이동으로 공격 모션이 캔슬됐는지 (모션 종료 시 해제)
+    private bool _bAttackCanceled = false;
+
+    /// <summary>공격 모션 진행 중 여부, 캔슬되면 false (PlayerController 이동 정지/회전 판정용)</summary>
+    public bool IsAttacking => _isAttacking == true && _bAttackCanceled == false;
+
+    /// <summary>경직 중이라 이동 캔슬 불가한지</summary>
+    public bool IsAttackLocked => IsAttacking == true && _fAttackLockTimer > 0f;
+
+    /// <summary>경직 이후 이동 입력으로 공격 모션 캔슬 (PlayerController 에서 호출)</summary>
+    public void CancelAttack()
+    {
+        if (IsAttacking == false || IsAttackLocked == true)
+        {
+            return;
+        }
+        _bAttackCanceled = true;
+    }
 
     /// <summary>공격 가능 여부 (쿨다운 + 무기 장착 확인)</summary>
     public bool CanAttack => _attackCooldownTimer <= 0f
@@ -105,8 +123,19 @@ public class PlayerCombat : MonoBehaviour
         if (_attackCooldownTimer > 0f)
             _attackCooldownTimer -= Time.deltaTime;
 
+        if (_fAttackLockTimer > 0f)
+        {
+            _fAttackLockTimer -= Time.deltaTime;
+        }
+
         // 상체 Attack 클립 재생 여부로 공격 중 상태 갱신 (레이어 weight 와 CanAttack 가드 공용)
         _isAttacking = IsUpperBodyAttacking();
+
+        // 모션이 끝나면 캔슬 상태 해제
+        if (_isAttacking == false)
+        {
+            _bAttackCanceled = false;
+        }
 
         bool pointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
                              UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject();
@@ -131,7 +160,8 @@ public class PlayerCombat : MonoBehaviour
         if (_animator == null) return;
         if (_animator.layerCount <= upperBodyLayerIndex) return;
 
-        float fTarget = _isAttacking ? 1f : 0f;
+        // 캔슬되면 남은 모션이 재생 중이어도 상체 레이어를 꺼서 이동 모션으로 전환
+        float fTarget = IsAttacking ? 1f : 0f;
         float fCurrent = _animator.GetLayerWeight(upperBodyLayerIndex);
         float fNext = Mathf.MoveTowards(fCurrent, fTarget, upperBodyBlendSpeed * Time.deltaTime);
         _animator.SetLayerWeight(upperBodyLayerIndex, fNext);
@@ -184,6 +214,8 @@ public class PlayerCombat : MonoBehaviour
 
         // 클릭 프레임에 즉시 이동 정지되도록 선반영 (다음 프레임부터는 Update 가 애니메이터 상태로 갱신)
         _isAttacking = true;
+        _bAttackCanceled = false;
+        _fAttackLockTimer = GetAttackLockTime();
 
         // 같은 프레임에 forward 기준 판정이 나가므로 커서 방향으로 즉시 회전
         if (_controller != null)
@@ -204,6 +236,18 @@ public class PlayerCombat : MonoBehaviour
 
         // 판정 실행 — onHit 콜백으로 피격 처리
         _hitbox.PerformAttack(CurrentWeapon, OnHit);
+    }
+
+    // 장착 무기의 경직 시간 (단검은 다단히트가 끝나기 전에 캔슬되지 않도록 최소 보장)
+    private float GetAttackLockTime()
+    {
+        float fLockTime = CurrentWeapon.WeaponData.AttackLockTime;
+
+        if (CurrentWeapon.ResolvedWeaponType == WeaponType.Dagger && _hitbox != null)
+        {
+            fLockTime = Mathf.Max(fLockTime, _hitbox.DaggerAttackDuration);
+        }
+        return fLockTime;
     }
 
     /// <summary>
