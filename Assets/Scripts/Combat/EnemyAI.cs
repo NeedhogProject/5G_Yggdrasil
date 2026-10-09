@@ -20,6 +20,7 @@ using UnityEngine.AI;
 /// [컴포넌트 설정]
 /// - NavMeshAgent 부착 필수
 /// - EnemyBase 와 같은 오브젝트에 부착
+/// - Rigidbody 는 실행 시 Kinematic 으로 전환 (이동은 NavMeshAgent 전담, 충돌로 플레이어를 밀지 않게)
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(EnemyBase))]
@@ -53,6 +54,9 @@ public class EnemyAI : MonoBehaviour
     [Tooltip("공격 쿨다운 (초)")]
     [SerializeField] private float attackCooldown = 1.5f;
 
+    // 추적 정지 거리 = 공격 범위 x 비율 (몸이 닿기 전에 멈춤)
+    private const float STOP_DISTANCE_RATIO = 0.8f;
+
     // ─────────────────────── 내부 참조 ───────────────────────
 
     private NavMeshAgent _agent;
@@ -75,6 +79,13 @@ public class EnemyAI : MonoBehaviour
         _base          = GetComponent<EnemyBase>();
         _spawnPosition = transform.position;
 
+        // 물리 Rigidbody 와 NavMeshAgent 가 동시에 위치를 움직이면 서로 밀어내므로 Kinematic 으로 고정
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.isKinematic = true;
+        }
+
         // EnemyBase 사망 이벤트 구독
         _base.OnDied += _ => TransitionTo(AIState.Dead);
     }
@@ -87,6 +98,9 @@ public class EnemyAI : MonoBehaviour
 
         // NavMeshAgent 스탯 동기화
         _agent.speed = _base.MoveSpeed;
+
+        // 플레이어 중심까지 파고들지 않도록 공격 범위 안쪽에서 정지
+        _agent.stoppingDistance = _base.AttackRange * STOP_DISTANCE_RATIO;
 
         TransitionTo(AIState.Patrol);
     }
@@ -211,6 +225,8 @@ public class EnemyAI : MonoBehaviour
             case AIState.Attack:
                 _agent.isStopped = true;
                 _agent.ResetPath();
+                // 위험: isStopped 만으로는 가속도(8)로 서서히 멈춰 최대 1.5m 더 미끄러지며 플레이어를 밀어냄
+                _agent.velocity = Vector3.zero;
                 break;
 
             case AIState.Dead:
