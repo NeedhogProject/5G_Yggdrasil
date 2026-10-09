@@ -18,9 +18,9 @@ public enum StemDirection
 public enum StemMode
 {
     DownOnly,       // 1층: 하강만 가능 (열쇠 필요)
-    UpOrDown,       // 2층: 열쇠 삽입 후 위/아래 선택
+    UpOrDown,       // 2층: 위/아래 선택 (위는 열쇠 불필요, 아래만 열쇠 필요)
     DownOnlyFixed,  // 사용 안 함 (4층 제거). 위험: 삭제하면 씬에 저장된 UpOnly 값이 밀림
-    UpOnly          // 3층(최하층): 줄기 1개, 상승만 가능
+    UpOnly          // 3층(최하층): 줄기 1개, 상승만 가능, 열쇠 불필요
 }
 
 /// <summary>
@@ -28,8 +28,8 @@ public enum StemMode
 ///
 /// [기획 반영]
 /// - 1층    : 열쇠 삽입 → 2층으로 하강만 가능
-/// - 2층    : 열쇠 삽입 → 위층 or 아래층 선택 UI 표시
-/// - 3층    : 최하층, 줄기 1개 고정, 열쇠 삽입 후 2층으로 상승만 (UpOnly)
+/// - 2층    : E키로 위/아래 선택 UI 표시, 아래 선택 시에만 열쇠 확인
+/// - 3층    : 최하층, 줄기 1개 고정, 열쇠 없이 E키로 2층으로 상승만 (UpOnly)
 /// - 시각적 구분 없음 (탐색 필요)
 /// - 열쇠 삽입 시 구멍 연출 후 이동
 /// </summary>
@@ -88,7 +88,20 @@ public class StemConnector : MonoBehaviour
         if (IsUnlocked) return;
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
-        // 모든 줄기는 열쇠 필요 (상승 전용도 동일 — 무한 파밍 방지)
+        // 올라가기 전용 줄기는 위층에서 이미 연 줄기로 돌아가는 것이라 열쇠 없이 바로 이동
+        if (stemMode == StemMode.UpOnly)
+        {
+            OnKeyInserted();
+            return;
+        }
+
+        // 위/아래 선택 줄기는 열쇠 없이 선택창부터 (아래 선택 시에만 열쇠 확인)
+        if (stemMode == StemMode.UpOrDown)
+        {
+            ShowDirectionChoice();
+            return;
+        }
+
         StemManager.Instance?.TryInsertKey(_playerObj, this);
     }
 
@@ -103,7 +116,8 @@ public class StemConnector : MonoBehaviour
         {
             case StemMode.DownOnly:
             case StemMode.DownOnlyFixed:
-                // 바로 하강 연출 시작
+            case StemMode.UpOrDown:
+                // 바로 하강 연출 시작 (UpOrDown 은 아래 선택 후 열쇠 확인을 통과한 경우)
                 PlayHoleVFX();
                 Invoke(nameof(GoDown), transitionDelay);
                 break;
@@ -112,11 +126,6 @@ public class StemConnector : MonoBehaviour
                 // 최하층 — 상승만 가능
                 PlayHoleVFX();
                 Invoke(nameof(GoUp), transitionDelay);
-                break;
-
-            case StemMode.UpOrDown:
-                // 위/아래 선택 UI 표시
-                ShowDirectionChoice();
                 break;
         }
     }
@@ -132,9 +141,9 @@ public class StemConnector : MonoBehaviour
         }
         else
         {
-            // UI 미설정 시 임시: 로그로 선택지 표시
+            // UI 미설정 시 임시: 하강 선택으로 처리 (열쇠 확인 거침)
             Debug.Log("[StemConnector] 방향 선택 — UI 미설정. 기본 하강 처리");
-            GoDown();
+            OnChooseDown();
         }
     }
 
@@ -147,6 +156,10 @@ public class StemConnector : MonoBehaviour
     /// <summary>위로 이동 버튼 — UI 버튼 OnClick 에 연결</summary>
     public void OnChooseUp()
     {
+        if (IsUnlocked == true) return;
+
+        // 올라가기는 열쇠 불필요
+        IsUnlocked = true;
         HideDirectionChoice();
         PlayHoleVFX();
         Invoke(nameof(GoUp), transitionDelay);
@@ -155,9 +168,11 @@ public class StemConnector : MonoBehaviour
     /// <summary>아래로 이동 버튼 — UI 버튼 OnClick 에 연결</summary>
     public void OnChooseDown()
     {
+        if (IsUnlocked == true) return;
+
+        // 내려가기는 열쇠 필요: 확인 통과 시 OnKeyInserted 에서 하강 연출
         HideDirectionChoice();
-        PlayHoleVFX();
-        Invoke(nameof(GoDown), transitionDelay);
+        StemManager.Instance?.TryInsertKey(_playerObj, this);
     }
 
     // ─────────────────────── 실제 이동 ───────────────────────

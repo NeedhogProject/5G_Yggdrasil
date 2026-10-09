@@ -6,9 +6,10 @@ using System.Collections.Generic;
 ///
 /// [기획 반영]
 /// - 층 입장 시 생명체 4마리에게 열쇠(북/남/동/서) 1개씩 랜덤 분배
+/// - 열쇠는 층에 들어온 뒤 나갈 때까지 방향별 1개씩, 총 줄기 수만큼만 존재 (재배정 없음)
 /// - 같은 열쇠 중복 불가 (층 내 고유)
 /// - 어떤 생명체가 어떤 열쇠를 갖는지 플레이어는 모름 → 탐색 필요
-/// - 3층(최하층): 줄기 1개 고정, 열쇠 1종만 분배
+/// - 올라가기 전용 줄기(3층)는 열쇠 불필요, 열쇠 분배 대상에서 제외
 /// - 플레이어가 줄기 앞에서 E키 → 인벤에 맞는 열쇠 있으면 삽입 → 구멍 연출 → 입장
 /// </summary>
 public class StemManager : MonoBehaviour
@@ -53,26 +54,40 @@ public class StemManager : MonoBehaviour
     private readonly Dictionary<KeyDirection, FloorKeyData> _directionKeyMap
         = new Dictionary<KeyDirection, FloorKeyData>();
 
+    // 아직 아무 생명체에게도 주지 않은 열쇠 (한 번 꺼내면 다시 들어오지 않음)
+    private readonly Queue<FloorKeyData> _pendingKeys = new Queue<FloorKeyData>();
+
     // ─────────────────────── 열쇠 분배 ───────────────────────
 
     /// <summary>
     /// 층 입장 시 호출 — 생명체에게 열쇠 랜덤 분배
-    /// EnemySpawner 에서 생명체 생성 완료 후 RegisterEnemies() 호출 필요
+    /// 열쇠 소유 생명체가 생성될 때마다 EnemySpawner 에서 AssignKey() 호출
     /// </summary>
     private void DistributeKeys()
     {
         _directionKeyMap.Clear();
 
-        // 3층: 줄기 1개 고정 → 열쇠 1종만 (northKey 사용)
-        if (stems.Count == 1)
+        // 올라가기 전용 줄기는 위층에서 이미 연 줄기로 돌아가는 것이라 열쇠 불필요
+        List<StemConnector> keyStems = stems.FindAll(stem => stem != null && stem.Mode != StemMode.UpOnly);
+
+        if (keyStems.Count == 0)
         {
-            StemConnector stem = stems[0];
-            _directionKeyMap[ToKeyDirection(stem.Direction)] = GetKeyByDirection(ToKeyDirection(stem.Direction));
-            Debug.Log($"[StemManager] {currentFloor}층 (고정 줄기) 열쇠: {stem.Direction}");
+            _pendingKeys.Clear();
+            Debug.Log($"[StemManager] {currentFloor}층 열쇠 없음 (올라가기 전용 줄기만 존재)");
             return;
         }
 
-        // 1~2층: 줄기 4개 → 열쇠 4종 1:1 랜덤 배정
+        // 열쇠가 필요한 줄기 1개: 열쇠 1종만
+        if (keyStems.Count == 1)
+        {
+            StemConnector stem = keyStems[0];
+            _directionKeyMap[ToKeyDirection(stem.Direction)] = GetKeyByDirection(ToKeyDirection(stem.Direction));
+            Debug.Log($"[StemManager] {currentFloor}층 (고정 줄기) 열쇠: {stem.Direction}");
+            FillPendingKeys();
+            return;
+        }
+
+        // 1~2층: 줄기 4개, 열쇠 4종 1:1 랜덤 배정
         List<KeyDirection> directions = new List<KeyDirection>
             { KeyDirection.North, KeyDirection.South, KeyDirection.East, KeyDirection.West };
 
@@ -83,40 +98,45 @@ public class StemManager : MonoBehaviour
             (directions[i], directions[j]) = (directions[j], directions[i]);
         }
 
-        for (int i = 0; i < stems.Count && i < directions.Count; i++)
-            _directionKeyMap[ToKeyDirection(stems[i].Direction)] = GetKeyByDirection(directions[i]);
+        for (int i = 0; i < keyStems.Count && i < directions.Count; i++)
+            _directionKeyMap[ToKeyDirection(keyStems[i].Direction)] = GetKeyByDirection(directions[i]);
 
+        FillPendingKeys();
         Debug.Log($"[StemManager] {currentFloor}층 열쇠 분배 완료");
     }
 
-    /// <summary>
-    /// EnemySpawner 에서 이 층의 열쇠 소유 생명체 등록
-    /// 열쇠 소유 생명체 목록을 받아 랜덤 분배 (중복 없음)
-    /// </summary>
-    public void RegisterEnemies(List<GameObject> keyEnemies)
+    // 줄기별 열쇠를 섞어서 배정 대기열에 넣음 (층 입장 시 1회)
+    private void FillPendingKeys()
     {
-        _enemyKeyMap.Clear();
-
-        if (keyEnemies == null || keyEnemies.Count == 0) return;
-
-        // 분배할 열쇠 목록 수집
         List<FloorKeyData> keys = new List<FloorKeyData>(_directionKeyMap.Values);
 
-        // 생명체 수와 열쇠 수 중 작은 쪽 기준으로 분배
-        int count = Mathf.Min(keyEnemies.Count, keys.Count);
-
-        // 열쇠 셔플
         for (int i = keys.Count - 1; i > 0; i--)
         {
-            int j = Random.Range(0, i + 1);
-            (keys[i], keys[j]) = (keys[j], keys[i]);
+            int nJ = Random.Range(0, i + 1);
+            (keys[i], keys[nJ]) = (keys[nJ], keys[i]);
         }
 
-        for (int i = 0; i < count; i++)
+        _pendingKeys.Clear();
+        foreach (FloorKeyData key in keys)
         {
-            _enemyKeyMap[keyEnemies[i]] = keys[i];
-            Debug.Log($"[StemManager] {keyEnemies[i].name} → {keys[i].KeyDirection} 열쇠 소유");
+            _pendingKeys.Enqueue(key);
         }
+    }
+
+    /// <summary>
+    /// 열쇠 소유 생명체 1마리 등록, 남은 열쇠 중 하나를 배정
+    /// 이미 배정한 열쇠는 다시 섞거나 다른 생명체에게 옮기지 않음
+    /// </summary>
+    public void AssignKey(GameObject _enemy)
+    {
+        if (_enemy == null || _pendingKeys.Count == 0)
+        {
+            return;
+        }
+
+        FloorKeyData key = _pendingKeys.Dequeue();
+        _enemyKeyMap[_enemy] = key;
+        Debug.Log($"[StemManager] {_enemy.name} 에게 {key.KeyDirection} 열쇠 배정 (남은 열쇠 {_pendingKeys.Count}개)");
     }
 
     /// <summary>

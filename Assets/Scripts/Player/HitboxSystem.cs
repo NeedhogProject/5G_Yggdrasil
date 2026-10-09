@@ -130,7 +130,7 @@ public class HitboxSystem : MonoBehaviour
             foreach (Collider col in hits)
             {
                 GameObject target = col.gameObject;
-                if (target == gameObject) continue;
+                if (IsHittable(col) == false) continue;
                 if (hitTargetsPerWave.Contains(target)) continue;
 
                 // 높이 차이 체크
@@ -151,6 +151,12 @@ public class HitboxSystem : MonoBehaviour
 #if UNITY_EDITOR
         Debug.Log($"[HitboxSystem] 단검 공격 완료 — 총 {totalHits}회 히트");
 #endif
+    }
+
+    // 적 또는 자원 노드만 판정 대상 (플레이어 자신, 지형, 바닥 아이템 제외)
+    private bool IsHittable(Collider _col)
+    {
+        return _col.TryGetComponent<EnemyBase>(out _) || _col.TryGetComponent<ResourceNode>(out _);
     }
 
     /// <summary>단검 다단히트 첫 판정부터 마지막 판정까지 걸리는 시간 (초)</summary>
@@ -180,7 +186,7 @@ public class HitboxSystem : MonoBehaviour
 
         foreach (Collider col in hits)
         {
-            if (col.gameObject == gameObject) continue;
+            if (IsHittable(col) == false) continue;
 
             Vector3 targetPos = col.transform.position;
             Vector3 dir = targetPos - transform.position;
@@ -231,7 +237,7 @@ public class HitboxSystem : MonoBehaviour
 
         foreach (Collider col in sorted)
         {
-            if (col.gameObject == gameObject) continue;
+            if (IsHittable(col) == false) continue;
 
             // 높이 차이 체크
             float heightDiff = Mathf.Abs(col.transform.position.y - transform.position.y);

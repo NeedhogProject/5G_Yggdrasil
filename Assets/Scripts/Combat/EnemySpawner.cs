@@ -9,7 +9,7 @@ using System.Collections.Generic;
 /// - 플레이어가 SpawnPoint 근처에 접근하면 적 생성 (탐색하면서 만나는 느낌)
 /// - 1층: 50마리 / 2·3층: 최소 125마리 기준
 /// - 재입장 시 모든 SpawnPoint 리셋 → 적 재생성
-/// - 열쇠 소유 적 4마리를 StemManager 에 등록
+/// - 열쇠 소유 적 4마리를 StemManager 에 등록 (열쇠 스폰 포인트당 첫 1마리만, 층당 1회)
 ///
 /// [씬 설정]
 /// 1. 씬에 SpawnPoint 오브젝트들을 배치
@@ -25,7 +25,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
 
     [Header("열쇠 소유 적 수")]
-    [Tooltip("기획: 4마리가 열쇠 1개씩 소유. 3층(줄기 1개)은 1로 설정")]
+    [Tooltip("기획: 4마리가 열쇠 1개씩 소유. 3층은 열쇠가 없어 값과 무관하게 배정되지 않음")]
     [SerializeField] [Range(1, 4)] private int keyEnemyCount = 4;
 
     [Header("스폰 체크 간격 (초)")]
@@ -48,9 +48,6 @@ public class EnemySpawner : MonoBehaviour
 
     private Transform _player;
     private float     _checkTimer = 0f;
-
-    /// <summary>스폰된 적 중 열쇠 소유 적 목록</summary>
-    private readonly List<GameObject> _keyEnemies = new List<GameObject>();
 
     /// <summary>열쇠를 부여할 스폰 포인트 인덱스 목록</summary>
     private readonly List<int> _keySpawnIndices = new List<int>();
@@ -196,7 +193,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         // 앞 keyEnemyCount 개를 열쇠 스폰 포인트로 지정
-        // 실제 열쇠 분배는 적 생성 후 StemManager.RegisterEnemies() 에서 처리
+        // 실제 열쇠 배정은 적 생성 시 StemManager.AssignKey() 에서 처리
         _keySpawnIndices.Clear();
         for (int i = 0; i < keyEnemyCount; i++)
             _keySpawnIndices.Add(indices[i]);
@@ -205,19 +202,19 @@ public class EnemySpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// 스폰된 적이 열쇠 소유 대상인지 확인 후 _keyEnemies 에 추가
+    /// 스폰된 적이 열쇠 소유 대상이면 StemManager 에 열쇠 배정 요청
     /// SpawnEnemy 내부에서 호출
     /// </summary>
     private void TryRegisterKeyEnemy(SpawnPoint _sp, GameObject _enemy)
     {
+        // 열쇠 스폰 포인트에서 처음 나온 1마리만 열쇠 소유 (같은 포인트의 다음 적은 제외)
         int nIdx = spawnPoints.IndexOf(_sp);
-        if (_keySpawnIndices.Contains(nIdx) == false) return;
+        if (_keySpawnIndices.Remove(nIdx) == false) return;
 
-        _keyEnemies.Add(_enemy);
-
-        // 열쇠 소유 적이 모두 모이면 StemManager 에 등록
-        if (_keyEnemies.Count >= keyEnemyCount)
-            StemManager.Instance?.RegisterEnemies(_keyEnemies);
+        if (StemManager.Instance != null)
+        {
+            StemManager.Instance.AssignKey(_enemy);
+        }
     }
 
     // ─────────────────────── 적 사망 콜백 ───────────────────────
@@ -236,7 +233,6 @@ public class EnemySpawner : MonoBehaviour
     /// </summary>
     public void ResetSpawner()
     {
-        _keyEnemies.Clear();
         _keySpawnIndices.Clear();
         AliveEnemyCount = 0;
 
