@@ -196,16 +196,29 @@ public class NPCInteractable : MonoBehaviour
 
     private void OpenScholar()
     {
-        // 기능 시스템이 아직 없어도 대화창은 먼저 띄운다.
-        // 기능 선택지를 눌렀을 때 시스템이 없으면 그때 경고한다.
+        // 학자: 유물 판매하기 = 상점 판매창을 유물 전용 모드로 연다 (상점 판매창과 동일)
+        // 유물이 아닌 아이템은 담기 거부되어 판매 불가 칸처럼 동작한다
         System.Action openFunction = delegate ()
         {
-            if (scholarSystem == null)
+            ShopSystem shop = shopSystem;
+            if (shop == null)
             {
-                Debug.LogWarning("[NPCInteractable] " + npcName + ": ScholarSystem 미연결");
+                shop = ShopSystem.Instance;
+            }
+            if (shop == null)
+            {
+                // ShopUI 가 꺼져 있을 수 있으므로 비활성 포함 검색
+                shop = FindFirstObjectByType<ShopSystem>(FindObjectsInactive.Include);
+            }
+            if (shop == null)
+            {
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": ShopSystem 을 찾을 수 없어 유물 판매를 열 수 없음");
                 return;
             }
-            scholarSystem.OpenScholar();
+
+            shop.OpenRelicSell();
+            // X/ESC 로 닫으면 이 학자 메뉴로 다시 돌아오게 연결
+            shop.onBackToMenu = OpenScholar;
         };
 
         string[] labels = new string[] { functionChoiceLabel };
@@ -216,7 +229,7 @@ public class NPCInteractable : MonoBehaviour
             return;
         }
 
-        // 대화 흐름을 못 쓰는 경우(설정 꺼짐 등) 기존처럼 바로 기능 열기 시도
+        // 대화 흐름을 못 쓰는 경우(설정 꺼짐 등) 바로 유물 판매창 열기 시도
         openFunction();
     }
 
@@ -230,6 +243,8 @@ public class NPCInteractable : MonoBehaviour
                 return;
             }
             blacksmithSystem.OpenBlacksmith();
+            // X/ESC 로 닫으면 이 메뉴로 다시 돌아오게 연결
+            blacksmithSystem.onBackToMenu = OpenBlacksmith;
         };
 
         string[] labels = new string[] { functionChoiceLabel };

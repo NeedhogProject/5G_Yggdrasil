@@ -104,6 +104,12 @@ public class ShopSystem : MonoBehaviour
 
     public static ShopSystem Instance { get; private set; }
 
+    // 유물 전용 판매 모드 (학자 NPC 가 상점 판매창을 재활용할 때 켬)
+    private bool _relicOnlyMode = false;
+
+    // 학자 모드에서 X/ESC 로 닫을 때 돌아갈 NPC 대화 메뉴 콜백 (NPCInteractable 가 설정)
+    public System.Action onBackToMenu = null;
+
     private InventoryUI _inventoryUI = null;
     private ShopItemData _pendingShopItem = null;
     private int _pendingQuantity = 1;
@@ -179,7 +185,7 @@ public class ShopSystem : MonoBehaviour
         }
         if (closeButton != null)
         {
-            closeButton.onClick.AddListener(CloseShop);
+            closeButton.onClick.AddListener(OnCloseButtonClicked);
         }
 
         if (quantityUpButton != null)
@@ -304,6 +310,8 @@ public class ShopSystem : MonoBehaviour
         }
 
         isOpen = false;
+        _relicOnlyMode = false;
+        onBackToMenu = null;
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
 
@@ -312,10 +320,46 @@ public class ShopSystem : MonoBehaviour
         {
             inventoryUI.CloseInventory();
         }
-        // 메뉴 인사 대사 (타이핑 효과로 출력)
-        SetDialogue(GetRandomLine(talkLines));
+
         // ShopUI(자기 자신) 끄기 — 다음에 OpenShop 때 다시 켜짐
         gameObject.SetActive(false);
+    }
+
+    // 학자 전용 — 상점 판매창을 유물 전용 모드로 바로 연다 (내부 선택 메뉴 없이 판매 화면으로)
+    // 유물이 아닌 아이템은 StageForSale 에서 담기 거부되어 판매 불가 칸처럼 동작한다
+    public void OpenRelicSell()
+    {
+        // ShopUI(자기 자신) 가 꺼져있으면 켜기
+        if (gameObject.activeSelf == false)
+        {
+            gameObject.SetActive(true);
+        }
+
+        // 꺼진 채 시작했을 수 있으니 버튼 연결 보장
+        EnsureSetup();
+
+        _relicOnlyMode = true;
+        isOpen = true;
+
+        UpdateGoldDisplay();
+        AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+
+        // 내부 선택 메뉴를 건너뛰고 바로 판매 화면으로
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+        if (shopPanel != null)
+        {
+            shopPanel.SetActive(true);
+        }
+
+        // 구매/판매 탭 버튼 숨김 (유물 판매 전용이라 탭 전환 불필요)
+        SetTabsVisible(false);
+        SwitchTab(ShopTab.Sell);
+        OpenInventoryBeside();
+
+        SetDialogue("유물을 판매창에 담아주게. 유물만 받는다네.");
     }
 
     private void ShowMenu()
@@ -433,6 +477,16 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
+        // ESC 는 X(닫기) 버튼과 동일하게 처리 (한 단계 뒤로)
+        OnCloseButtonClicked();
+    }
+
+    // X(닫기) 버튼 처리 — 바로 종료하지 않고 한 단계씩 뒤로 간다
+    // 구매 확인 팝업 열림: 팝업만 닫기
+    // 구매/판매 창: 선택 메뉴로 복귀 (대화 종료 아님)
+    // 선택 메뉴: 상점 완전 종료
+    public void OnCloseButtonClicked()
+    {
         // 구매 확인 팝업이 떠 있으면 팝업만 닫기
         if (buyConfirmPopup != null && buyConfirmPopup.activeSelf == true)
         {
@@ -440,7 +494,14 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        // 구매/판매 창이 떠 있으면 메뉴로 돌아가기
+        // 학자(유물 전용) 모드는 내부 선택 메뉴가 없으므로 닫고 학자 대화 메뉴로 복귀한다
+        if (_relicOnlyMode == true)
+        {
+            GoBackToNpcMenu();
+            return;
+        }
+
+        // 구매/판매 창이 떠 있으면 상점 전용 선택 메뉴로 돌아가기 (대화 종료 아님)
         if (shopPanel != null && shopPanel.activeSelf == true)
         {
             // 뒤로 가기 대사 출력 (메뉴 패널에 dialogueText 가 있으면 표시)
@@ -449,8 +510,43 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        // 메뉴 화면이면 상점 완전히 닫기
+        // 선택 메뉴 화면이면 상점 완전히 닫기
         CloseShop();
+    }
+
+    // 학자 모드 전용 — 상점을 닫고 NPC 대화 선택 메뉴로 복귀한다
+    // CloseShop 이 ShopUI 를 꺼버리므로 항상 켜져 있는 GameManager 에서 재오픈을 실행한다
+    private void GoBackToNpcMenu()
+    {
+        // 콜백을 먼저 보관 (CloseShop 에서 비우므로)
+        System.Action back = onBackToMenu;
+
+        CloseShop();
+
+        if (back == null)
+        {
+            return;
+        }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StartCoroutine(ReopenNpcMenuNextFrame(back));
+        }
+        else
+        {
+            back();
+        }
+    }
+
+    // 한 프레임 뒤에 NPC 대화 메뉴를 다시 연다
+    private IEnumerator ReopenNpcMenuNextFrame(System.Action back)
+    {
+        yield return null;
+
+        if (back != null)
+        {
+            back();
+        }
     }
 
     private void SwitchTab(ShopTab tab)
@@ -754,6 +850,13 @@ public class ShopSystem : MonoBehaviour
 
         if (currentTab != ShopTab.Sell)
         {
+            return;
+        }
+
+        // 유물 전용 모드(학자)면 유물이 아닌 아이템은 담지 못한다 (판매 불가 칸 처리)
+        if (_relicOnlyMode == true && slot.currentItem.itemType != ItemType.Relic)
+        {
+            SetDialogue("유물만 판매할 수 있다네.");
             return;
         }
 

@@ -1,41 +1,59 @@
-/*
+ï»¿/*
  * MerchantTalk.cs
- * »óÀÎ(º§¶ó) ¸Ş´ºÃ¢ÀÇ "´ëÈ­ÇÏ±â" ¹öÆ°¿ë ´ë»ç ¼øÈ¯
- * ShopMenuPanel ¿¡ ºÎÂøÇÏ°í, MenuTalkButton ÀÇ OnClick ¿¡ OnTalkClicked ¿¬°á
- * ´ã´ç: ±èº¸¹Î
+ * ìƒì¸(ë²¨ë¼) ë©”ë‰´ì°½ì˜ "ëŒ€í™”í•˜ê¸°" ë²„íŠ¼ìš© ëŒ€ì‚¬ ìˆœí™˜
+ * ShopMenuPanel ì— ë¶€ì°©í•˜ê³ , MenuTalkButton ì˜ OnClick ì— OnTalkClicked ì—°ê²°
+ * ë‹´ë‹¹: ê¹€ë³´ë¯¼
  */
 
 using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class MerchantTalk : MonoBehaviour
 {
-    [Header("´ë»ç Ç¥½Ã ÅØ½ºÆ®")]
-    [Tooltip("´ëÈ­ÇÏ±â ´©¸¦ ¶§ ´ë»ç°¡ Ç¥½ÃµÉ TMP ÅØ½ºÆ®")]
+    [Header("ëŒ€ì‚¬ í‘œì‹œ í…ìŠ¤íŠ¸")]
+    [Tooltip("ëŒ€í™”í•˜ê¸° ëˆ„ë¥¼ ë•Œ ëŒ€ì‚¬ê°€ í‘œì‹œë  TMP í…ìŠ¤íŠ¸")]
     [SerializeField] private TMP_Text talkText;
 
-    [Header("´ë»ç ¸ñ·Ï")]
-    [Tooltip("´ëÈ­ÇÏ±â¸¦ ´©¸¦ ¶§¸¶´Ù ¼ø¼­´ë·Î ¼øÈ¯ÇÏ¸ç Ç¥½Ã")]
+    [Header("íƒ€ì´í•‘ íš¨ê³¼ (ì´ˆë‹¹ ê°„ê²©, 0 ì´í•˜ë©´ ê¸°ë³¸ê°’ 0.03 ì‚¬ìš©)")]
+    [Tooltip("í•œ ê¸€ìì”© ì°íˆëŠ” ê°„ê²©. ì‘ì„ìˆ˜ë¡ ë¹ ë¦„")]
+    [SerializeField] private float typingSpeed = 0.05f;
+
+    [Header("ëŒ€ì‚¬ ëª©ë¡")]
+    [Tooltip("ëŒ€í™”í•˜ê¸°ë¥¼ ëˆ„ë¥¼ ë•Œë§ˆë‹¤ ìˆœì„œëŒ€ë¡œ ìˆœí™˜í•˜ë©° í‘œì‹œ")]
     [TextArea]
     [SerializeField]
     private string[] sentences = new string[]
     {
-        "Á¤Á÷ÇÑ °¡°İÀ¸·Î ¸ğ½Ê´Ï´Ù~! ¾î¼­¿À¼¼¿ä!",
-        "ÇÊ¿äÇÑ °Ô ÀÖÀ¸½Å°¡¿ä? ÃµÃµÈ÷ µÑ·¯º¸¼¼¿ä~",
-        "ÇìÇì, Ã£¾Æ¿Í ÁÖ¼Å¼­ °¨»çÇÕ´Ï´Ù!"
+        "ì •ì§í•œ ê°€ê²©ìœ¼ë¡œ ëª¨ì‹­ë‹ˆë‹¤~! ì–´ì„œì˜¤ì„¸ìš”!",
+        "í•„ìš”í•œ ê²Œ ìˆìœ¼ì‹ ê°€ìš”? ì²œì²œíˆ ë‘˜ëŸ¬ë³´ì„¸ìš”~",
+        "í—¤í—¤, ì°¾ì•„ì™€ ì£¼ì…”ì„œ ê°ì‚¬í•©ë‹ˆë‹¤!"
     };
 
-    // ÇöÀç Ç¥½Ã ÁßÀÎ ´ë»ç ¹øÈ£
+    // í˜„ì¬ í‘œì‹œ ì¤‘ì¸ ëŒ€ì‚¬ ë²ˆí˜¸
     private int _lineIndex = 0;
 
-    // ¸Ş´ºÃ¢ÀÌ ¿­¸± ¶§¸¶´Ù Ã¹ ´ë»ç·Î ÃÊ±âÈ­ÇÏ°í ½ÍÀ¸¸é OnEnable »ç¿ë
+    // ì§„í–‰ ì¤‘ì¸ íƒ€ì´í•‘ ì½”ë£¨í‹´ (ìƒˆ ëŒ€ì‚¬ê°€ ë‚˜ì˜¤ë©´ ë©ˆì¶”ê³  ìƒˆë¡œ ì‹œì‘)
+    private Coroutine _typingCoroutine = null;
+
+    // ë©”ë‰´ì°½ì´ ì—´ë¦´ ë•Œë§ˆë‹¤ ì²« ëŒ€ì‚¬ë¶€í„° íƒ€ì´í•‘ìœ¼ë¡œ í‘œì‹œ
     private void OnEnable()
     {
         _lineIndex = 0;
         ShowCurrentLine();
     }
 
-    // ´ëÈ­ÇÏ±â ¹öÆ° OnClick ¿¡ ¿¬°á
+    // ì°½ì´ êº¼ì§ˆ ë•Œ ì§„í–‰ ì¤‘ì´ë˜ íƒ€ì´í•‘ì„ ë©ˆì¶˜ë‹¤
+    private void OnDisable()
+    {
+        if (_typingCoroutine != null)
+        {
+            StopCoroutine(_typingCoroutine);
+            _typingCoroutine = null;
+        }
+    }
+
+    // ëŒ€í™”í•˜ê¸° ë²„íŠ¼ OnClick ì— ì—°ê²°
     public void OnTalkClicked()
     {
         if (sentences == null || sentences.Length == 0)
@@ -52,7 +70,7 @@ public class MerchantTalk : MonoBehaviour
         ShowCurrentLine();
     }
 
-    // ÇöÀç ¹øÈ£ÀÇ ´ë»ç¸¦ ÅØ½ºÆ®¿¡ Ç¥½Ã
+    // í˜„ì¬ ë²ˆí˜¸ì˜ ëŒ€ì‚¬ë¥¼ íƒ€ì´í•‘ íš¨ê³¼ë¡œ í‘œì‹œ
     private void ShowCurrentLine()
     {
         if (talkText == null)
@@ -69,6 +87,50 @@ public class MerchantTalk : MonoBehaviour
             _lineIndex = 0;
         }
 
-        talkText.text = sentences[_lineIndex];
+        StartTyping(sentences[_lineIndex]);
+    }
+
+    // ì´ì „ íƒ€ì´í•‘ì„ ë©ˆì¶”ê³  ìƒˆ ëŒ€ì‚¬ íƒ€ì´í•‘ì„ ì‹œì‘
+    private void StartTyping(string line)
+    {
+        if (_typingCoroutine != null)
+        {
+            StopCoroutine(_typingCoroutine);
+            _typingCoroutine = null;
+        }
+
+        // ì˜¤ë¸Œì íŠ¸ê°€ ë¹„í™œì„±ì´ë©´ ì½”ë£¨í‹´ì„ ëª» ëŒë¦¬ë¯€ë¡œ ì¦‰ì‹œ í‘œì‹œ
+        if (gameObject.activeInHierarchy == false)
+        {
+            talkText.text = line;
+            return;
+        }
+
+        _typingCoroutine = StartCoroutine(TypeLine(line));
+    }
+
+    // í•œ ê¸€ìì”© ì¶œë ¥í•˜ëŠ” ì½”ë£¨í‹´ (WaitForSecondsRealtime ë¼ ì¼ì‹œì •ì§€ ì¤‘ì—ë„ ë™ì‘)
+    private IEnumerator TypeLine(string line)
+    {
+        talkText.text = "";
+
+        // ì†ë„ ë³´ì • â€” 0 ì´í•˜ì´ë©´ ê¸°ë³¸ê°’ ì‚¬ìš© (ì¸ìŠ¤í™í„° 0 ì‹¤ìˆ˜ ë°©ì§€)
+        float speed = typingSpeed;
+        if (speed <= 0f)
+        {
+            speed = 0.03f;
+        }
+
+        int i = 0;
+        int length = line.Length;
+
+        while (i < length)
+        {
+            talkText.text = talkText.text + line[i];
+            i = i + 1;
+            yield return new WaitForSecondsRealtime(speed);
+        }
+
+        _typingCoroutine = null;
     }
 }

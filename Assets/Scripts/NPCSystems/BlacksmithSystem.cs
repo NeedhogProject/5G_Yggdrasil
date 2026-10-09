@@ -52,6 +52,9 @@ public class BlacksmithSystem : MonoBehaviour
     public Button menuEnhanceButton;
     public Button menuTalkButton;
 
+    // X(닫기)/ESC 로 강화창을 닫을 때 다시 띄울 NPC 대화 메뉴 콜백 (NPCInteractable 가 설정)
+    public System.Action onBackToMenu = null;
+
     [Header("대사 타이핑 효과")]
     // 글자 하나당 대기 시간(초). 0 이면 즉시 표시.
     [SerializeField] private float dialogueTextSpeed = 0.03f;
@@ -126,7 +129,7 @@ public class BlacksmithSystem : MonoBehaviour
         }
         if (closeButton != null)
         {
-            closeButton.onClick.AddListener(CloseBlacksmith);
+            closeButton.onClick.AddListener(GoBackToMenu);
         }
 
         if (menuEnhanceButton != null)
@@ -190,6 +193,7 @@ public class BlacksmithSystem : MonoBehaviour
         _isOpen = false;
         _selectedWeapon = null;
         _selectedCard = null;
+        onBackToMenu = null;
 
         ClearWeaponList();
 
@@ -266,17 +270,34 @@ public class BlacksmithSystem : MonoBehaviour
             return;
         }
 
-        // 강화 패널이 떠 있으면 완전히 닫기 (메뉴는 NPCDialogue 가 담당하므로 복귀 단계 없음)
-        if (blacksmithPanel.activeSelf == true)
-        {
-            CloseBlacksmith();
-            return;
-        }
+        // X 버튼과 동일하게 — 강화창을 닫고 NPC 대화 선택 메뉴로 복귀
+        GoBackToMenu();
+    }
 
-        // 메뉴 화면이면 완전히 닫기
-        if (menuPanel != null && menuPanel.activeSelf == true)
+    // X(닫기)/ESC 처리 — 강화창을 닫고 NPC 대화 선택 메뉴로 돌아간다
+    // onBackToMenu 가 없으면(단독 실행 등) 그냥 완전히 닫는다
+    private void GoBackToMenu()
+    {
+        // 콜백을 먼저 보관 (CloseBlacksmith 에서 비우므로)
+        System.Action back = onBackToMenu;
+
+        CloseBlacksmith();
+
+        if (back != null)
         {
-            CloseBlacksmith();
+            // 같은 프레임에 대화창이 ESC 로 다시 닫히는 것을 막기 위해 한 프레임 뒤에 연다
+            StartCoroutine(ReopenMenuNextFrame(back));
+        }
+    }
+
+    // 한 프레임 뒤에 NPC 대화 메뉴를 다시 연다
+    private IEnumerator ReopenMenuNextFrame(System.Action back)
+    {
+        yield return null;
+
+        if (back != null)
+        {
+            back();
         }
     }
 

@@ -276,6 +276,9 @@ public class GameManager : MonoBehaviour
         if (_townEntry == TownEntry.DungeonReturn)
         {
             MovePlayerToSpawn("Spawn_TownCenter");
+
+            // 혹시 카메라가 고정 상태로 남아있어도 추적을 켜서 플레이어를 따라가게 보장한다
+            StartCoroutine(EnableCameraFollowNextFrame());
         }
 
         // 새 게임은 집 안에서 시작 — 카메라를 집 고정 위치로 (한 프레임 뒤: CameraFollow Start 완료 후)
@@ -284,11 +287,11 @@ public class GameManager : MonoBehaviour
             StartCoroutine(MoveCameraToHouseNextFrame());
         }
 
-        // 사망 부활은 던전에서 마을로 오므로 플레이어를 집 위치로 옮긴 뒤 카메라 고정
+        // 사망 부활은 집 위치로 옮기되, 카메라는 고정하지 않고 바로 플레이어를 따라가게 한다
         if (_townEntry == TownEntry.Respawn)
         {
             MovePlayerToSpawn("Spawn_House");
-            StartCoroutine(MoveCameraToHouseNextFrame());
+            StartCoroutine(EnableCameraFollowNextFrame());
         }
     }
 
@@ -360,6 +363,23 @@ public class GameManager : MonoBehaviour
         }
 
         camFollow.MoveToFixedPoint(objPoint.transform);
+    }
+
+    // 부활/복귀 직후 카메라를 플레이어 추적 상태로 되돌린다 (집 고정 대신 바로 따라가기)
+    // 한 프레임 뒤에 실행해 플레이어 이동과 CameraFollow 초기화가 끝난 뒤 스냅한다
+    private System.Collections.IEnumerator EnableCameraFollowNextFrame()
+    {
+        yield return null;
+
+        CameraFollow camFollow = FindFirstObjectByType<CameraFollow>();
+        if (camFollow == null)
+        {
+            yield break;
+        }
+
+        // 추적 다시 켜고 플레이어 위치로 즉시 스냅 (뚝 끊겨 보이지 않게)
+        camFollow.SetFollowEnabled(true);
+        camFollow.SnapToTarget();
     }
 
     /// <summary>타이틀로 복귀</summary>

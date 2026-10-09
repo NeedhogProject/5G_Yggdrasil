@@ -137,7 +137,7 @@ public class InscriptionMasterSystem : MonoBehaviour
         }
         if (closeButton != null)
         {
-            closeButton.onClick.AddListener(CloseInscriptionMaster);
+            closeButton.onClick.AddListener(GoBackToMenu);
         }
     }
 
