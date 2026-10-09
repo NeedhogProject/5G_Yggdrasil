@@ -61,11 +61,8 @@ MonoBehaviour:
     enemyHealthMult: 2.2
     enemyAttackMult: 1.7
     rarityBonus: 2.5
-  - floor: 4
-    totalSpawnCount: 1
-    enemyHealthMult: 3.5
-    enemyAttackMult: 2.5
-    rarityBonus: 5
+  bossHealthMult: 3.5
+  bossAttackMult: 2.5
 --- !u!114 &7226239186556597543
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -82,6 +79,7 @@ MonoBehaviour:
   - {fileID: 0}
   keyEnemyCount: 4
   checkInterval: 0.3
+  minPlayerDistance: 4
   healthMultiplier: 1
   attackMultiplier: 1
   maxSpawnCount: 50

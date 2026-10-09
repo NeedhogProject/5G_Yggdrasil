@@ -24,7 +24,7 @@ public class FloorManager : MonoBehaviour
         if (CurrentFloor <= 1)
             GameManager.Instance?.ReturnToTown();
         else
-            GameManager.Instance?.GoToNextFloor();
+            GameManager.Instance?.GoToFloor(CurrentFloor - 1); // 위험: GoToNextFloor 는 층 +1 이라 하강됨
     }
 
     /// <summary>한 층 아래로 (StemConnector 에서 호출)</summary>

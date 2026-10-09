@@ -8,7 +8,7 @@ using System.Collections.Generic;
 /// - 층 입장 시 생명체 4마리에게 열쇠(북/남/동/서) 1개씩 랜덤 분배
 /// - 같은 열쇠 중복 불가 (층 내 고유)
 /// - 어떤 생명체가 어떤 열쇠를 갖는지 플레이어는 모름 → 탐색 필요
-/// - 3→4층: 줄기 1개 고정, 열쇠 1종만 분배
+/// - 3층(최하층): 줄기 1개 고정, 열쇠 1종만 분배
 /// - 플레이어가 줄기 앞에서 E키 → 인벤에 맞는 열쇠 있으면 삽입 → 구멍 연출 → 입장
 /// </summary>
 public class StemManager : MonoBehaviour
@@ -31,7 +31,7 @@ public class StemManager : MonoBehaviour
     [SerializeField] private int currentFloor = 1;
 
     [Header("줄기 목록 (방향 순서대로 등록)")]
-    [Tooltip("1~3층: North/South/East/West 4개\n3→4층: 1개만 등록")]
+    [Tooltip("1~2층: North/South/East/West 4개\n3층: 1개만 등록")]
     [SerializeField] private List<StemConnector> stems = new List<StemConnector>();
 
     [Header("열쇠 ScriptableObject (방향별 4종)")]
@@ -63,7 +63,7 @@ public class StemManager : MonoBehaviour
     {
         _directionKeyMap.Clear();
 
-        // 3→4층: 줄기 1개 고정 → 열쇠 1종만 (northKey 사용)
+        // 3층: 줄기 1개 고정 → 열쇠 1종만 (northKey 사용)
         if (stems.Count == 1)
         {
             StemConnector stem = stems[0];
@@ -72,7 +72,7 @@ public class StemManager : MonoBehaviour
             return;
         }
 
-        // 1~3층: 줄기 4개 → 열쇠 4종 1:1 랜덤 배정
+        // 1~2층: 줄기 4개 → 열쇠 4종 1:1 랜덤 배정
         List<KeyDirection> directions = new List<KeyDirection>
             { KeyDirection.North, KeyDirection.South, KeyDirection.East, KeyDirection.West };
 

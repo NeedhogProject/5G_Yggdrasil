@@ -25,7 +25,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private List<SpawnPoint> spawnPoints = new List<SpawnPoint>();
 
     [Header("열쇠 소유 적 수")]
-    [Tooltip("기획: 4마리가 열쇠 1개씩 소유. 3→4층은 1로 설정")]
+    [Tooltip("기획: 4마리가 열쇠 1개씩 소유. 3층(줄기 1개)은 1로 설정")]
     [SerializeField] [Range(1, 4)] private int keyEnemyCount = 4;
 
     [Header("스폰 체크 간격 (초)")]
@@ -41,7 +41,7 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private float attackMultiplier = 1f;
 
     [Header("최대 스폰 수 (DungeonDifficultyScaler 에서 자동 설정)")]
-    [Tooltip("1층=50 / 2·3층=125 / 4층=1(보스)")]
+    [Tooltip("1층=50 / 2·3층=125 (3층 보스는 스포너 대상 아님)")]
     [SerializeField] private int maxSpawnCount = 50;
 
     // ─────────────────────── 내부 상태 ───────────────────────

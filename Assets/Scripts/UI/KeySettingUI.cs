@@ -1,6 +1,6 @@
 // KeySettingUI.cs
-// Å° ¼³Á¤ ÆË¾÷ UI (New Input System ¸®¹ÙÀÎµù ±â¹Ý)
-// °¢ ½½·ÔÀÇ ¹öÆ°À» ´©¸£¸é ´ÙÀ½ ÀÔ·Â Å°·Î ÇØ´ç ¹ÙÀÎµùÀ» Àç¼³Á¤ÇÑ´Ù.
+// Å° ï¿½ï¿½ï¿½ï¿½ ï¿½Ë¾ï¿½ UI (New Input System ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ï¿½)
+// ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ Å°ï¿½ï¿½ ï¿½Ø´ï¿½ ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ç¼³ï¿½ï¿½ï¿½Ñ´ï¿½.
 
 using TMPro;
 using UnityEngine;
@@ -9,14 +9,14 @@ using UnityEngine.UI;
 
 public class KeySettingUI : MonoBehaviour
 {
-    // ÇÑ ÁÙ(¾×¼Ç ÇÏ³ª)¿¡ ´ëÀÀÇÏ´Â UI ¹­À½
+    // ï¿½ï¿½ ï¿½ï¿½(ï¿½×¼ï¿½ ï¿½Ï³ï¿½)ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ UI ï¿½ï¿½ï¿½ï¿½
     [System.Serializable]
     public class KeySlot
     {
-        [Tooltip("InputActionAsset¿¡ µî·ÏµÈ ¾×¼Ç ÀÌ¸§")]
+        [Tooltip("InputActionAssetï¿½ï¿½ ï¿½ï¿½Ïµï¿½ ï¿½×¼ï¿½ ï¿½Ì¸ï¿½")]
         public string actionName;
 
-        [Tooltip("¹ÙÀÎµù ÀÎµ¦½º. ´ÜÀÏ Å°´Â 0, 2D Vector ÄÄÆ÷Áþ(Move)Àº 1=Up, 2=Down, 3=Left, 4=Right")]
+        [Tooltip("ï¿½ï¿½ï¿½Îµï¿½ ï¿½Îµï¿½ï¿½ï¿½. ï¿½ï¿½ï¿½ï¿½ Å°ï¿½ï¿½ 0, 2D Vector ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½(Move)ï¿½ï¿½ 1=Up, 2=Down, 3=Left, 4=Right")]
         public int bindingIndex;
 
         public TMP_Text keyText;
@@ -24,23 +24,23 @@ public class KeySettingUI : MonoBehaviour
     }
 
 
-    [Header("ÅÇ ºÐ±â (¼³Á¤ ÃÊ±âÈ­ ¹öÆ°ÀÌ ¾î´À ÂÊÀ» ÃÊ±âÈ­ÇÒÁö ÆÇ´Ü)")]
+    [Header("ï¿½ï¿½ ï¿½Ð±ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½)")]
     [SerializeField] private GameObject audioPanel;
-    [SerializeField] private SettingsUI audioSettingsUI;
+    [SerializeField] private SettingUI audioSettingUI;
     [SerializeField] private GameObject keyPanel;
     [SerializeField] private KeySlot[] keySlots;
     [SerializeField] private Button applyButton;
     [SerializeField] private Button resetButton;
     [SerializeField] private Button closeButton;
-    [SerializeField] private GameObject popupRoot;  // ¼³Á¤Ã¢ ÀüÃ¼, ºñ¿ì¸é ÀÚ±â ÀÚ½ÅÀ» ´ÝÀ½
+    [SerializeField] private GameObject popupRoot;  // ï¿½ï¿½ï¿½ï¿½Ã¢ ï¿½ï¿½Ã¼, ï¿½ï¿½ï¿½ï¿½ ï¿½Ú±ï¿½ ï¿½Ú½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 
 
-    // ÁøÇà ÁßÀÎ ¸®¹ÙÀÎµù ÀÛ¾÷
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ ï¿½Û¾ï¿½
     private InputActionRebindingExtensions.RebindingOperation currentRebind;
 
-    // ÇöÀç Àç¼³Á¤ ÁßÀÎ ½½·Ô
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ç¼³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private KeySlot rebindingSlot;
-    // ÀÌ¹ø ¼¼¼Ç¿¡¼­ Àû¿ë ¹öÆ°À» ´­·¶´ÂÁö
+    // ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private bool _changesApplied = false;
 
     private void Start()
@@ -74,7 +74,7 @@ public class KeySettingUI : MonoBehaviour
         RefreshUI();
     }
 
-    // ½½·ÔÀÇ Å° Àç¼³Á¤ ½ÃÀÛ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å° ï¿½ç¼³ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private void StartRebind(KeySlot slot)
     {
         if (KeyBindingManager.Instance == null)
@@ -82,7 +82,7 @@ public class KeySettingUI : MonoBehaviour
             return;
         }
 
-        // ÀÌ¹Ì ´Ù¸¥ ¸®¹ÙÀÎµùÀÌ ÁøÇà ÁßÀÌ¸é Ãë¼Ò
+        // ï¿½Ì¹ï¿½ ï¿½Ù¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ì¸ï¿½ ï¿½ï¿½ï¿½
         if (currentRebind != null)
         {
             currentRebind.Cancel();
@@ -103,7 +103,7 @@ public class KeySettingUI : MonoBehaviour
             onCancel: OnRebindFinished);
     }
 
-    // ¸®¹ÙÀÎµù Á¾·á(¿Ï·á ¶Ç´Â Ãë¼Ò) °øÅë Ã³¸®
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½(ï¿½Ï·ï¿½ ï¿½Ç´ï¿½ ï¿½ï¿½ï¿½) ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½
     private void OnRebindFinished()
     {
         currentRebind = null;
@@ -111,8 +111,8 @@ public class KeySettingUI : MonoBehaviour
         RefreshUI();
     }
 
-    // º¯°æ»çÇ× ÀúÀå (Àû¿ë ¹öÆ°)
-    // º¯°æ»çÇ× ÀúÀå (Àû¿ë ¹öÆ°)
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°)
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°)
     private void Apply()
     {
         if (KeyBindingManager.Instance != null)
@@ -120,17 +120,17 @@ public class KeySettingUI : MonoBehaviour
             KeyBindingManager.Instance.SaveBindings();
         }
 
-        // ¡é ÀÌ ºÎºÐ Ãß°¡ (¿Àµð¿Àµµ ÀúÀå)
-        if (audioSettingsUI != null)
+        // ï¿½ï¿½ ï¿½ï¿½ ï¿½Îºï¿½ ï¿½ß°ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
+        if (audioSettingUI != null)
         {
-            audioSettingsUI.ApplyAudio();
+            audioSettingUI.ApplyAudio();
         }
 
         _changesApplied = true;
     }
 
-    // ±âº»°ªÀ¸·Î º¹¿ø (¼³Á¤ ÃÊ±âÈ­ ¹öÆ°)
-    public void ResetKeys()   // private ¡æ public
+    // ï¿½âº»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ (ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½Æ°)
+    public void ResetKeys()   // private ï¿½ï¿½ public
     {
         if (KeyBindingManager.Instance != null)
         {
@@ -139,35 +139,35 @@ public class KeySettingUI : MonoBehaviour
         RefreshUI();
     }
 
-    // ÇöÀç È°¼ºÈ­µÈ ÅÇ¿¡ ¸ÂÃç ¿Àµð¿À ¶Ç´Â Å°¸¦ ÃÊ±âÈ­
+    // ï¿½ï¿½ï¿½ï¿½ È°ï¿½ï¿½È­ï¿½ï¿½ ï¿½Ç¿ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç´ï¿½ Å°ï¿½ï¿½ ï¿½Ê±ï¿½È­
     private void ResetCurrent()
     {
-        Debug.Log($"[Reset] audioPanel={audioPanel}, activeSelf={audioPanel?.activeSelf}, audioSettingsUI={audioSettingsUI}");
+        Debug.Log($"[Reset] audioPanel={audioPanel}, activeSelf={audioPanel?.activeSelf}, audioSettingUI={audioSettingUI}");
         Debug.Log($"[Reset] keyPanel={keyPanel}, activeSelf={keyPanel?.activeSelf}");
 
         if (audioPanel != null && audioPanel.activeSelf == true)
         {
-            if (audioSettingsUI != null)
+            if (audioSettingUI != null)
             {
-                Debug.Log("[Reset] ¿Àµð¿À ÃÊ±âÈ­ ½ÇÇà");
-                audioSettingsUI.ResetAudio();
+                Debug.Log("[Reset] ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½");
+                audioSettingUI.ResetAudio();
             }
             else
             {
-                Debug.Log("[Reset] audioSettingsUI°¡ null ÀÌ¶ó ÃÊ±âÈ­ ¸ø ÇÔ");
+                Debug.Log("[Reset] audioSettingUIï¿½ï¿½ null ï¿½Ì¶ï¿½ ï¿½Ê±ï¿½È­ ï¿½ï¿½ ï¿½ï¿½");
             }
             return;
         }
 
         if (keyPanel != null && keyPanel.activeSelf == true)
         {
-            Debug.Log("[Reset] Å° ÃÊ±âÈ­ ½ÇÇà");
+            Debug.Log("[Reset] Å° ï¿½Ê±ï¿½È­ ï¿½ï¿½ï¿½ï¿½");
             ResetKeys();
         }
     }
 
-    // ÆË¾÷ ´Ý±â (³ª°¡±â ¹öÆ°)
-    // ÆË¾÷ ´Ý±â (³ª°¡±â ¹öÆ°)
+    // ï¿½Ë¾ï¿½ ï¿½Ý±ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°)
+    // ï¿½Ë¾ï¿½ ï¿½Ý±ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°)
     private void Close()
     {
         CancelPendingRebind();
@@ -180,10 +180,10 @@ public class KeySettingUI : MonoBehaviour
                 RefreshUI();
             }
 
-            // ¡é ÀÌ ºÎºÐ Ãß°¡ (¿Àµð¿Àµµ µÇµ¹¸®±â)
-            if (audioSettingsUI != null)
+            // ï¿½ï¿½ ï¿½ï¿½ ï¿½Îºï¿½ ï¿½ß°ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Çµï¿½ï¿½ï¿½ï¿½ï¿½)
+            if (audioSettingUI != null)
             {
-                audioSettingsUI.RestoreAudioSnapshot();
+                audioSettingUI.RestoreAudioSnapshot();
             }
         }
 
@@ -196,14 +196,14 @@ public class KeySettingUI : MonoBehaviour
             gameObject.SetActive(false);
         }
 
-        // ¼³Á¤Ã¢Àº ÀÏ½ÃÁ¤Áö »óÅÂ·Î ¿­¸®¹Ç·Î ´ÝÀ» ¶§ °ÔÀÓ Àç°³ (ESC ·Î ´ÝÀ» ¶§¿Í µ¿ÀÏ)
+        // ï¿½ï¿½ï¿½ï¿½Ã¢ï¿½ï¿½ ï¿½Ï½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Â·ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ç°³ (ESC ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Paused)
         {
             GameManager.Instance.Resume();
         }
     }
 
-    // ÁøÇà ÁßÀÎ ¸®¹ÙÀÎµùÀÌ ÀÖÀ¸¸é Ãë¼Ò
+    // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
     private void CancelPendingRebind()
     {
         if (currentRebind == null)
@@ -216,7 +216,7 @@ public class KeySettingUI : MonoBehaviour
         rebindingSlot = null;
     }
 
-    // ¸ðµç ½½·ÔÀÇ Ç¥½Ã ±ÛÀÚ °»½Å
+    // ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private void RefreshUI()
     {
         if (keySlots == null)
@@ -247,7 +247,7 @@ public class KeySettingUI : MonoBehaviour
         }
     }
 
-    // ºñÈ°¼ºÈ­ ½Ã ¸®¹ÙÀÎµù ¾ÈÀü Á¤¸®
+    // ï¿½ï¿½È°ï¿½ï¿½È­ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
     private void OnEnable()
     {
         _changesApplied = false;
@@ -257,10 +257,10 @@ public class KeySettingUI : MonoBehaviour
             KeyBindingManager.Instance.TakeSnapshot();
         }
 
-        // ¡é ÀÌ ºÎºÐ Ãß°¡ (¿Àµð¿Àµµ »çÁø Âï±â)
-        if (audioSettingsUI != null)
+        // ï¿½ï¿½ ï¿½ï¿½ ï¿½Îºï¿½ ï¿½ß°ï¿½ (ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½)
+        if (audioSettingUI != null)
         {
-            audioSettingsUI.TakeAudioSnapshot();
+            audioSettingUI.TakeAudioSnapshot();
         }
     }
 }

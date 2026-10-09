@@ -4,7 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// AudioManager
-/// - BGM : 마을 / 층별(1~4층) / 전투 상황별 트랙 관리
+/// - BGM : 마을 / 층별(1~3층) / 3층 보스 구역 / 전투 상황별 트랙 관리
 ///         즉시 전환 & 크로스페이드 모두 지원
 /// - SFX : 오디오 풀링으로 다수 동시 재생 지원
 /// - 볼륨 : PlayerPrefs 영구 저장
@@ -27,7 +27,7 @@ public enum BGMTrack
     Floor1,     // 1층 — 위그드라실의 가호
     Floor2,     // 2층 — 썩어가는 뿌리
     Floor3,     // 3층 — 심연의 둥지 입구
-    Floor4,     // 4층 — 니드호그의 둥지
+    Floor3Boss, // 3층 보스 구역 (니드호그). 위험: 순서 유지 (기존 Floor4 자리, 인스펙터 값이 번호로 저장됨)
     Battle,     // 전투 (보스 등 별도 전투 BGM)
     Ending,     // 엔딩
 }
@@ -419,7 +419,7 @@ public class AudioManager : MonoBehaviour
     // ════════════════════════════════════════
 
     /// <summary>
-    /// 층 번호(0 = 마을, 1~4 = 던전 층)로 BGM 자동 전환
+    /// 층 번호(0 = 마을, 1~3 = 던전 층)로 BGM 자동 전환 (3층 보스 구역은 PlayBossZoneBGM)
     /// </summary>
     public void PlayFloorBGM(int floor, float fadeTime = 1.0f)
     {
@@ -429,12 +429,17 @@ public class AudioManager : MonoBehaviour
             1 => BGMTrack.Floor1,
             2 => BGMTrack.Floor2,
             3 => BGMTrack.Floor3,
-            4 => BGMTrack.Floor4,
             _ => BGMTrack.None
         };
 
         if (track != BGMTrack.None)
             PlayBGM(track, fadeTime);
+    }
+
+    /// <summary>3층 보스 구역 BGM 전환 (BossZoneBGM 에서 호출)</summary>
+    public void PlayBossZoneBGM(float fadeTime = 1.0f)
+    {
+        PlayBGM(BGMTrack.Floor3Boss, fadeTime);
     }
 
     /// <summary>

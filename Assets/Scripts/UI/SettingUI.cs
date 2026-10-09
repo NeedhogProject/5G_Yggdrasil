@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class SettingsUI : MonoBehaviour
+public class SettingUI : MonoBehaviour
 {
     [Header("패널 루트 (팝업 모드 전용, 탭으로 쓰면 비움)")]
     [SerializeField] private GameObject panelRoot;

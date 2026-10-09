@@ -195,7 +195,6 @@ GameObject:
   - component: {fileID: 5829704913376795539}
   - component: {fileID: 8939204100268109601}
   - component: {fileID: 113282000785982979}
-  - component: {fileID: 2863292657278193009}
   - component: {fileID: 5739348222253432421}
   - component: {fileID: 8789632454230601966}
   - component: {fileID: 3595415761557878682}
@@ -243,7 +242,6 @@ MonoBehaviour:
   floor3SceneName: Floor_3
   floor4SceneName: Floor_4_Boss
   endingSceneName: Ending
-  homeRespawnPosition: {x: -33.61, y: 0.7, z: -107.5}
 --- !u!114 &113282000785982979
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -261,23 +259,6 @@ MonoBehaviour:
   sfxPoolSize: 10
   defaultBGMVolume: 0.7
   defaultSFXVolume: 0.9
---- !u!114 &2863292657278193009
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8942303448545066385}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 057cc436bd982f143961a03acac24cf5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SaveSystem
-  playerStats: {fileID: 0}
-  playerEquipment: {fileID: 0}
-  houseSystem: {fileID: 0}
-  inventorySystem: {fileID: 0}
-  itemDatabase: []
 --- !u!114 &5739348222253432421
 MonoBehaviour:
   m_ObjectHideFlags: 0

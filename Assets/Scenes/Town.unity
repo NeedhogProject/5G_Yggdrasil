@@ -14157,7 +14157,6 @@ GameObject:
   - component: {fileID: 530418772}
   - component: {fileID: 530418771}
   - component: {fileID: 530418773}
-  - component: {fileID: 530418774}
   m_Layer: 5
   m_Name: ShopMenuPanel
   m_TagString: Untagged
@@ -14248,18 +14247,6 @@ MonoBehaviour:
   - "\uD544\uC694\uD55C \uAC8C \uC788\uC73C\uC2E0\uAC00\uC694? \uCC9C\uCC9C\uD788
     \uB458\uB7EC\uBCF4\uC138\uC694~"
   - "\uD5E4\uD5E4, \uCC3E\uC544\uC640 \uC8FC\uC154\uC11C \uAC10\uC0AC\uD569\uB2C8\uB2E4!"
---- !u!114 &530418774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 530418769}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 50aa1779ee534fa4fa9ec043a0036029, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ClickDebugger
 --- !u!1 &534043622
 GameObject:
   m_ObjectHideFlags: 0
@@ -22147,50 +22134,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 975056934}
   m_CullTransparentMesh: 1
---- !u!1 &978797643
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 978797645}
-  - component: {fileID: 978797644}
-  m_Layer: 0
-  m_Name: ArmorTestSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &978797644
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 978797643}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f91614ad37374443947dce36be92847, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ArmorTestSpawner
---- !u!4 &978797645
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 978797643}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 796.8277, y: -0.00002, z: 3122.7876}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &980291560
 GameObject:
   m_ObjectHideFlags: 0
@@ -43197,5 +43140,4 @@ SceneRoots:
   - {fileID: 33168134}
   - {fileID: 269986417}
   - {fileID: 2082839705}
-  - {fileID: 978797645}
   - {fileID: 785330045}

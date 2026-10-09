@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 /// 게임 전체 상태 및 씬 전환 관리 싱글턴
 ///
 /// [기획 반영]
-/// - 게임 흐름: 타이틀에서 마을, 던전(1~4층), 엔딩 순서로 진행
+/// - 게임 흐름: 타이틀에서 마을, 던전(1~3층, 3층 보스 구역), 엔딩 순서로 진행
 /// - 게임 상태: Playing / Paused / GameOver / Ending
 /// - 플레이어 사망 시 인벤 드롭 후 마을 복귀
 /// - DontDestroyOnLoad 로 씬 전환에도 유지
@@ -53,7 +53,7 @@ public class GameManager : MonoBehaviour
     {
         Title,      // 타이틀 화면
         Town,       // 마을
-        Dungeon,    // 던전 (1~4층)
+        Dungeon,    // 던전 (1~3층)
         Paused,     // 일시정지
         GameOver,   // 플레이어 사망
         Ending      // 엔딩 (니드호그 처치)
@@ -72,12 +72,14 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string floor1SceneName = "Floor_1";
     [SerializeField] private string floor2SceneName = "Floor_2";
     [SerializeField] private string floor3SceneName = "Floor_3";
-    [SerializeField] private string floor4SceneName = "Floor_4_Boss";
     [SerializeField] private string endingSceneName = "Ending";
 
     // 런타임 상태
 
-    /// <summary>현재 층 (0=마을, 1~4=던전)</summary>
+    // 최하층 (4층 제거, 3층에 보스 구역)
+    private const int MAX_FLOOR = 3;
+
+    /// <summary>현재 층 (0=마을, 1~3=던전)</summary>
     public int CurrentFloor { get; private set; } = 0;
 
     // 마을 진입 종류 (스폰 위치 분기용)
@@ -133,6 +135,13 @@ public class GameManager : MonoBehaviour
     /// <summary>다음 층으로 이동 (FloorManager 에서 호출)</summary>
     public void GoToNextFloor()
     {
+        // 최하층에서는 더 내려갈 층이 없음
+        if (CurrentFloor >= MAX_FLOOR)
+        {
+            Debug.LogWarning("[GameManager] 최하층(" + MAX_FLOOR + "층)이라 더 내려갈 수 없음");
+            return;
+        }
+
         CurrentFloor++;
 
         string sceneName;
@@ -148,10 +157,6 @@ public class GameManager : MonoBehaviour
         else if (CurrentFloor == 3)
         {
             sceneName = floor3SceneName;
-        }
-        else if (CurrentFloor == 4)
-        {
-            sceneName = floor4SceneName;
         }
         else
         {
@@ -176,10 +181,6 @@ public class GameManager : MonoBehaviour
         {
             CurrentFloor = 3;
         }
-        else if (sceneName == floor4SceneName)
-        {
-            CurrentFloor = 4;
-        }
         else
         {
             CurrentFloor = 0;
@@ -189,13 +190,13 @@ public class GameManager : MonoBehaviour
     /// <summary>층 번호로 동기화 — YggdrasilPortal int 호출 호환용</summary>
     public void SyncFloor(int floor)
     {
-        CurrentFloor = Mathf.Clamp(floor, 0, 4);
+        CurrentFloor = Mathf.Clamp(floor, 0, MAX_FLOOR);
     }
 
     /// <summary>층 번호로 직접 씬 이동 — FloorManager.LoadFloor(int) 에서 호출</summary>
     public void GoToFloor(int floor)
     {
-        CurrentFloor = Mathf.Clamp(floor, 0, 4);
+        CurrentFloor = Mathf.Clamp(floor, 0, MAX_FLOOR);
 
         string sceneName;
 
@@ -214,10 +215,6 @@ public class GameManager : MonoBehaviour
         else if (CurrentFloor == 3)
         {
             sceneName = floor3SceneName;
-        }
-        else if (CurrentFloor == 4)
-        {
-            sceneName = floor4SceneName;
         }
         else
         {
@@ -258,6 +255,12 @@ public class GameManager : MonoBehaviour
 
         // EventSystem 이 없는 씬이면 생성 (없으면 UI 버튼 클릭 불가)
         EnsureEventSystem();
+
+        // 마을/층 기본 BGM (3층 보스 구역 BGM 은 BossZoneBGM 에서 전환)
+        if ((CurrentState == GameState.Town || CurrentState == GameState.Dungeon) && AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayFloorBGM(CurrentFloor);
+        }
 
         if (scene.name != townSceneName)
         {
