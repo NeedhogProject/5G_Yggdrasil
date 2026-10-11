@@ -5,6 +5,7 @@
 //   선택지 0 = 기능 패널 열기, 선택지 1 = 대화하기 (창 유지, 하단 대사만 순환)
 // 상인은 자체 메뉴(ShopMenuPanel)가 있어 기존 동작 유지.
 // 각인술사: 장비 각인하기 / 각인 초기화하기 선택지가 각각 다른 화면을 연다.
+// 범위 진입 시 공용 "E" 프롬프트(InteractionHint)를 이 NPC 위에 띄운다. 개별 힌트 오브젝트는 선택.
 
 using UnityEngine;
 
@@ -63,8 +64,14 @@ public class NPCInteractable : MonoBehaviour
     [SerializeField] private string inscriptionResetLabel = "각인 초기화하기";
 
     [Header("UI 힌트")]
-    [Tooltip("범위에 들어오면 켜질 안내 오브젝트 (예: E 상호작용 표시). 없으면 비워둠")]
+    [Tooltip("범위에 들어오면 켜질 안내 오브젝트 (개별 힌트, 선택). 공용 'E' 프롬프트만 쓸 거면 비워둔다")]
     [SerializeField] private GameObject hintObject;
+
+    [Tooltip("공용 'E' 프롬프트를 띄울 높이 (오브젝트 위로)")]
+    [SerializeField] private float promptHeightOffset = 2f;
+
+    [Tooltip("범위에 들어왔을 때 프롬프트에 표시할 문구 (예: E - 상점 / E - 대화)")]
+    [SerializeField] private string interactHintText = "E - 상호작용";
 
     private bool _playerInRange = false;
     // 대화하기 순환용 현재 대사 번호
@@ -78,7 +85,7 @@ public class NPCInteractable : MonoBehaviour
         }
         _playerInRange = true;
 
-        SetHintVisible(true);
+        ShowHint();
         Debug.Log("[NPCInteractable] " + npcName + " — E키로 상호작용");
     }
 
@@ -90,7 +97,7 @@ public class NPCInteractable : MonoBehaviour
         }
         _playerInRange = false;
 
-        SetHintVisible(false);
+        HideHint();
     }
 
     private void Update()
@@ -117,7 +124,8 @@ public class NPCInteractable : MonoBehaviour
             return;
         }
 
-        SetHintVisible(false);
+        // 상호작용을 시작하므로 프롬프트를 숨긴다
+        HideHint();
         OpenNPC();
     }
 
@@ -131,7 +139,29 @@ public class NPCInteractable : MonoBehaviour
         return false;
     }
 
-    // 힌트 표시 또는 숨김 (중복 호출 방지)
+    // 힌트 표시 — 개별 힌트 오브젝트 + 공용 'E' 프롬프트
+    private void ShowHint()
+    {
+        SetHintVisible(true);
+
+        if (InteractionHint.Instance != null)
+        {
+            InteractionHint.Instance.Register(transform, promptHeightOffset, interactHintText);
+        }
+    }
+
+    // 힌트 숨김 — 개별 힌트 오브젝트 + 공용 'E' 프롬프트
+    private void HideHint()
+    {
+        SetHintVisible(false);
+
+        if (InteractionHint.Instance != null)
+        {
+            InteractionHint.Instance.Unregister(transform);
+        }
+    }
+
+    // 개별 힌트 오브젝트 표시 또는 숨김 (중복 호출 방지)
     private void SetHintVisible(bool visible)
     {
         if (hintObject == null)
@@ -414,6 +444,16 @@ public class NPCInteractable : MonoBehaviour
         // 싱글톤이 비어있으면 현재 씬에서 직접 찾는다 (마을 전용 대화창 대비)
         NPCDialogue found = FindFirstObjectByType<NPCDialogue>();
         return found;
+    }
+
+    // 오브젝트가 꺼질 때 공용 프롬프트가 남지 않도록 정리
+    private void OnDisable()
+    {
+        if (_playerInRange == true)
+        {
+            _playerInRange = false;
+            HideHint();
+        }
     }
 
 #if UNITY_EDITOR
