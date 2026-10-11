@@ -238,18 +238,8 @@ public class InventoryUI : MonoBehaviour
     {
         currentTab = tab;
 
-        if (tab == InventoryTab.Item)
-        {
-            itemInventoryPanel.SetActive(true);
-            resourceInventoryPanel.SetActive(false);
-
-            // 그리드가 보이게 된 시점에 오버레이 아이콘 위치를 다시 잡음
-            InventorySystem.Instance?.RefreshIconPositions();
-        }
-        else
-        {
-            itemInventoryPanel.SetActive(false);
-            resourceInventoryPanel.SetActive(true);
-        }
+        // 탭 구분 없이 장비 격자와 각인재료를 둘 다 항상 켠다
+        itemInventoryPanel.SetActive(true);
+        resourceInventoryPanel.SetActive(true);
     }
 }

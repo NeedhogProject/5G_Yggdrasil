@@ -777,6 +777,19 @@ public class InventorySystem : MonoBehaviour
 
             RemoveItem(item);
         }
+        else if (item.itemType == ItemType.Relic)
+        {
+            // 유물 우클릭 → 유물 슬롯에 장착 (교체된 기존 유물은 EquipItem 내부에서 인벤토리로 반환)
+            ItemInstance relicInstance = _itemInstances.Find(i => i.Data == item);
+            if (relicInstance == null)
+            {
+                return;
+            }
+
+            // 장착 전에 인벤토리에서 먼저 제거 (복사 방지)
+            RemoveItem(relicInstance);
+            playerEquipment?.EquipItem(relicInstance);
+        }
     }
 
     public void DropItem(ItemData item)

@@ -8,6 +8,9 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
     [Header("슬롯 설정")]
     public EquipmentType slotType;
 
+    [Tooltip("유물 슬롯일 때만 사용 — 유물 칸 번호 (0 또는 1). 유물 칸이 2개라서 구분용")]
+    public int relicSlotIndex = 0;
+
     [Header("UI 참조")]
     public Image equipmentIcon;
     public Image highlightImage;
@@ -99,6 +102,13 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             WeaponInstance weapon = playerEquipment.EquippedWeapon;
             return weapon?.Data;
+        }
+
+        // 유물 슬롯: 유물 칸 번호로 조회
+        if (slotType == EquipmentType.Relic)
+        {
+            ItemInstance relic = playerEquipment.GetRelic(relicSlotIndex);
+            return relic?.Data;
         }
 
         ArmorSlot armorSlot = SlotTypeToArmorSlot(slotType);
@@ -231,6 +241,10 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         if (slotType == EquipmentType.Weapon)
         {
             unequipped = playerEquipment.UnequipWeapon();
+        }
+        else if (slotType == EquipmentType.Relic)
+        {
+            unequipped = playerEquipment.UnequipRelicSlot(relicSlotIndex);
         }
         else
         {

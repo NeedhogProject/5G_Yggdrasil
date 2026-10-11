@@ -40,5 +40,6 @@ public enum EquipmentType
     Helmet,  // 투구
     Chest,   // 갑옷
     Legs,    // 각반
-    Boots    // 장화
+    Boots,    // 장화
+    Relic    // 유물 (반지처럼 장착)
 }

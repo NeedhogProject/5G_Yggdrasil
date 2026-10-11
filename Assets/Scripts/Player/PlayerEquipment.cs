@@ -21,10 +21,10 @@ public class PlayerEquipment : MonoBehaviour
     // ─────────────────────── 참조 ───────────────────────
 
     [Header("참조")]
-    [SerializeField] private PlayerStats      playerStats;
-    [SerializeField] private PlayerCombat     playerCombat;
-    [SerializeField] private ArmorSetManager  armorSetManager;
-    [SerializeField] private InventorySystem  inventorySystem;
+    [SerializeField] private PlayerStats playerStats;
+    [SerializeField] private PlayerCombat playerCombat;
+    [SerializeField] private ArmorSetManager armorSetManager;
+    [SerializeField] private InventorySystem inventorySystem;
     [SerializeField] private InscriptionColorHelper inscriptionColorHelper;
 
     [Header("무기 모델")]
@@ -47,6 +47,9 @@ public class PlayerEquipment : MonoBehaviour
             { ArmorSlot.Boots,  null }
         };
 
+    // 유물 슬롯 2개 (반지처럼 장착). 유물은 RelicData 기반 — 전용 인스턴스가 없어 ItemInstance 로 보관
+    private readonly ItemInstance[] _relicSlots = new ItemInstance[2];
+
     // ─────────────────────── 이벤트 ───────────────────────
 
     /// <summary>장비 변경 시 발생 (UI 갱신용)</summary>
@@ -56,10 +59,10 @@ public class PlayerEquipment : MonoBehaviour
 
     private void Awake()
     {
-        if (playerStats      == null) playerStats      = GetComponent<PlayerStats>();
-        if (playerCombat     == null) playerCombat     = GetComponent<PlayerCombat>();
-        if (armorSetManager  == null) armorSetManager  = GetComponent<ArmorSetManager>();
-        if (inventorySystem  == null) inventorySystem  = InventorySystem.Instance;
+        if (playerStats == null) playerStats = GetComponent<PlayerStats>();
+        if (playerCombat == null) playerCombat = GetComponent<PlayerCombat>();
+        if (armorSetManager == null) armorSetManager = GetComponent<ArmorSetManager>();
+        if (inventorySystem == null) inventorySystem = InventorySystem.Instance;
     }
 
     // ─────────────────────── 장착 ───────────────────────
@@ -74,17 +77,25 @@ public class PlayerEquipment : MonoBehaviour
 
         ItemInstance replaced = null;
 
-        switch (item)
+        // 유물은 전용 유물 슬롯으로 장착 (RelicData 기반)
+        if (item.Data is RelicData)
         {
-            case WeaponInstance weapon:
-                replaced = EquipWeapon(weapon);
-                break;
-            case ArmorInstance armor:
-                replaced = EquipArmor(armor);
-                break;
-            default:
-                Debug.LogWarning($"[PlayerEquipment] 장착 불가 아이템: {item.Data?.ItemName}");
-                return null;
+            replaced = EquipRelicAuto(item);
+        }
+        else
+        {
+            switch (item)
+            {
+                case WeaponInstance weapon:
+                    replaced = EquipWeapon(weapon);
+                    break;
+                case ArmorInstance armor:
+                    replaced = EquipArmor(armor);
+                    break;
+                default:
+                    Debug.LogWarning($"[PlayerEquipment] 장착 불가 아이템: {item.Data?.ItemName}");
+                    return null;
+            }
         }
 
         // 교체된 기존 장비 → 인벤토리로 자동 반환
@@ -173,11 +184,11 @@ public class PlayerEquipment : MonoBehaviour
         armorSetManager?.OnArmorEquipped(newArmor); // 추가
 
         // 각인 색상 UI 갱신
-        ArmorInstance.InscriptionInfo info = newArmor.GetInscription( );
+        ArmorInstance.InscriptionInfo info = newArmor.GetInscription();
 
-       
+
         //inscriptionColorHelper?.UpdateInscriptionColor(slot.ToString(), info.Element.ToString());
-    
+
         OnEquipmentChanged?.Invoke();
 
         // 교체된 기존 방어구 반환 (인벤토리로 돌아감)
@@ -192,6 +203,111 @@ public class PlayerEquipment : MonoBehaviour
         armorSetManager?.OnArmorUnequipped(armor);
         _armorSlots[armor.Slot] = null;
         inscriptionColorHelper?.UpdateInscriptionColor(armor.Slot.ToString(), "");
+    }
+
+    // ─────────────────────── 유물 장착 ───────────────────────
+
+    // 빈 유물 슬롯을 찾아 장착한다. 두 칸 다 차 있으면 0번 칸을 교체한다.
+    // 교체된 기존 유물을 반환 (없으면 null)
+    private ItemInstance EquipRelicAuto(ItemInstance relic)
+    {
+        if (relic == null)
+        {
+            return null;
+        }
+
+        int targetIndex = -1;
+
+        // 빈 칸 먼저 찾기
+        for (int i = 0; i < _relicSlots.Length; i++)
+        {
+            if (_relicSlots[i] == null)
+            {
+                targetIndex = i;
+                break;
+            }
+        }
+
+        // 빈 칸이 없으면 0번 칸을 교체
+        if (targetIndex == -1)
+        {
+            targetIndex = 0;
+        }
+
+        return EquipRelicAt(targetIndex, relic);
+    }
+
+    // 지정한 유물 슬롯(0 또는 1)에 장착. 교체된 기존 유물 반환
+    public ItemInstance EquipRelicAt(int index, ItemInstance relic)
+    {
+        if (index < 0 || index >= _relicSlots.Length)
+        {
+            return null;
+        }
+        if (relic == null)
+        {
+            return null;
+        }
+
+        ItemInstance previous = _relicSlots[index];
+
+        // 기존 유물 효과 해제
+        if (previous != null)
+        {
+            RemoveRelicEffect(previous);
+        }
+
+        // 새 유물 장착
+        _relicSlots[index] = relic;
+        ApplyRelicEffect(relic);
+
+        Debug.Log("[PlayerEquipment] 유물 장착 (슬롯 " + index.ToString() + "): " + relic.Data?.ItemName);
+        OnEquipmentChanged?.Invoke();
+
+        return previous;
+    }
+
+    // 지정한 유물 슬롯 해제. 해제된 유물 반환
+    public ItemInstance UnequipRelicSlot(int index)
+    {
+        if (index < 0 || index >= _relicSlots.Length)
+        {
+            return null;
+        }
+
+        ItemInstance relic = _relicSlots[index];
+        if (relic == null)
+        {
+            return null;
+        }
+
+        RemoveRelicEffect(relic);
+        _relicSlots[index] = null;
+        OnEquipmentChanged?.Invoke();
+
+        return relic;
+    }
+
+    // 지정한 유물 슬롯의 유물 반환 (없으면 null) — EquipmentSlotUI 표시용
+    public ItemInstance GetRelic(int index)
+    {
+        if (index < 0 || index >= _relicSlots.Length)
+        {
+            return null;
+        }
+        return _relicSlots[index];
+    }
+
+    // 유물 효과 적용 — 아직 유물 스탯이 정의되지 않아 비워둠 (효과 확정 시 여기에 작성)
+    private void ApplyRelicEffect(ItemInstance relic)
+    {
+        // TODO: 유물 효과 적용. RelicData 에 스탯이 생기면 PlayerStats 등에 반영
+    }
+
+    // 유물 효과 해제 — ApplyRelicEffect 와 짝. 효과 확정 시 반대 처리 작성
+    private void RemoveRelicEffect(ItemInstance relic)
+    {
+        // TODO: 유물 효과 해제
     }
 
     // ─────────────────────── 해제 ───────────────────────
@@ -265,6 +381,19 @@ public class PlayerEquipment : MonoBehaviour
             if (armor == null) continue;
             dropped.Add(armor);
             DetachArmor(armor);
+        }
+
+        // 유물 슬롯도 전부 해제
+        for (int i = 0; i < _relicSlots.Length; i++)
+        {
+            ItemInstance relic = _relicSlots[i];
+            if (relic == null)
+            {
+                continue;
+            }
+            dropped.Add(relic);
+            RemoveRelicEffect(relic);
+            _relicSlots[i] = null;
         }
 
         OnEquipmentChanged?.Invoke();
