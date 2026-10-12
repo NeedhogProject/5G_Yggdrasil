@@ -48,6 +48,18 @@ public class InscriptionMasterSystem : MonoBehaviour
     [Header("각인하기 화면 — 자원 목록 (불/물/바람/땅/어둠 5개)")]
     public ResourceRowUI[] resourceRows;
 
+    [Header("원소 아이콘 (선택 원소 표시용 — 각 원소 이미지 연결)")]
+    [Tooltip("불의 원소 아이콘")]
+    public Sprite fireIcon;
+    [Tooltip("물의 원소 아이콘")]
+    public Sprite waterIcon;
+    [Tooltip("바람의 원소 아이콘")]
+    public Sprite windIcon;
+    [Tooltip("땅의 원소 아이콘")]
+    public Sprite earthIcon;
+    [Tooltip("어둠의 원소 아이콘")]
+    public Sprite darknessIcon;
+
     [Header("초기화하기 화면")]
     public Image resetArmorIcon;
     public TMP_Text resetArmorNameText;
@@ -488,10 +500,19 @@ public class InscriptionMasterSystem : MonoBehaviour
             inscribeArmorSlotText.text = GetSlotStateText(_selectedArmor);
         }
 
-        // 선택 원소
+        // 선택 원소 아이콘 — 원소별 이미지로 표시 (이미지 없으면 색상으로 대체)
         if (selectedElementIcon != null)
         {
-            selectedElementIcon.color = RuneInscriptionSystem.GetElementColor(_selectedElement);
+            Sprite elementSprite = GetElementSprite(_selectedElement);
+            if (elementSprite != null)
+            {
+                selectedElementIcon.sprite = elementSprite;
+                selectedElementIcon.color = Color.white;
+            }
+            else
+            {
+                selectedElementIcon.color = RuneInscriptionSystem.GetElementColor(_selectedElement);
+            }
             selectedElementIcon.enabled = true;
         }
         if (selectedElementNameText != null)
@@ -578,7 +599,16 @@ public class InscriptionMasterSystem : MonoBehaviour
         }
         if (selectedElementIcon != null)
         {
-            selectedElementIcon.color = RuneInscriptionSystem.GetElementColor(_selectedElement);
+            Sprite elementSprite = GetElementSprite(_selectedElement);
+            if (elementSprite != null)
+            {
+                selectedElementIcon.sprite = elementSprite;
+                selectedElementIcon.color = Color.white;
+            }
+            else
+            {
+                selectedElementIcon.color = RuneInscriptionSystem.GetElementColor(_selectedElement);
+            }
         }
         if (elementResourceText != null)
         {
@@ -831,6 +861,26 @@ public class InscriptionMasterSystem : MonoBehaviour
     }
 
     // ─────────────────────── 유틸 ───────────────────────
+
+    // 선택된 원소에 맞는 아이콘 스프라이트 반환 (연결 안 됐으면 null)
+    private Sprite GetElementSprite(RuneElement element)
+    {
+        switch (element)
+        {
+            case RuneElement.Fire:
+                return fireIcon;
+            case RuneElement.Water:
+                return waterIcon;
+            case RuneElement.Wind:
+                return windIcon;
+            case RuneElement.Earth:
+                return earthIcon;
+            case RuneElement.Darkness:
+                return darknessIcon;
+            default:
+                return null;
+        }
+    }
 
     // 슬롯 상태 문자열 (각인 있으면 1/1, 없으면 0/1)
     private string GetSlotStateText(ArmorInstance armor)
