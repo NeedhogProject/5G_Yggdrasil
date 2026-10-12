@@ -288,7 +288,7 @@ public class InscriptionMasterSystem : MonoBehaviour
     // ─────────────────────── 방어구 목록 ───────────────────────
 
     // 인벤토리에서 방어구들을 모아 좌측 목록에 표시
-    // 정렬: 부위(투구 > 갑옷 > 각반 > 장화), 같은 부위는 이름 순
+    // 정렬: 부위(투구 > 갑옷 > 각반 > 장화), 같은 부위는 등급 높은 순 > 각인된 것 먼저 > 이름 순
     private void RefreshArmorList()
     {
         ClearArmorList();
@@ -328,7 +328,11 @@ public class InscriptionMasterSystem : MonoBehaviour
         }
     }
 
-    // 방어구 정렬 비교: 부위(투구0 > 갑옷1 > 각반2 > 장화3) 오름차순, 같은 부위는 이름 순
+    // 방어구 정렬 비교
+    // 1차: 부위(투구0 > 갑옷1 > 각반2 > 장화3) 오름차순
+    // 2차: 등급 높은 순 (ItemRarity 값 클수록 높은 등급, 내림차순)
+    // 3차: 각인된 것 먼저
+    // 4차: 이름 순
     private int CompareArmor(ArmorInstance a, ArmorInstance b)
     {
         ArmorData dataA = a.ArmorData;
@@ -339,14 +343,31 @@ public class InscriptionMasterSystem : MonoBehaviour
             return 0;
         }
 
+        // 1차: 부위 순서 (투구 > 갑옷 > 각반 > 장화)
         int slotA = (int)dataA.ArmorSlot;
         int slotB = (int)dataB.ArmorSlot;
-
         if (slotA != slotB)
         {
             return slotA.CompareTo(slotB);
         }
 
+        // 2차: 등급 높은 순 (내림차순이라 b 를 앞에 두고 비교)
+        int rarityA = (int)dataA.Rarity;
+        int rarityB = (int)dataB.Rarity;
+        if (rarityA != rarityB)
+        {
+            return rarityB.CompareTo(rarityA);
+        }
+
+        // 3차: 각인된 것 먼저 (각인 있는 쪽을 앞으로)
+        bool runeA = a.HasRune;
+        bool runeB = b.HasRune;
+        if (runeA != runeB)
+        {
+            return runeA == true ? -1 : 1;
+        }
+
+        // 4차: 이름 순
         return string.Compare(dataA.itemName, dataB.itemName);
     }
 

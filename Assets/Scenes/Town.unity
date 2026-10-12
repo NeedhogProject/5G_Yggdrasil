@@ -23996,10 +23996,10 @@ MonoBehaviour:
   m_ChildAlignment: 4
   m_StartCorner: 0
   m_StartAxis: 0
-  m_CellSize: {x: 50, y: 50}
+  m_CellSize: {x: 66, y: 66}
   m_Spacing: {x: 2, y: 2}
   m_Constraint: 1
-  m_ConstraintCount: 13
+  m_ConstraintCount: 10
 --- !u!114 &1071795313
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27482,8 +27482,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b4a3f25bb5e7dc44bc8029bd76483db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StorageUI
-  gridWidth: 13
-  gridHeight: 9
+  gridWidth: 10
+  gridHeight: 7
   storagePanel: {fileID: 1348764355}
   slotContainer: {fileID: 1071795311}
   slotPrefab: {fileID: 7130759374801163818, guid: ea44927e1feed4647807b0550a76dd13, type: 3}
@@ -31086,8 +31086,8 @@ MonoBehaviour:
   restButton: {fileID: 0}
   closeButton: {fileID: 0}
   playerStats: {fileID: 0}
-  storageWidth: 8
-  storageHeight: 8
+  storageWidth: 10
+  storageHeight: 7
   sleepHealthRestore: 100
   restMentalRestore: 100
   sleepCost: 0
