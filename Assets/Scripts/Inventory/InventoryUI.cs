@@ -9,9 +9,7 @@ public class InventoryUI : MonoBehaviour
     public GameObject itemInventoryPanel;
     public GameObject resourceInventoryPanel;
 
-    [Header("Tab Buttons")]
-    public Button itemTabButton;
-    public Button resourceTabButton;
+    [Header("Buttons")]
     public Button closeButton;
     public Button dropButton;
 
@@ -32,27 +30,10 @@ public class InventoryUI : MonoBehaviour
     private Vector2 _defaultPanelPosition = Vector2.zero;
 
     private bool isOpen = false;
-    private InventoryTab currentTab = InventoryTab.Item;
-
-    private enum InventoryTab
-    {
-        Item,
-        Resource
-    }
 
     void Start()
     {
         inventoryPanel.SetActive(false);
-
-        if (itemTabButton != null)
-        {
-            itemTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Item));
-        }
-
-        if (resourceTabButton != null)
-        {
-            resourceTabButton.onClick.AddListener(() => SwitchTab(InventoryTab.Resource));
-        }
 
         // 닫기 버튼은 단순 CloseInventory 가 아니라 분기 처리 메서드로 연결
         // (상점과 같이 열린 상태면 상점 전체를 닫아야 함)
@@ -196,7 +177,9 @@ public class InventoryUI : MonoBehaviour
             outsideCloseButton.gameObject.SetActive(showOutsideClose);
         }
 
-        SwitchTab(InventoryTab.Item);
+        // 장비 격자와 각인재료를 항상 같이 표시
+        itemInventoryPanel.SetActive(true);
+        resourceInventoryPanel.SetActive(true);
 
         Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
@@ -232,14 +215,5 @@ public class InventoryUI : MonoBehaviour
         }
 
         Debug.Log("[InventoryUI] 버리기 버튼 클릭");
-    }
-
-    private void SwitchTab(InventoryTab tab)
-    {
-        currentTab = tab;
-
-        // 탭 구분 없이 장비 격자와 각인재료를 둘 다 항상 켠다
-        itemInventoryPanel.SetActive(true);
-        resourceInventoryPanel.SetActive(true);
     }
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using System.Collections.Generic;
 
 // ─────────────────────── 드롭 항목 구조체 ───────────────────────
@@ -17,11 +18,11 @@ public class LootEntry
     [Range(0, 100)]
     public int weight = 10;
 
-    [Tooltip("최소 드롭 수량")]
+    [Tooltip("최소 드롭 수량 (중첩 가능 아이템만 적용, 그 외는 항상 1개)")]
     [Range(1, 99)]
     public int minCount = 1;
 
-    [Tooltip("최대 드롭 수량")]
+    [Tooltip("최대 드롭 수량 (중첩 가능 아이템만 적용, 아이템의 최대 중첩 수를 넘으면 잘림)")]
     [Range(1, 99)]
     public int maxCount = 1;
 }
@@ -42,7 +43,7 @@ public class LootEntry
 /// [사용법]
 /// 1. 적 프리팹에 LootTable 부착
 /// 2. lootEntries 에 드롭할 아이템과 가중치 입력
-/// 3. dropCount 로 한 번에 드롭할 항목 수 설정
+/// 3. minDropCount ~ maxDropCount 로 한 번에 드롭할 아이템 수 설정
 /// </summary>
 public class LootTable : MonoBehaviour
 {
@@ -51,12 +52,13 @@ public class LootTable : MonoBehaviour
     [Header("드롭 항목 (아이템 확정 후 채워넣기)")]
     [SerializeField] private List<LootEntry> lootEntries = new List<LootEntry>();
 
-    [Header("드롭 횟수")]
-    [Tooltip("사망 시 드롭을 시도할 횟수 (중복 드롭 가능)")]
-    [SerializeField] [Range(0, 5)] private int dropCount = 1;
+    [Header("드롭 횟수 (몬스터 1마리가 떨어뜨리는 아이템 수, 최소~최대 중 랜덤)")]
+    [Tooltip("최소 드롭 횟수")]
+    [SerializeField] [Range(0, 10)] private int minDropCount = 1;
 
-    [Tooltip("드롭 자체를 건너뛸 확률 (%). 0이면 항상 드롭 시도")]
-    [SerializeField] [Range(0, 100)] private float skipChance = 0f;
+    [Tooltip("최대 드롭 횟수 (기존 dropCount 값이 여기로 옮겨짐)")]
+    [FormerlySerializedAs("dropCount")]
+    [SerializeField] [Range(0, 10)] private int maxDropCount = 1;
 
     [Header("드롭 아이템 프리팹")]
     [Tooltip("DroppedItem 컴포넌트가 붙은 프리팹 — 없으면 ItemData.Prefab3D 사용")]
@@ -85,18 +87,24 @@ public class LootTable : MonoBehaviour
 
         if (lootEntries == null || lootEntries.Count == 0) return results;
 
-        for (int i = 0; i < dropCount; i++)
-        {
-            // 드롭 스킵 확률 체크
-            if (skipChance > 0f && Random.Range(0f, 100f) < skipChance) continue;
+        // 이번에 떨어뜨릴 아이템 수 (최소~최대, 같은 항목이 여러 번 나올 수 있음)
+        int nMaxDrop = Mathf.Max(minDropCount, maxDropCount);
+        int nDropTimes = Random.Range(minDropCount, nMaxDrop + 1);
 
+        for (int i = 0; i < nDropTimes; i++)
+        {
             LootEntry entry = SelectEntry();
             if (entry == null || entry.item == null) continue;
 
-            // 수량 0 은 인스펙터 범위(1~99) 밖의 잘못된 값이라 최소 1 로 보정 (0 이면 아무것도 생성되지 않음)
-            int nMin = Mathf.Max(1, entry.minCount);
-            int nMax = Mathf.Max(nMin, entry.maxCount);
-            int count = Random.Range(nMin, nMax + 1);
+            // 중첩 가능 아이템(판매/강화 재료 등)만 항목의 최소~최대 수량, 그 외는 1개
+            int count = 1;
+            if (entry.item.IsStackable == true)
+            {
+                // 수량 0 은 인스펙터 범위(1~99) 밖의 잘못된 값이라 최소 1 로 보정
+                int nMin = Mathf.Max(1, entry.minCount);
+                int nMax = Mathf.Max(nMin, entry.maxCount);
+                count = Mathf.Min(Random.Range(nMin, nMax + 1), entry.item.MaxStack);
+            }
             results.Add((entry.item, count));
 
             // 월드에 아이템 스폰 (프리팹 있을 경우)
@@ -167,20 +175,19 @@ public class LootTable : MonoBehaviour
             return;
         }
 
-        for (int i = 0; i < count; i++)
+        // 수량은 바닥 아이템 1개에 묶어서 생성 (줍는 순간 수량만큼 획득)
+        Vector2 spread   = Random.insideUnitCircle * dropSpreadRadius;
+        Vector3 spawnPos = position + new Vector3(spread.x, 0.3f, spread.y);
+
+        GameObject dropped = Instantiate(prefab, spawnPos, Quaternion.identity);
+
+        // DroppedItem에 아이템 데이터 주입
+        DroppedItem droppedComp = dropped.GetComponent<DroppedItem>();
+        if (droppedComp != null)
         {
-            Vector2 spread   = Random.insideUnitCircle * dropSpreadRadius;
-            Vector3 spawnPos = position + new Vector3(spread.x, 0.3f, spread.y);
-
-            GameObject dropped = Instantiate(prefab, spawnPos, Quaternion.identity);
-
-            // DroppedItem에 아이템 데이터 주입
-            DroppedItem droppedComp = dropped.GetComponent<DroppedItem>();
-            if (droppedComp != null)
-            {
-                ItemInstance instance = new ItemInstance(item);
-                droppedComp.Initialize(instance);
-            }
+            ItemInstance instance = new ItemInstance(item);
+            instance.AddStack(count - 1);
+            droppedComp.Initialize(instance);
         }
 
         Debug.Log($"[LootTable] {item.ItemName} x{count} 드롭");

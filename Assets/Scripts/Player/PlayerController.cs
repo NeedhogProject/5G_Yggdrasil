@@ -90,11 +90,18 @@ public class PlayerController : MonoBehaviour
     private Vector3     _vPathDestination = Vector3.zero;
     private Vector3     _vPrevPosition = Vector3.zero;
 
+    // 막힘 감지 상태
+    private float   _fStuckTimer = 0f;
+    private bool    _bBlocked = false;              // 우클릭을 누른 채 막혔는지
+    private Vector3 _vBlockedDestination = Vector3.zero;
+
     // 경로 탐색 상수
     private const float REPATH_DISTANCE     = 0.25f;  // 목적지가 이만큼 바뀌면 경로 재계산
     private const float ARRIVE_DISTANCE     = 0.2f;   // 코너/목적지 도착 판정 거리
     private const float NAVMESH_SNAP_RADIUS = 2f;     // 커서 지점의 NavMesh 스냅 반경
     private const float TELEPORT_DISTANCE   = 3f;     // 한 프레임 이동이 이 이상이면 텔레포트로 간주
+    private const float STUCK_SPEED         = 0.1f;   // 이 속도보다 느리면 막힌 것으로 간주
+    private const float STUCK_TIME          = 0.3f;   // 막힌 상태가 이 시간 이상 이어지면 경로 폐기
 
     // 낙하 복귀 상태
     private Vector3 _lastSafePosition;
@@ -168,6 +175,9 @@ public class PlayerController : MonoBehaviour
 
         // 외부 텔레포트(집 문, 스폰 이동, 낙하 복귀) 감지 시 기존 경로 폐기
         DetectTeleport();
+
+        // 콜라이더나 낭떠러지에 막혀 못 움직이면 경로 폐기 (제자리 걷기 방지)
+        CheckStuck();
 
         // 우클릭 입력으로 경로 갱신 후 이동 방향 계산 (공격 중이면 즉시 이동 상태 해제)
         UpdateMoveDirection();
@@ -250,6 +260,10 @@ public class PlayerController : MonoBehaviour
         {
             UpdateDestinationFromCursor();
         }
+        else
+        {
+            _bBlocked = false;
+        }
 
         FollowPath();
     }
@@ -264,7 +278,12 @@ public class PlayerController : MonoBehaviour
 
         if (NavMesh.SamplePosition(vCursorPoint, out NavMeshHit hit, NAVMESH_SNAP_RADIUS, NavMesh.AllAreas) == false)
         {
-            return;
+            // 커서 근처에 NavMesh 가 없으면 커서 방향으로 갈 수 있는 끝 지점을 목적지로 사용
+            if (NavMesh.SamplePosition(transform.position, out NavMeshHit startHit, NAVMESH_SNAP_RADIUS, NavMesh.AllAreas) == false)
+            {
+                return;
+            }
+            NavMesh.Raycast(startHit.position, vCursorPoint, out hit, NavMesh.AllAreas);
         }
 
         Vector3 vDestination = hit.position;
@@ -281,6 +300,13 @@ public class PlayerController : MonoBehaviour
         // 기존 목적지와 거의 같으면 경로 재계산 생략
         if (_bHasPath == true
             && (vDestination - _vPathDestination).sqrMagnitude < REPATH_DISTANCE * REPATH_DISTANCE)
+        {
+            return;
+        }
+
+        // 누른 채로 막혔던 목적지면 다시 경로를 만들지 않음
+        if (_bBlocked == true
+            && (vDestination - _vBlockedDestination).sqrMagnitude < REPATH_DISTANCE * REPATH_DISTANCE)
         {
             return;
         }
@@ -305,8 +331,35 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        // 갈 수 없는 구역이면 경로 끝(갈 수 있는 최대 지점)이 이미 발밑일 때 이동 요청을 넣지 않음 (제자리 걷기 방지)
+        if (_navPath.status == NavMeshPathStatus.PathPartial)
+        {
+            Vector3 vEnd = _navPath.corners[_navPath.corners.Length - 1];
+
+            // 커서 방향 직선 끝 지점이 목표에 더 가까우면 그쪽으로 경로 재계산 (돌아가는 끝 지점으로 엉뚱하게 가는 것 방지)
+            if (NavMesh.Raycast(vStart, _vDestination, out NavMeshHit edgeHit, NavMesh.AllAreas) == true
+                && (edgeHit.position - _vDestination).sqrMagnitude < (vEnd - _vDestination).sqrMagnitude)
+            {
+                if (NavMesh.CalculatePath(vStart, edgeHit.position, NavMesh.AllAreas, _navPath) == false)
+                {
+                    ClearPath();
+                    return;
+                }
+                vEnd = edgeHit.position;
+            }
+
+            Vector3 vReachable = vEnd - transform.position;
+            vReachable.y = 0f;
+            if (vReachable.sqrMagnitude < ARRIVE_DISTANCE * ARRIVE_DISTANCE)
+            {
+                ClearPath();
+                return;
+            }
+        }
+
         _vPathDestination = _vDestination;
         _bHasPath = true;
+        _bBlocked = false;
         // corners[0] 은 시작점이므로 다음 코너부터 추종
         _nCornerIndex = 1;
     }
@@ -350,6 +403,31 @@ public class PlayerController : MonoBehaviour
     {
         _bHasPath = false;
         _nCornerIndex = 0;
+    }
+
+    // 경로가 있는데 일정 시간 거의 못 움직였으면 경로 폐기
+    private void CheckStuck()
+    {
+        Vector3 vMoved = transform.position - _vPrevPosition;
+        vMoved.y = 0f;
+
+        if (_bHasPath == false || vMoved.magnitude >= STUCK_SPEED * Time.deltaTime)
+        {
+            _fStuckTimer = 0f;
+            return;
+        }
+
+        _fStuckTimer += Time.deltaTime;
+        if (_fStuckTimer < STUCK_TIME)
+        {
+            return;
+        }
+
+        // 위험: 같은 목적지로 다시 경로를 만들면 막힌 채 걷기가 반복되므로 기록해 둠
+        _bBlocked = true;
+        _vBlockedDestination = _vPathDestination;
+        _fStuckTimer = 0f;
+        ClearPath();
     }
 
     // 한 프레임에 기준 거리 이상 이동했으면 텔레포트로 보고 경로 폐기 (옛 목적지로 회귀 방지)

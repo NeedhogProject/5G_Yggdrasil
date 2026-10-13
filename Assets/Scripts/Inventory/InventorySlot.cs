@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using TMPro;
@@ -61,6 +62,7 @@ public class InventorySlot : MonoBehaviour,
 
     // 인벤토리 <-> 창고 간 아이템 이동 (데이터 동기화 포함)
     // fromSlot: 드래그를 시작한 출발 슬롯 (OnDrop 에서 확보해 넘겨줌)
+    // 빈 자리면 그 자리에, 아이템 1개면 위치 교환, 교환 불가면 빈 공간으로, 빈 공간도 없으면 변경 없음
     private void HandleCrossContainerDrop(InventorySlot fromSlot, ItemInstance draggedInstance)
     {
         // 창고는 인스턴스 단위 보관 — 인스턴스 없는 아이템은 이동 불가
@@ -75,60 +77,156 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
-        if (container == SlotContainer.Storage)
+        if (InventorySystem.Instance == null || StorageUI.Instance == null)
         {
-            // 인벤토리에서 창고로
-            // StorageUI 가 빈 칸을 찾아 배치한다 (기존 창고 아이템 위치는 유지)
-            if (StorageUI.Instance == null)
-            {
-                return;
-            }
-
-            bool added = StorageUI.Instance.AddToStorageData(draggedInstance);
-            if (added == true)
-            {
-                // 출발 슬롯(인벤토리)을 멀티셀 영역 + 데이터까지 확실히 제거
-                // RemoveItemAtSlot 하나로 슬롯 비우기와 데이터 제거를 모두 처리한다 (복제 방지)
-                InventorySystem.Instance?.RemoveItemAtSlot(fromSlot);
-            }
+            return;
         }
-        else
+
+        bool bToStorage = container == SlotContainer.Storage;
+
+        // 잡은 칸 보정: 아이템 좌상단(주인)이 들어갈 칸
+        Vector2Int vTarget = gridPosition - _grabOffset;
+        List<InventorySlot> targetOwners = GetOwnersInArea(bToStorage, vTarget, draggedInstance.Data.itemSize);
+
+        // 1. 놓은 자리가 비어 있으면 그 자리에 배치
+        if (targetOwners != null && targetOwners.Count == 0 && PlaceInContainer(bToStorage, GetSlot(bToStorage, vTarget), draggedInstance) == true)
         {
-            // 창고에서 인벤토리로
-            // 목적지(인벤토리) 칸이 차있으면 막는다 — 인벤토리는 위치 기반 배치라 빈 칸이 필요
-            if (isOccupied == true)
-            {
-                Debug.Log("[InventorySlot] 빈 칸에만 옮길 수 있습니다.");
-                return;
-            }
+            RemoveFromContainer(bToStorage == false, fromSlot, draggedInstance);
+            return;
+        }
 
-            // 창고 데이터 제거 + 슬롯 영역 해제는 RemoveFromStorageData(ReleaseArea)가 모두 처리한다.
-            if (StorageUI.Instance != null)
-            {
-                StorageUI.Instance.RemoveFromStorageData(draggedInstance);
-            }
+        // 2. 놓은 자리에 아이템 1개가 있으면 서로 위치 교환
+        if (targetOwners != null && targetOwners.Count == 1 && TrySwap(bToStorage, fromSlot, draggedInstance, targetOwners[0], vTarget) == true)
+        {
+            return;
+        }
 
-            // 드롭한 위치(this 슬롯)에 정확히 배치 시도.
-            // 잡은 칸 보정으로 아이템 좌상단이 들어갈 슬롯을 구한다.
-            InventorySystem inventory = InventorySystem.Instance;
-            bool placed = false;
-            if (inventory != null)
+        // 3. 교환 불가: 받는 쪽 빈 공간으로, 그것도 없으면 변경 없음
+        bool bAdded = bToStorage ? StorageUI.Instance.AddToStorageData(draggedInstance) : InventorySystem.Instance.AddItem(draggedInstance);
+        if (bAdded == true)
+        {
+            RemoveFromContainer(bToStorage == false, fromSlot, draggedInstance);
+            return;
+        }
+
+        Debug.Log("[InventorySlot] 교환할 수 없고 빈 공간도 없어 이동하지 않습니다.");
+    }
+
+    // 끌어온 아이템(A)과 놓은 자리의 아이템(B) 위치 교환, 크기나 창고 용량이 맞지 않으면 false
+    private bool TrySwap(bool _bToStorage, InventorySlot _fromSlot, ItemInstance _draggedInstance, InventorySlot _targetOwner, Vector2Int _vTarget)
+    {
+        ItemInstance targetInstance = _targetOwner.CurrentInstance;
+        // 판매창에 담긴 아이템은 교환 대상에서 제외 (끌어온 쪽은 OnBeginDrag 에서 이미 차단)
+        if (targetInstance == null || _targetOwner.IsSaleMarked == true)
+        {
+            return false;
+        }
+
+        // B 가 A 를 뺀 원래 자리에 들어가야 교환 가능 (A 쪽은 놓은 자리에 B 하나뿐이라 이미 확인됨)
+        Vector2Int vSource = _fromSlot.gridPosition;
+        if (IsAreaFreeExcept(_bToStorage == false, vSource, targetInstance.Data.itemSize, _fromSlot) == false)
+        {
+            return false;
+        }
+
+        // 창고는 칸 배치와 별개로 총 용량 제한이 있어 미리 확인 (배치 도중 실패하면 아이템이 사라짐)
+        ItemData storageIn = _bToStorage ? _draggedInstance.Data : targetInstance.Data;
+        ItemData storageOut = _bToStorage ? targetInstance.Data : _draggedInstance.Data;
+        if (StorageUI.Instance.HasCapacity(storageIn, storageOut) == false)
+        {
+            return false;
+        }
+
+        RemoveFromContainer(_bToStorage == false, _fromSlot, _draggedInstance);
+        RemoveFromContainer(_bToStorage, _targetOwner, targetInstance);
+
+        PlaceInContainer(_bToStorage, GetSlot(_bToStorage, _vTarget), _draggedInstance);
+        PlaceInContainer(_bToStorage == false, GetSlot(_bToStorage == false, vSource), targetInstance);
+
+        Debug.Log("[InventorySlot] 위치 교환: " + _draggedInstance.Data.itemName + " <-> " + targetInstance.Data.itemName);
+        return true;
+    }
+
+    // 좌표의 칸 (_bStorage: 창고 / 인벤토리, 범위 밖이면 null)
+    private static InventorySlot GetSlot(bool _bStorage, Vector2Int _vGrid)
+    {
+        if (_bStorage == true)
+        {
+            return StorageUI.Instance.GetSlotAt(_vGrid);
+        }
+        return InventorySystem.Instance.GetSlotAt(_vGrid);
+    }
+
+    // 영역 안 아이템들의 주인 칸 목록 (영역이 칸 밖으로 나가면 null)
+    private static List<InventorySlot> GetOwnersInArea(bool _bStorage, Vector2Int _vStart, Vector2Int _vSize)
+    {
+        List<InventorySlot> owners = new List<InventorySlot>();
+
+        for (int y = 0; y < _vSize.y; y++)
+        {
+            for (int x = 0; x < _vSize.x; x++)
             {
-                Vector2Int targetOwnerGrid = gridPosition - _grabOffset;
-                InventorySlot targetSlot = inventory.GetSlotAt(targetOwnerGrid);
-                if (targetSlot == null)
+                InventorySlot slot = GetSlot(_bStorage, new Vector2Int(_vStart.x + x, _vStart.y + y));
+                if (slot == null)
                 {
-                    targetSlot = this;
+                    return null;
                 }
-                placed = inventory.AddItemAtSlot(targetSlot, draggedInstance);
-            }
+                if (slot.isOccupied == false)
+                {
+                    continue;
+                }
 
-            // 그 자리에 못 넣으면(공간 부족 등) 빈 칸 아무데나 폴백
-            if (placed == false)
-            {
-                inventory?.AddItem(draggedInstance);
+                InventorySlot owner = slot.ownerSlot != null ? slot.ownerSlot : slot;
+                if (owners.Contains(owner) == false)
+                {
+                    owners.Add(owner);
+                }
             }
         }
+        return owners;
+    }
+
+    // 지정한 아이템(_ignoreOwner)을 뺐다고 가정할 때 영역이 비는지
+    private static bool IsAreaFreeExcept(bool _bStorage, Vector2Int _vStart, Vector2Int _vSize, InventorySlot _ignoreOwner)
+    {
+        List<InventorySlot> owners = GetOwnersInArea(_bStorage, _vStart, _vSize);
+        if (owners == null)
+        {
+            return false;
+        }
+        foreach (InventorySlot owner in owners)
+        {
+            if (owner != _ignoreOwner)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // 지정 칸에 배치 (_bStorage: 창고 / 인벤토리)
+    private static bool PlaceInContainer(bool _bStorage, InventorySlot _slot, ItemInstance _instance)
+    {
+        if (_slot == null)
+        {
+            return false;
+        }
+        if (_bStorage == true)
+        {
+            return StorageUI.Instance.PlaceAtSlot(_slot, _instance);
+        }
+        return InventorySystem.Instance.AddItemAtSlot(_slot, _instance);
+    }
+
+    // 보관함에서 데이터와 칸까지 제거
+    private static void RemoveFromContainer(bool _bStorage, InventorySlot _ownerSlot, ItemInstance _instance)
+    {
+        if (_bStorage == true)
+        {
+            StorageUI.Instance.RemoveFromStorageData(_instance);
+            return;
+        }
+        InventorySystem.Instance.RemoveItemAtSlot(_ownerSlot);
     }
 
     // ─────────────────────── 슬롯 세팅 ───────────────────────
@@ -326,7 +424,7 @@ public class InventorySlot : MonoBehaviour,
         // 그 외에는 장착/해제
         if (source.currentItem != null)
         {
-            InventorySystem.Instance?.UseItem(source.currentItem);
+            InventorySystem.Instance?.UseItem(source.currentItem, source.CurrentInstance);
         }
     }
 

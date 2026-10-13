@@ -113,6 +113,29 @@ public class DroppedItem : MonoBehaviour
 
         Debug.Log($"[DroppedItem] 획득 시도: {_itemInstance.Data?.ItemName} / 슬롯 수: {inventory.slots.Count}");
 
+        // 중첩 가능 아이템은 수량째로 넣고, 다 못 넣으면 남은 수량만 바닥에 남김
+        if (_itemInstance.Data.IsStackable == true)
+        {
+            int nTotal = _itemInstance.StackCount;
+            int nLeft = inventory.AddItemStack(_itemInstance.Data, nTotal);
+
+            if (nLeft < nTotal)
+            {
+                AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+                Debug.Log($"[DroppedItem] {_itemInstance.Data.ItemName} x{nTotal - nLeft} 획득");
+            }
+
+            if (nLeft <= 0)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            _itemInstance.RemoveStack(nTotal - nLeft);
+            Debug.LogWarning($"[DroppedItem] 인벤토리 가득 참 — {nLeft}개 남음");
+            return;
+        }
+
         if (inventory.AddItem(_itemInstance.Data))
         {
             AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);

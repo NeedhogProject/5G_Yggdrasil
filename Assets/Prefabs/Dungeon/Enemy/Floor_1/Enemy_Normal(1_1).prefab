@@ -677,8 +677,8 @@ MonoBehaviour:
     weight: 3
     minCount: 1
     maxCount: 1
-  dropCount: 3
-  skipChance: 0
+  minDropCount: 1
+  maxDropCount: 3
   droppedItemPrefab: {fileID: 9050273253143957091, guid: 990821102621e1145b36c049befa6795, type: 3}
   dropSpreadRadius: 0.5
 --- !u!114 &7151931608398415947

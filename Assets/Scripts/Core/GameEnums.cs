@@ -10,7 +10,9 @@ public enum ItemType
     Consumable,  // 소모품 (물약, 주문서)
     Relic,       // 유물
     Resource,    // 자원 (원석)
-    QuestItem    // 퀘스트 아이템 (열쇠 등)
+    QuestItem,   // 퀘스트 아이템 (열쇠 등)
+    Sellable,    // 판매 전용 (상점에 팔아 달란 획득)
+    EnhanceMaterial // 강화 재료
 }
 
 /// <summary>아이템 희귀도 — UIItemTooltip 참조</summary>

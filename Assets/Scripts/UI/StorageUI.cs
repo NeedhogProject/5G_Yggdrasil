@@ -210,6 +210,45 @@ public class StorageUI : MonoBehaviour
         return _slots[idx];
     }
 
+    // 칸 좌표로 슬롯 조회 (인벤토리와 창고 사이 위치 교환용)
+    public InventorySlot GetSlotAt(Vector2Int _vGrid)
+    {
+        return GetSlotAt(_vGrid.x, _vGrid.y);
+    }
+
+    // 창고 총 용량 기준으로 _incoming 을 넣고 _outgoing 을 뺐을 때 들어갈 수 있는지 (위치 교환용)
+    public bool HasCapacity(ItemData _incoming, ItemData _outgoing)
+    {
+        if (houseSystem == null)
+        {
+            return false;
+        }
+        return houseSystem.UsedSlots - _outgoing.InventorySize + _incoming.InventorySize <= houseSystem.StorageCapacity;
+    }
+
+    // 창고 데이터에 추가 + 지정 칸에 배치 (드롭한 위치 그대로), 성공 여부 반환
+    public bool PlaceAtSlot(InventorySlot _slot, ItemInstance _instance)
+    {
+        if (houseSystem == null)
+        {
+            return false;
+        }
+
+        Vector2Int vGrid = _slot.gridPosition;
+        if (CanPlaceAt(vGrid.x, vGrid.y, _instance.Data.itemSize, null) == false)
+        {
+            return false;
+        }
+
+        if (houseSystem.AddToStorage(_instance) == false)
+        {
+            return false;
+        }
+
+        OccupyArea(_slot, _instance);
+        return true;
+    }
+
     // 특정 좌표에 아이템 크기만큼 배치 가능한지 검사 (경계 + 점유)
     // ignoreOwner: 이동 시 자기 자신이 점유한 칸은 무시하고 검사하기 위한 주인 슬롯
     private bool CanPlaceAt(int startX, int startY, Vector2Int size, InventorySlot ignoreOwner)

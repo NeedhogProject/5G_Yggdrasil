@@ -124,6 +124,14 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
 
+        // 중첩 가능 아이템은 기존 묶음에 전부 들어가면 새 칸을 쓰지 않음
+        if (CanMergeAll(instance.Data, instance.StackCount) == true)
+        {
+            MergeIntoStacks(instance.Data, instance.StackCount);
+            Debug.Log("[InventorySystem] 아이템 합침: " + instance.Data.itemName + " x" + instance.StackCount);
+            return true;
+        }
+
         InventorySlot emptySlot = FindEmptySlot(instance.Data);
 
         if (emptySlot == null)
@@ -139,6 +147,75 @@ public class InventorySystem : MonoBehaviour
 
         Debug.Log("[InventorySystem] 아이템 추가: " + instance.Data.itemName);
         return true;
+    }
+
+    // 중첩 아이템을 수량째로 추가 (기존 묶음 먼저, 남으면 새 칸 1개), 못 넣은 수량 반환
+    public int AddItemStack(ItemData _item, int _nCount)
+    {
+        if (_item == null || _nCount <= 0)
+        {
+            return 0;
+        }
+
+        int nRemain = MergeIntoStacks(_item, _nCount);
+        if (nRemain <= 0)
+        {
+            return 0;
+        }
+
+        ItemInstance instance = CreateInstanceFromData(_item);
+        int nAmount = Mathf.Min(nRemain, _item.MaxStack);
+        instance.AddStack(nAmount - 1);
+
+        if (AddItem(instance) == false)
+        {
+            return nRemain;
+        }
+        return nRemain - nAmount;
+    }
+
+    // 해당 아이템이 놓인 주인 칸 목록 (상점 판매창에 담긴 칸은 제외)
+    private List<InventorySlot> GetItemSlots(ItemData _item)
+    {
+        return slots.FindAll(s => s.IsOwner == true && s.IsSaleMarked == false && s.CurrentInstance != null && s.CurrentInstance.Data == _item);
+    }
+
+    // 기존 묶음의 남은 칸으로 수량 전부를 받을 수 있는지
+    private bool CanMergeAll(ItemData _item, int _nCount)
+    {
+        if (_item.IsStackable == false)
+        {
+            return false;
+        }
+
+        int nSpace = 0;
+        foreach (InventorySlot slot in GetItemSlots(_item))
+        {
+            nSpace += _item.MaxStack - slot.CurrentInstance.StackCount;
+        }
+        return nSpace >= _nCount;
+    }
+
+    // 같은 아이템 기존 묶음에 수량을 채우고 남은 수량 반환
+    private int MergeIntoStacks(ItemData _item, int _nCount)
+    {
+        int nRemain = _nCount;
+
+        foreach (InventorySlot slot in GetItemSlots(_item))
+        {
+            if (nRemain <= 0)
+            {
+                break;
+            }
+
+            int nAdded = slot.CurrentInstance.AddStack(nRemain);
+            if (nAdded > 0)
+            {
+                nRemain -= nAdded;
+                slot.SetItem(slot.CurrentInstance); // 수량 표시 갱신
+            }
+        }
+        return nRemain;
     }
 
     // SetItem은 호출측에서 이미 한 경우, 영역 점유와 아이콘 크기만 처리
@@ -357,7 +434,8 @@ public class InventorySystem : MonoBehaviour
         int toY = toSlot.slotIndex / gridWidth;
 
         // 먼저 출발지 점유를 임시 해제해야 자기 영역과 겹쳐도 배치 가능
-        ItemInstance movingInstance = FindInstanceBySlot(fromOwner);
+        // 위험: 같은 아이템이 여러 칸(묶음, 강화 단계 차이)일 수 있어 아이템 종류로 찾지 않고 칸의 인스턴스를 사용
+        ItemInstance movingInstance = fromOwner.CurrentInstance;
         ReleaseAreaSilent(fromOwner);
 
         // 목표 영역이 비었는지 검사
@@ -427,16 +505,6 @@ public class InventorySystem : MonoBehaviour
 
         Debug.Log("[InventorySystem] 지정 위치 배치: " + instance.Data.itemName);
         return true;
-    }
-
-    // 인스턴스 찾기 (주인 슬롯 기준)
-    private ItemInstance FindInstanceBySlot(InventorySlot ownerSlot)
-    {
-        if (ownerSlot.currentItem == null)
-        {
-            return null;
-        }
-        return _itemInstances.Find(i => i.Data == ownerSlot.currentItem);
     }
 
     // 특정 좌표에 크기만큼 배치 가능한지 (점유/경계 검사)
@@ -521,11 +589,8 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        InventorySlot slot = slots.Find(s => s.currentItem == instance.Data && s.IsOwner);
-        if (slot == null)
-        {
-            slot = slots.Find(s => s.currentItem == instance.Data);
-        }
+        // 위험: 같은 아이템 묶음이 여러 칸일 수 있어 아이템 종류가 아닌 인스턴스로 칸을 찾음 (못 찾아도 다른 칸은 건드리지 않음)
+        InventorySlot slot = slots.Find(s => s.CurrentInstance == instance && s.IsOwner);
 
         if (slot != null)
         {
@@ -536,6 +601,54 @@ public class InventorySystem : MonoBehaviour
         items.Remove(instance.Data);
 
         Debug.Log("[InventorySystem] 아이템 제거: " + instance.Data.itemName);
+    }
+
+    /// <summary>인벤토리에 있는 해당 아이템 총 수량 (여러 묶음 합산)</summary>
+    public int GetItemCount(ItemData _item)
+    {
+        int nTotal = 0;
+        foreach (InventorySlot slot in GetItemSlots(_item))
+        {
+            nTotal += slot.CurrentInstance.StackCount;
+        }
+        return nTotal;
+    }
+
+    // 지정 수량만 제거 (재료 소모 등), 부족하면 아무것도 빼지 않고 false, 0개가 된 묶음은 칸까지 비움
+    public bool RemoveItemCount(ItemData _item, int _nCount)
+    {
+        if (_item == null || _nCount <= 0)
+        {
+            return false;
+        }
+
+        if (GetItemCount(_item) < _nCount)
+        {
+            Debug.LogWarning("[InventorySystem] 수량 부족: " + _item.itemName + " (필요 " + _nCount + ")");
+            return false;
+        }
+
+        // 뒤쪽 칸의 묶음부터 빼서 앞쪽 묶음을 최대한 유지
+        List<InventorySlot> itemSlots = GetItemSlots(_item);
+        int nRemain = _nCount;
+
+        for (int i = itemSlots.Count - 1; i >= 0 && nRemain > 0; i--)
+        {
+            InventorySlot slot = itemSlots[i];
+            nRemain -= slot.CurrentInstance.RemoveStack(nRemain);
+
+            if (slot.CurrentInstance.IsEmpty == true)
+            {
+                RemoveItemAtSlot(slot);
+            }
+            else
+            {
+                slot.SetItem(slot.CurrentInstance); // 수량 표시 갱신
+            }
+        }
+
+        Debug.Log("[InventorySystem] 수량 제거: " + _item.itemName + " x" + _nCount);
+        return true;
     }
 
     // 주인 슬롯이 차지한 모든 칸을 해제하고 아이콘 크기 복원
@@ -618,6 +731,11 @@ public class InventorySystem : MonoBehaviour
 
         if (slot != null)
         {
+            // 칸의 인스턴스도 목록에서 제거 (남으면 대장간 목록 등에 보이지 않는 아이템으로 남음)
+            if (slot.CurrentInstance != null)
+            {
+                _itemInstances.Remove(slot.CurrentInstance);
+            }
             ReleaseArea(slot);
         }
 
@@ -720,7 +838,8 @@ public class InventorySystem : MonoBehaviour
 
     // ─────────────────────── 아이템 사용/버리기 ───────────────────────
 
-    public void UseItem(ItemData item)
+    // _clickedInstance: 우클릭한 칸의 인스턴스 (같은 아이템이 여러 칸이면 클릭한 것을 사용)
+    public void UseItem(ItemData item, ItemInstance _clickedInstance = null)
     {
         if (item == null)
         {
@@ -729,8 +848,8 @@ public class InventorySystem : MonoBehaviour
 
         if (item.itemType == ItemType.Equipment)
         {
-            // 인스턴스 목록에서 해당 데이터의 인스턴스 찾기
-            ItemInstance instance = _itemInstances.Find(i => i.Data == item);
+            // 클릭한 칸의 인스턴스 우선, 없으면 해당 데이터의 인스턴스 찾기
+            ItemInstance instance = _clickedInstance != null ? _clickedInstance : _itemInstances.Find(i => i.Data == item);
 
             // 착용 전에 인벤토리에서 먼저 제거 (복사 방지)
             // 교체된 기존 장비는 PlayerEquipment.EquipItem 내부에서 인벤토리로 반환됨
@@ -775,12 +894,20 @@ public class InventorySystem : MonoBehaviour
                 return;
             }
 
-            RemoveItem(item);
+            // 클릭한 칸의 물약을 소모 (같은 물약이 여러 칸이면 다른 칸이 비워지지 않게)
+            if (_clickedInstance != null)
+            {
+                RemoveItem(_clickedInstance);
+            }
+            else
+            {
+                RemoveItem(item);
+            }
         }
         else if (item.itemType == ItemType.Relic)
         {
             // 유물 우클릭 → 유물 슬롯에 장착 (교체된 기존 유물은 EquipItem 내부에서 인벤토리로 반환)
-            ItemInstance relicInstance = _itemInstances.Find(i => i.Data == item);
+            ItemInstance relicInstance = _clickedInstance != null ? _clickedInstance : _itemInstances.Find(i => i.Data == item);
             if (relicInstance == null)
             {
                 return;
