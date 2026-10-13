@@ -45,3 +45,13 @@ public enum EquipmentType
     Boots,    // 장화
     Relic    // 유물 (반지처럼 장착)
 }
+
+/// <summary>유물 옵션 종류 — RelicData, PlayerStats 참조</summary>
+public enum RelicOptionType
+{
+    None,      // 판매용 유물 (장착 불가)
+    MaxHealth, // 최대 HP 증가 (고정값)
+    MaxMental, // 최대 정신력 증가 (고정값)
+    DropGold,  // 몬스터 달란 획득량 증가 (0.05 = 5%)
+    Attack     // 공격력 증가 (고정값)
+}

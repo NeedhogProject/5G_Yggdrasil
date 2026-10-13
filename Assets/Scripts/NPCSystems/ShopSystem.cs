@@ -860,6 +860,13 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
+        // 미감정 유물은 판매 불가 (감정 후 판매)
+        if (slot.CurrentInstance is RelicInstance relic && relic.IsIdentified == false)
+        {
+            SetDialogue("감정하지 않은 유물은 받을 수 없다네.");
+            return;
+        }
+
         // 이미 담긴 슬롯이면 무시 (중복 방지)
         for (int i = 0; i < _stagedItems.Count; i++)
         {

@@ -176,6 +176,9 @@ public class EnemyBase : MonoBehaviour
             return;
         }
 
+        // 유물 달란 증가 비율 적용
+        nAmount = Mathf.RoundToInt(nAmount * (1f + PlayerStats.Instance.RelicGoldBonus));
+
         // gold setter 가 상한 999999 로 클램프
         PlayerStats.Instance.gold += nAmount;
         Debug.Log($"[{gameObject.name}] 달란 +{nAmount}");

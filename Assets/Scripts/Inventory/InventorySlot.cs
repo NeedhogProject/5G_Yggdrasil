@@ -421,6 +421,13 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
+        // 학자 감정창이 열려 있으면 우클릭 = 감정할 유물 선택 (장착보다 우선)
+        if (container == SlotContainer.Inventory && ScholarSystem.Instance != null && ScholarSystem.Instance.IsOpen == true)
+        {
+            ScholarSystem.Instance.SelectRelic(source.CurrentInstance);
+            return;
+        }
+
         // 그 외에는 장착/해제
         if (source.currentItem != null)
         {

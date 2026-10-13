@@ -71,7 +71,8 @@ public class HouseSystem : MonoBehaviour
     // ─────────────────────── 창고 런타임 ───────────────────────
 
     /// <summary>창고에 보관 중인 아이템 목록</summary>
-    private readonly List<ItemInstance> _storageItems = new List<ItemInstance>();
+    // 위험: HouseSystem 은 마을 씬과 함께 파괴되므로 목록을 static 으로 둬야 던전에 다녀와도 유지됨
+    private static readonly List<ItemInstance> _storageItems = new List<ItemInstance>();
 
     /// <summary>창고 최대 칸 수</summary>
     public int StorageCapacity => storageWidth * storageHeight;
@@ -296,16 +297,22 @@ public class HouseSystem : MonoBehaviour
     }
 
     // ─────────────────────── 저장/불러오기 ───────────────────────
-    // SaveSystem 완성 후 연동
+    // 마을 밖(던전)에서도 저장/불러오기 할 수 있게 static
 
-    /// <summary>창고 데이터 저장용 직렬화 (SaveSystem 연동 예정)</summary>
-    public List<ItemInstance> GetStorageForSave() => new List<ItemInstance>(_storageItems);
+    /// <summary>창고 데이터 저장용 목록 — SaveSystem 참조</summary>
+    public static List<ItemInstance> GetStorageForSave() => new List<ItemInstance>(_storageItems);
 
-    /// <summary>창고 데이터 불러오기 (SaveSystem 연동 예정)</summary>
-    public void LoadStorage(List<ItemInstance> items)
+    /// <summary>창고 데이터 불러오기 — SaveSystem 참조</summary>
+    public static void LoadStorage(List<ItemInstance> items)
     {
         _storageItems.Clear();
         if (items != null) _storageItems.AddRange(items);
+    }
+
+    /// <summary>창고 비우기 — 새 게임, 이어하기 시작 시 GameManager 에서 호출</summary>
+    public static void ClearStorage()
+    {
+        _storageItems.Clear();
     }
 
 #if UNITY_EDITOR

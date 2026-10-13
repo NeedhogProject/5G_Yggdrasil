@@ -4,7 +4,8 @@ using TMPro;
 
 /// <summary>
 /// 학자 NPC 패널.
-/// 미감정 유물을 골드를 소모해 감정한 뒤 능력치를 공개한다.
+/// 미감정 유물을 달란을 소모해 감정한 뒤 능력치를 공개한다.
+/// 인벤토리를 같이 열고, 인벤토리의 유물을 우클릭해 하나씩 골라 감정한다.
 /// </summary>
 public class ScholarSystem : MonoBehaviour
 {
@@ -21,8 +22,18 @@ public class ScholarSystem : MonoBehaviour
     [Header("감정 설정")]
     public int identifyCost = 50;
 
-    private RelicData selectedRelic;
+    public static ScholarSystem Instance { get; private set; }
+
+    private RelicInstance selectedRelic;
     private bool      isOpen = false;
+
+    /// <summary>감정창이 열려 있는지 — InventorySlot 우클릭 분기에서 참조</summary>
+    public bool IsOpen => isOpen;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -41,7 +52,13 @@ public class ScholarSystem : MonoBehaviour
         scholarPanel.SetActive(true);
         isOpen = true;
 
-        dialogueText.text = "유물 감정이 필요하신가요? 어디 한번 살펴보겠습니다.";
+        dialogueText.text = "유물 감정이 필요하신가요? 인벤토리에서 유물을 우클릭해 보여주세요.";
+        relicInfoText.text = "";
+        identifyCostText.text = $"감정 비용: {identifyCost} 달란";
+        identifyButton.interactable = false;
+
+        // 감정할 유물을 고를 수 있게 인벤토리를 옆에 같이 연다
+        FindFirstObjectByType<InventoryUI>()?.OpenInventoryForShop();
 
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
     }
@@ -53,26 +70,22 @@ public class ScholarSystem : MonoBehaviour
 
         selectedRelic = null;
 
+        FindFirstObjectByType<InventoryUI>()?.CloseInventory();
+
         AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
 
-    // 인벤토리 슬롯 클릭 시 외부에서 호출
-    public void SelectRelic(ItemData relic)
+    // 인벤토리 슬롯 우클릭 시 InventorySlot 에서 호출
+    public void SelectRelic(ItemInstance _instance)
     {
-        if (relic.itemType != ItemType.Relic)
+        RelicInstance relic = _instance as RelicInstance;
+        if (relic == null)
         {
             dialogueText.text = "유물만 감정할 수 있습니다.";
             return;
         }
 
-        RelicData relicData = relic as RelicData;
-        if (relicData == null)
-        {
-            dialogueText.text = "유물 데이터를 읽을 수 없습니다.";
-            return;
-        }
-
-        selectedRelic = relicData;
+        selectedRelic = relic;
         UpdateIdentificationUI();
     }
 
@@ -83,16 +96,16 @@ public class ScholarSystem : MonoBehaviour
             return;
         }
 
-        if (selectedRelic.isIdentified)
+        if (selectedRelic.IsIdentified == true)
         {
-            relicInfoText.text             = $"{selectedRelic.itemName}\n{selectedRelic.relicEffect}";
+            relicInfoText.text             = $"{selectedRelic.RelicData.itemName}\n{selectedRelic.RelicData.relicEffect}";
             identifyCostText.text          = "이미 감정된 유물입니다.";
             identifyButton.interactable    = false;
         }
         else
         {
             relicInfoText.text             = "미감정 유물\n감정이 필요합니다.";
-            identifyCostText.text          = $"감정 비용: {identifyCost} 골드";
+            identifyCostText.text          = $"감정 비용: {identifyCost} 달란";
             identifyButton.interactable    = PlayerStats.Instance.gold >= identifyCost;
         }
     }
@@ -105,7 +118,7 @@ public class ScholarSystem : MonoBehaviour
             return;
         }
 
-        if (selectedRelic.isIdentified)
+        if (selectedRelic.IsIdentified == true)
         {
             dialogueText.text = "이미 감정된 유물입니다.";
             return;
@@ -113,16 +126,16 @@ public class ScholarSystem : MonoBehaviour
 
         if (PlayerStats.Instance.gold < identifyCost)
         {
-            dialogueText.text = "골드가 부족합니다!";
+            dialogueText.text = "달란이 부족합니다!";
             AudioManager.Instance?.PlaySFX(SFXClip.UIError);
             return;
         }
 
         PlayerStats.Instance.gold -= identifyCost;
 
-        selectedRelic.RevealStats();
+        selectedRelic.Identify();
 
-        dialogueText.text = $"감정 완료! 이건 {selectedRelic.itemName}이군요!\n{selectedRelic.relicEffect}";
+        dialogueText.text = $"감정 완료! 이건 {selectedRelic.RelicData.itemName}이군요!\n{selectedRelic.RelicData.relicEffect}";
 
         UpdateIdentificationUI();
 

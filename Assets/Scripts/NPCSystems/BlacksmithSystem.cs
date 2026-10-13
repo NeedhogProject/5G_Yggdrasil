@@ -717,6 +717,9 @@ public class BlacksmithSystem : MonoBehaviour
                 break;
         }
 
+        // 강화 결과 자동 저장
+        SaveSystem.Save();
+
         _isEnhancing = false;
 
         // 선택된 카드의 강화 단계 표시 갱신

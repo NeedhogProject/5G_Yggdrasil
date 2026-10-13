@@ -12,9 +12,10 @@ using UnityEngine.SceneManagement;
 /// - 플레이어 사망 시 인벤 드롭 후 마을 복귀
 /// - DontDestroyOnLoad 로 씬 전환에도 유지
 ///
-/// [저장 시스템 제거]
-/// - 이어하기 및 저장/불러오기 기능을 완전히 제거함
-/// - IsNewGame, CurrentSlot 프로퍼티는 다른 파일 호환을 위해 남겨둠
+/// [저장]
+/// - 슬롯 없이 SaveSystem 파일 1개. 타이틀 이어하기로 불러오기
+/// - 마을 도착, 층 이동 때 자동 저장 (새 게임은 설정창 저장 버튼을 처음 누른 뒤부터)
+/// - CurrentSlot 프로퍼티는 다른 파일 호환을 위해 남겨둠
 ///
 /// [씬 이름 설정]
 /// 인스펙터에서 각 씬 이름을 프로젝트에 맞게 설정
@@ -98,6 +99,9 @@ public class GameManager : MonoBehaviour
     // 씬 로드 진행 중 여부 (로드 완료 전 중복 요청 차단)
     private bool _bSceneLoading = false;
 
+    // 이어하기로 불러온 데이터 (씬 로드 후 플레이어에 적용하고 비움)
+    private SaveSystem.SaveData _pendingLoad = null;
+
     // 게임 시작 흐름
 
     /// <summary>새 게임 여부 — StartingEquipment 가 참조 (타이틀을 거치지 않고 씬에서 바로 시작해도 지급되도록 기본 true)</summary>
@@ -121,8 +125,35 @@ public class GameManager : MonoBehaviour
 
         // 이전 플레이의 영속 상태가 남지 않도록 정리 (씬에 배치된 새 오브젝트가 깨끗하게 시작)
         DestroyPersistentPlayerObjects();
+        HouseSystem.ClearStorage();
+
+        // 기존 저장은 플레이어가 저장 버튼을 누를 때까지 그대로 둠 (실수로 새 게임을 눌러도 이어하기 가능)
+        SaveSystem.IsAutoSaveEnabled = false;
 
         LoadScene(townSceneName, GameState.Town);
+    }
+
+    /// <summary>이어하기 — 저장된 층에서 시작 (타이틀 이어하기 버튼에서 호출)</summary>
+    public void ContinueGame()
+    {
+        SaveSystem.SaveData data = SaveSystem.Load();
+        if (data == null)
+        {
+            Debug.LogWarning("[GameManager] 불러올 저장 데이터가 없음");
+            return;
+        }
+
+        // 저장 데이터가 장비를 복원하므로 기본 무기 지급을 막음
+        IsNewGame = false;
+        DestroyPersistentPlayerObjects();
+
+        // 창고는 씬과 무관하게 유지되므로 바로 복원, 플레이어는 씬 로드 후 복원
+        HouseSystem.ClearStorage();
+        SaveSystem.ApplyStorage(data);
+        _pendingLoad = data;
+        SaveSystem.IsAutoSaveEnabled = true;
+
+        GoToFloor(data.floor);
     }
 
     /// <summary>마을 → 던전 1층</summary>
@@ -256,6 +287,12 @@ public class GameManager : MonoBehaviour
         // EventSystem 이 없는 씬이면 생성 (없으면 UI 버튼 클릭 불가)
         EnsureEventSystem();
 
+        // 이어하기 복원 후 자동 저장 (마을 도착, 층 이동)
+        if (CurrentState == GameState.Town || CurrentState == GameState.Dungeon)
+        {
+            StartCoroutine(LoadAndSaveAfterSceneReady());
+        }
+
         // 마을/층 기본 BGM (3층 보스 구역 BGM 은 BossZoneBGM 에서 전환)
         if ((CurrentState == GameState.Town || CurrentState == GameState.Dungeon) && AudioManager.Instance != null)
         {
@@ -293,6 +330,32 @@ public class GameManager : MonoBehaviour
             MovePlayerToSpawn("Spawn_House");
             StartCoroutine(EnableCameraFollowNextFrame());
         }
+    }
+
+    // 인벤토리 칸이 만들어진 뒤 이어하기 데이터 적용, 이후 자동 저장
+    private System.Collections.IEnumerator LoadAndSaveAfterSceneReady()
+    {
+        // 칸 생성(InventorySystem.Start) 대기 - 최대 10프레임
+        int nWaitFrames = 0;
+        while (nWaitFrames < 10)
+        {
+            yield return null;
+            nWaitFrames = nWaitFrames + 1;
+
+            if (InventorySystem.Instance != null && InventorySystem.Instance.slots.Count > 0)
+            {
+                break;
+            }
+        }
+
+        if (_pendingLoad != null)
+        {
+            SaveSystem.ApplyPlayer(_pendingLoad);
+            _pendingLoad = null;
+            yield break;
+        }
+
+        SaveSystem.Save();
     }
 
     // 씬에 EventSystem 이 없을 때만 New Input System 용으로 생성 (씬 소속이라 씬 전환 시 함께 제거)

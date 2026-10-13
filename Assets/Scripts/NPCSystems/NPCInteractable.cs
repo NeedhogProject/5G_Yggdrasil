@@ -50,6 +50,8 @@ public class NPCInteractable : MonoBehaviour
     [SerializeField] private string functionChoiceLabel = "맡기기";
     [Tooltip("창을 유지한 채 대사를 순환하는 선택지 문구")]
     [SerializeField] private string talkChoiceLabel = "대화하기";
+    [Tooltip("학자의 감정 선택지 문구")]
+    [SerializeField] private string identifyChoiceLabel = "유물 감정";
 
     [Header("상인(벨라) 선택지 문구")]
     [Tooltip("상인의 첫 번째 기능 선택지 (구매)")]
@@ -251,8 +253,24 @@ public class NPCInteractable : MonoBehaviour
             shop.onBackToMenu = OpenScholar;
         };
 
-        string[] labels = new string[] { functionChoiceLabel };
-        System.Action[] actions = new System.Action[] { openFunction };
+        // 학자: 유물 감정 = 감정창과 인벤토리를 같이 연다
+        System.Action openIdentify = delegate ()
+        {
+            ScholarSystem scholar = scholarSystem;
+            if (scholar == null)
+            {
+                scholar = FindFirstObjectByType<ScholarSystem>(FindObjectsInactive.Include);
+            }
+            if (scholar == null)
+            {
+                Debug.LogWarning("[NPCInteractable] " + npcName + ": ScholarSystem 을 찾을 수 없어 감정을 열 수 없음");
+                return;
+            }
+            scholar.OpenScholar();
+        };
+
+        string[] labels = new string[] { functionChoiceLabel, identifyChoiceLabel };
+        System.Action[] actions = new System.Action[] { openFunction, openIdentify };
 
         if (TryStartMenuDialogue(labels, actions) == true)
         {

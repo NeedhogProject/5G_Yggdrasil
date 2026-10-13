@@ -294,7 +294,8 @@ public class PlayerCombat : MonoBehaviour
     {
         if (CurrentWeapon == null) return 0f;
 
-        float baseDamage = CurrentWeapon.FinalDamage;
+        // 유물 공격력은 무기 공격력에 고정값으로 더함
+        float baseDamage = CurrentWeapon.FinalDamage + (_stats != null ? _stats.RelicAttackBonus : 0f);
 
         // 정신력 배율 (정신력 낮을수록 공격력 감소, 강도는 PlayerStats 인스펙터)
         float mentalMult = _stats != null ? _stats.MentalAttackMultiplier : 1f;

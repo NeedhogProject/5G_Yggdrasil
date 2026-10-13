@@ -29,6 +29,9 @@ public class UIItemTooltip : MonoBehaviour
     private RectTransform _tooltipRect;
     private ItemData _currentItem;
 
+    // 미감정 유물 효과 대신 표시할 문구
+    private const string UNIDENTIFIED_TEXT = "미확인 유물\n감정이 필요합니다.";
+
     private void Awake()
     {
         if (Instance == null)
@@ -96,7 +99,8 @@ public class UIItemTooltip : MonoBehaviour
             }
             else if (item is RelicData rel)
             {
-                itemStatsText.text = GetRelicStats(rel);
+                // 데이터만 넘어오는 곳은 장착 칸(감정된 유물만 장착 가능)이라 효과 표시
+                itemStatsText.text = rel.relicEffect;
             }
             else
             {
@@ -122,6 +126,11 @@ public class UIItemTooltip : MonoBehaviour
 
         RefreshCommonFields(instance.Data);
 
+        if (instance is RelicInstance hiddenRelic && hiddenRelic.IsIdentified == false)
+        {
+            HideRelicDetails();
+        }
+
         if (itemStatsText != null)
         {
             WeaponInstance weaponInstance = instance as WeaponInstance;
@@ -135,9 +144,9 @@ public class UIItemTooltip : MonoBehaviour
             {
                 itemStatsText.text = GetArmorStatsFromInstance(armorInstance);
             }
-            else if (instance.Data is RelicData rel)
+            else if (instance is RelicInstance relic)
             {
-                itemStatsText.text = GetRelicStats(rel);
+                itemStatsText.text = relic.IsIdentified == true ? relic.RelicData.relicEffect : UNIDENTIFIED_TEXT;
             }
             else
             {
@@ -285,13 +294,17 @@ public class UIItemTooltip : MonoBehaviour
         return result;
     }
 
-    private static string GetRelicStats(RelicData r)
+    // 미감정 유물은 희귀도 색과 설명(옵션이 드러남)을 숨김
+    private void HideRelicDetails()
     {
-        if (r.isIdentified == true)
+        if (rarityBorder != null)
         {
-            return r.relicEffect;
+            rarityBorder.color = GetRarityColor(ItemRarity.Common);
         }
-        return "미확인 유물\n감정이 필요합니다.";
+        if (itemDescriptionText != null)
+        {
+            itemDescriptionText.text = "";
+        }
     }
 
     // ─────────────────────── 이름 변환 유틸 ───────────────────────

@@ -2,17 +2,28 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// ¾ÆÀÌÅÛ µ¥ÀÌÅÍ ·¹Áö½ºÆ®¸®
+/// ì•„ì´í…œ ë°ì´í„° ë ˆì§€ìŠ¤íŠ¸ë¦¬
 ///
-/// SaveSystem ÀÌ ¿ªÁ÷·ÄÈ­ÇÒ ¶§ ¿¡¼Â ÀÌ¸§À¸·Î ItemData ¸¦ Ã£À» ¼ö ÀÖµµ·Ï
-/// Inspector ¿¡¼­ ¸ğµç ScriptableObject ¸¦ ¹Ì¸® µî·ÏÇØµÎ´Â ½Ì±ÛÅÏ
+/// SaveSystem ì´ ì €ì¥/ë¶ˆëŸ¬ì˜¤ê¸° í•  ë•Œ ì•„ì´í…œì„ ê³ ìœ  ID(ì—ì…‹ GUID)ë¡œ ì°¾ì„ ìˆ˜ ìˆë„ë¡
+/// ëª¨ë“  ItemData ì—ì…‹ì„ ë¯¸ë¦¬ ë“±ë¡í•´ë‘ëŠ” ì‹±ê¸€í„´
+/// - ì—ì…‹ ì´ë¦„ì„ ë°”ê¿”ë„ GUID ëŠ” ê·¸ëŒ€ë¡œë¼ ì €ì¥ ë°ì´í„°ê°€ ìœ ì§€ë¨
+/// - ItemData ì—ì…‹ì„ ë§Œë“¤ê±°ë‚˜ ì§€ìš°ê±°ë‚˜ ì˜®ê¸°ë©´ ItemDataRegistryAutoCollect ê°€ ëª©ë¡ì„ ìë™ ê°±ì‹ 
 ///
-/// »ç¿ë¹ı:
-///   ItemDataRegistry.Instance.Find("¿¡¼ÂÀÌ¸§") À¸·Î ItemData ¹İÈ¯
+/// ì‚¬ìš©ë²•:
+///   GameCore í”„ë¦¬íŒ¹ì— ë¶€ì°© (ëª©ë¡ì€ ìë™ìœ¼ë¡œ ì±„ì›Œì§, ìˆ˜ë™ì€ ì»´í¬ë„ŒíŠ¸ ìš°í´ë¦­ 'ëª¨ë“  ItemData ìë™ ìˆ˜ì§‘')
+///   ItemDataRegistry.Instance.FindById(id) / GetId(data)
 /// </summary>
 public class ItemDataRegistry : MonoBehaviour
 {
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ½Ì±ÛÅÏ ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // ë“±ë¡ í•­ëª© (GUID ì™€ ì—ì…‹)
+    [System.Serializable]
+    public class Entry
+    {
+        public string id;
+        public ItemData data;
+    }
+
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ì‹±ê¸€í„´ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     public static ItemDataRegistry Instance { get; private set; }
 
@@ -30,129 +41,103 @@ public class ItemDataRegistry : MonoBehaviour
         BuildDictionary();
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Inspector µî·Ï ¸ñ·Ï ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ë“±ë¡ ëª©ë¡ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    [Header("¹«±â µ¥ÀÌÅÍ ¸ñ·Ï")]
-    [SerializeField] private List<WeaponData> weapons = new List<WeaponData>();
+    [Header("ëª¨ë“  ì•„ì´í…œ ë°ì´í„° (ìë™ ìˆ˜ì§‘)")]
+    [SerializeField] private List<Entry> items = new List<Entry>();
 
-    [Header("¹æ¾î±¸ µ¥ÀÌÅÍ ¸ñ·Ï")]
-    [SerializeField] private List<ArmorData> armors = new List<ArmorData>();
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ë‚´ë¶€ ë”•ì…”ë„ˆë¦¬ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    [Header("¼Ò¸ğÇ° µ¥ÀÌÅÍ ¸ñ·Ï")]
-    [SerializeField] private List<ConsumableData> consumables = new List<ConsumableData>();
+    private Dictionary<string, ItemData> _byId = new Dictionary<string, ItemData>();
+    private Dictionary<ItemData, string> _idOf = new Dictionary<ItemData, string>();
 
-    [Header("ÀÚ¿ø µ¥ÀÌÅÍ ¸ñ·Ï")]
-    [SerializeField] private List<ResourceData> resources = new List<ResourceData>();
-
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ³»ºÎ µñ¼Å³Ê¸® ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-
-    private Dictionary<string, ItemData> _registry = new Dictionary<string, ItemData>();
-
-    /// <summary>Inspector ¸ñ·ÏÀ» µñ¼Å³Ê¸®·Î º¯È¯ (Awake ½Ã 1È¸ ½ÇÇà)</summary>
+    /// <summary>ëª©ë¡ì„ ë”•ì…”ë„ˆë¦¬ë¡œ ë³€í™˜ (Awake ì‹œ 1íšŒ ì‹¤í–‰)</summary>
     private void BuildDictionary()
     {
-        _registry.Clear();
+        _byId.Clear();
+        _idOf.Clear();
 
-        for (int i = 0; i < weapons.Count; i++)
+        for (int i = 0; i < items.Count; i++)
         {
-            if (weapons[i] == null)
+            Entry entry = items[i];
+            if (entry == null || entry.data == null || string.IsNullOrEmpty(entry.id) == true)
             {
                 continue;
             }
-
-            if (_registry.ContainsKey(weapons[i].name) == false)
-            {
-                _registry.Add(weapons[i].name, weapons[i]);
-            }
-        }
-
-        for (int i = 0; i < armors.Count; i++)
-        {
-            if (armors[i] == null)
+            if (_byId.ContainsKey(entry.id) == true)
             {
                 continue;
             }
-
-            if (_registry.ContainsKey(armors[i].name) == false)
-            {
-                _registry.Add(armors[i].name, armors[i]);
-            }
+            _byId.Add(entry.id, entry.data);
+            _idOf[entry.data] = entry.id;
         }
 
-        for (int i = 0; i < consumables.Count; i++)
-        {
-            if (consumables[i] == null)
-            {
-                continue;
-            }
-
-            if (_registry.ContainsKey(consumables[i].name) == false)
-            {
-                _registry.Add(consumables[i].name, consumables[i]);
-            }
-        }
-
-        for (int i = 0; i < resources.Count; i++)
-        {
-            if (resources[i] == null)
-            {
-                continue;
-            }
-
-            if (_registry.ContainsKey(resources[i].name) == false)
-            {
-                _registry.Add(resources[i].name, resources[i]);
-            }
-        }
-
-        Debug.Log("[ItemDataRegistry] µî·Ï ¿Ï·á: " + _registry.Count + "°³");
+        Debug.Log("[ItemDataRegistry] ë“±ë¡ ì™„ë£Œ: " + _byId.Count + "ê°œ");
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ °Ë»ö ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ê²€ìƒ‰ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-    /// <summary>
-    /// ¿¡¼Â ÀÌ¸§À¸·Î ItemData ¹İÈ¯
-    /// ¾øÀ¸¸é null ¹İÈ¯ ÈÄ °æ°í ·Î±× Ãâ·Â
-    /// </summary>
-    public ItemData Find(string assetName)
+    /// <summary>ê³ ìœ  ID ë¡œ ItemData ë°˜í™˜ (ì—†ìœ¼ë©´ null + ê²½ê³ ) â€” SaveSystem ë¶ˆëŸ¬ì˜¤ê¸°ìš©</summary>
+    public ItemData FindById(string _id)
     {
-        if (string.IsNullOrEmpty(assetName) == true)
+        if (string.IsNullOrEmpty(_id) == true)
         {
             return null;
         }
-
-        if (_registry.ContainsKey(assetName) == true)
+        if (_byId.TryGetValue(_id, out ItemData data) == true)
         {
-            return _registry[assetName];
+            return data;
         }
-
-        Debug.LogWarning("[ItemDataRegistry] µî·ÏµÇÁö ¾ÊÀº ¾ÆÀÌÅÛ: " + assetName);
+        Debug.LogWarning("[ItemDataRegistry] ë“±ë¡ë˜ì§€ ì•Šì€ ì•„ì´í…œ ID: " + _id);
         return null;
     }
 
-    /// <summary>WeaponData ·Î Ä³½ºÆÃÇØ¼­ ¹İÈ¯. ¾Æ´Ï¸é null</summary>
-    public WeaponData FindWeapon(string assetName)
+    /// <summary>ItemData ì˜ ê³ ìœ  ID ë°˜í™˜ (ë“±ë¡ ì•ˆ ëìœ¼ë©´ ë¹ˆ ë¬¸ìì—´) â€” SaveSystem ì €ì¥ìš©</summary>
+    public string GetId(ItemData _data)
     {
-        ItemData data = Find(assetName);
-        return data as WeaponData;
+        if (_data != null && _idOf.TryGetValue(_data, out string id) == true)
+        {
+            return id;
+        }
+        Debug.LogWarning("[ItemDataRegistry] ë“±ë¡ë˜ì§€ ì•Šì€ ì•„ì´í…œì´ë¼ ì €ì¥í•˜ì§€ ëª»í•¨: " + (_data != null ? _data.name : "null"));
+        return "";
     }
 
-    /// <summary>ArmorData ·Î Ä³½ºÆÃÇØ¼­ ¹İÈ¯. ¾Æ´Ï¸é null</summary>
-    public ArmorData FindArmor(string assetName)
-    {
-        ItemData data = Find(assetName);
-        return data as ArmorData;
-    }
-
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¿¡µğÅÍ Å×½ºÆ® ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ì—ë””í„° â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 #if UNITY_EDITOR
-    [ContextMenu("µî·Ï ¸ñ·Ï Ãâ·Â")]
+    /// <summary>í”„ë¡œì íŠ¸ì˜ ëª¨ë“  ItemData ë¥¼ GUID ì™€ í•¨ê»˜ ìˆ˜ì§‘ â€” ItemDataRegistryAutoCollect ì—ì„œë„ í˜¸ì¶œ</summary>
+    [ContextMenu("ëª¨ë“  ItemData ìë™ ìˆ˜ì§‘")]
+    public void CollectAllItems()
+    {
+        items.Clear();
+        string[] guids = UnityEditor.AssetDatabase.FindAssets("t:ItemData");
+        // ìˆœì„œë¥¼ ê³ ì •í•´ ê°™ì€ ì•„ì´í…œ êµ¬ì„±ì´ë©´ í”„ë¦¬íŒ¹ ë‚´ìš©ë„ ê°™ê²Œ (íŒ€ì› ê°„ ì¶©ëŒ ì¤„ì´ê¸°)
+        System.Array.Sort(guids, System.StringComparer.Ordinal);
+        for (int i = 0; i < guids.Length; i++)
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guids[i]);
+            ItemData data = UnityEditor.AssetDatabase.LoadAssetAtPath<ItemData>(path);
+            if (data == null)
+            {
+                continue;
+            }
+
+            Entry entry = new Entry();
+            entry.id = guids[i];
+            entry.data = data;
+            items.Add(entry);
+        }
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log("[ItemDataRegistry] ìˆ˜ì§‘ ì™„ë£Œ: " + items.Count + "ê°œ");
+    }
+
+    [ContextMenu("ë“±ë¡ ëª©ë¡ ì¶œë ¥")]
     private void PrintRegistry()
     {
-        foreach (string key in _registry.Keys)
+        foreach (KeyValuePair<string, ItemData> pair in _byId)
         {
-            Debug.Log("[ItemDataRegistry] µî·ÏµÊ: " + key);
+            Debug.Log("[ItemDataRegistry] ë“±ë¡ë¨: " + pair.Value.name + " (" + pair.Key + ")");
         }
     }
 #endif

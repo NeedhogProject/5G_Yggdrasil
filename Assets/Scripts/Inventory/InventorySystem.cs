@@ -913,6 +913,14 @@ public class InventorySystem : MonoBehaviour
                 return;
             }
 
+            // 위험: 판매용, 미감정 유물은 장착이 거부되므로 인벤토리에서 빼기 전에 막아야 사라지지 않음
+            RelicInstance relic = relicInstance as RelicInstance;
+            if (relic == null || relic.CanEquip == false)
+            {
+                Debug.Log("[InventorySystem] 장착할 수 없는 유물 (판매용 또는 미감정): " + item.itemName);
+                return;
+            }
+
             // 장착 전에 인벤토리에서 먼저 제거 (복사 방지)
             RemoveItem(relicInstance);
             playerEquipment?.EquipItem(relicInstance);
@@ -1106,6 +1114,8 @@ public class InventorySystem : MonoBehaviour
 
             if (instance != null)
             {
+                // 불러올 때 같은 칸에 놓기 위해 위치 기록
+                instance.SlotPosition = slot.gridPosition;
                 result.Add(instance);
             }
         }
@@ -1113,8 +1123,8 @@ public class InventorySystem : MonoBehaviour
         return result;
     }
 
-    // ItemData 로부터 적절한 ItemInstance 생성 (추가/저장 공용)
-    private ItemInstance CreateInstanceFromData(ItemData data)
+    // ItemData 로부터 적절한 ItemInstance 생성 (추가/저장/바닥 드랍 공용)
+    public static ItemInstance CreateInstanceFromData(ItemData data)
     {
         if (data == null)
         {
@@ -1139,6 +1149,12 @@ public class InventorySystem : MonoBehaviour
         if (data is ResourceData resourceData)
         {
             return new ResourceInstance(resourceData, 1);
+        }
+
+        // 유물은 감정 여부를 하나씩 따로 저장해야 해서 전용 인스턴스로 생성
+        if (data is RelicData relicData)
+        {
+            return new RelicInstance(relicData);
         }
 
         return new ItemInstance(data);

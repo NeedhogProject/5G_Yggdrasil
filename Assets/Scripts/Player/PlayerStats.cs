@@ -26,6 +26,11 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float setMentalBonus = 0f;       // 최대 정신력 포인트 가산
     [SerializeField] private float setShieldPercent = 0f;     // 최대 체력 비례 보호막 %
 
+    [Header("유물 보너스 (PlayerEquipment 가 설정)")]
+    [SerializeField] private float relicMentalBonus = 0f;     // 최대 정신력 포인트 가산
+    [SerializeField] private float relicGoldBonus = 0f;       // 달란 획득 비율 (0.05 = 5%)
+    [SerializeField] private float relicAttackBonus = 0f;     // 공격력 고정값 가산
+
     [Header("정신력 패널티 (정신력 낮을수록 능력치 감소)")]
     // 정신력 0 일 때 공격력 감소율. 0.5 = 최대 50% 감소
     [SerializeField] [Range(0f, 1f)] private float mentalAttackPenalty = 0.5f;
@@ -59,7 +64,13 @@ public class PlayerStats : MonoBehaviour
 
     // ── 계산 프로퍼티 ─────────────────────────────
     /// <summary>최대 정신력 = 기본 100 + 세트 보너스 (상한 150)</summary>
-    public float MaxMental => Mathf.Min(MAX_STAT + setMentalBonus, MAX_MENTAL_CAP);
+    public float MaxMental => Mathf.Min(MAX_STAT + setMentalBonus + relicMentalBonus, MAX_MENTAL_CAP);
+
+    /// <summary>유물 달란 획득 비율 — EnemyBase 참조</summary>
+    public float RelicGoldBonus => relicGoldBonus;
+
+    /// <summary>유물 공격력 고정값 — PlayerCombat 참조</summary>
+    public float RelicAttackBonus => relicAttackBonus;
 
     // 정신력 100 초과분은 버퍼(소모 여유분) — 배율은 1.0 상한 고정
     public float MentalMultiplier => Mathf.Clamp01(mental / MAX_STAT);
@@ -185,6 +196,37 @@ public class PlayerStats : MonoBehaviour
         if (OnStatsChanged != null)
         {
             OnStatsChanged.Invoke();
+        }
+    }
+
+    // 유물 옵션 가감 (장착 시 양수, 해제 시 음수)
+    public void AddRelicBonus(RelicOptionType _type, float _fValue)
+    {
+        if (_type == RelicOptionType.MaxHealth)
+        {
+            // HP 는 장비 최대 체력과 같은 규칙 (마을이면 회복, 해제 시 상한 보정)
+            if (_fValue > 0f)
+            {
+                AddEquipmentMaxHealth(_fValue);
+            }
+            else
+            {
+                RemoveEquipmentMaxHealth(-_fValue);
+            }
+        }
+        else if (_type == RelicOptionType.MaxMental)
+        {
+            relicMentalBonus += _fValue;
+            // 최대치가 줄면 현재 정신력도 상한으로 보정
+            ModifyMental(0f);
+        }
+        else if (_type == RelicOptionType.DropGold)
+        {
+            relicGoldBonus += _fValue;
+        }
+        else if (_type == RelicOptionType.Attack)
+        {
+            relicAttackBonus += _fValue;
         }
     }
 

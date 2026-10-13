@@ -187,6 +187,13 @@ public class InventoryUI : MonoBehaviour
 
     public void CloseInventory()
     {
+        // 감정창과 같이 열려 있었으면 감정창을 닫음 (감정창이 인벤토리도 같이 닫으므로 여기서 종료)
+        if (ScholarSystem.Instance != null && ScholarSystem.Instance.IsOpen == true)
+        {
+            ScholarSystem.Instance.CloseScholar();
+            return;
+        }
+
         _openedBeside = false;
         inventoryPanel.SetActive(false);
         isOpen = false;

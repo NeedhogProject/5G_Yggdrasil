@@ -50,6 +50,9 @@ public class PlayerEquipment : MonoBehaviour
     // 유물 슬롯 2개 (반지처럼 장착). 유물은 RelicData 기반 — 전용 인스턴스가 없어 ItemInstance 로 보관
     private readonly ItemInstance[] _relicSlots = new ItemInstance[2];
 
+    /// <summary>유물 칸 수 — SaveSystem 참조</summary>
+    public int RelicSlotCount => _relicSlots.Length;
+
     // ─────────────────────── 이벤트 ───────────────────────
 
     /// <summary>장비 변경 시 발생 (UI 갱신용)</summary>
@@ -298,16 +301,26 @@ public class PlayerEquipment : MonoBehaviour
         return _relicSlots[index];
     }
 
-    // 유물 효과 적용 — 아직 유물 스탯이 정의되지 않아 비워둠 (효과 확정 시 여기에 작성)
+    // 유물 효과 적용 (장착 칸에 있는 동안만 적용, 같은 유물 2개면 중첩)
     private void ApplyRelicEffect(ItemInstance relic)
     {
-        // TODO: 유물 효과 적용. RelicData 에 스탯이 생기면 PlayerStats 등에 반영
+        RelicData relicData = relic.Data as RelicData;
+        if (relicData == null || playerStats == null)
+        {
+            return;
+        }
+        playerStats.AddRelicBonus(relicData.OptionType, relicData.OptionValue);
     }
 
-    // 유물 효과 해제 — ApplyRelicEffect 와 짝. 효과 확정 시 반대 처리 작성
+    // 유물 효과 해제 (ApplyRelicEffect 와 짝)
     private void RemoveRelicEffect(ItemInstance relic)
     {
-        // TODO: 유물 효과 해제
+        RelicData relicData = relic.Data as RelicData;
+        if (relicData == null || playerStats == null)
+        {
+            return;
+        }
+        playerStats.AddRelicBonus(relicData.OptionType, -relicData.OptionValue);
     }
 
     // ─────────────────────── 해제 ───────────────────────
