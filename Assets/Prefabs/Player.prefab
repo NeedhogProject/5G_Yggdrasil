@@ -63,6 +63,9 @@ MonoBehaviour:
   setDefensePercent: 0
   setMentalBonus: 0
   setShieldPercent: 0
+  relicMentalBonus: 0
+  relicGoldBonus: 0
+  relicAttackBonus: 0
   mentalAttackPenalty: 0.5
   mentalDefensePenalty: 0.5
   mentalMoveSpeedPenalty: 0.3
@@ -333,7 +336,7 @@ Transform:
   m_LocalScale: {x: 13, y: 13, z: 13}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5309874880745012186}
+  m_Father: {fileID: 6309370063833392121}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &5766256620790645778
 PrefabInstance:
@@ -361,7 +364,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.04
+      value: 1.322
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}
       propertyPath: m_LocalPosition.z
@@ -410,16 +413,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 1852576806548013000, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3073418045415624321}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}
---- !u!4 &5309874880745012186 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 1852576806548013000, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}
-  m_PrefabInstance: {fileID: 5766256620790645778}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6309370063833392121 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c292d64d81510684aaeea9f70130b6c3, type: 3}

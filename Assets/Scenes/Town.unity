@@ -12178,6 +12178,7 @@ MonoBehaviour:
   useDialogueBeforeFunction: 0
   functionChoiceLabel: "\uAD6C\uB9E4\uD558\uAE30"
   talkChoiceLabel: "\uB300\uD654\uD558\uAE30"
+  identifyChoiceLabel: "\uC720\uBB3C \uAC10\uC815"
   merchantBuyLabel: "\uAD6C\uB9E4"
   merchantSellLabel: "\uD310\uB9E4"
   inscriptionEngraveLabel: "\uC7A5\uBE44 \uAC01\uC778\uD558\uAE30"
@@ -25635,6 +25636,7 @@ MonoBehaviour:
   useDialogueBeforeFunction: 1
   functionChoiceLabel: "\uC720\uBB3C \uD310\uB9E4\uD558\uAE30"
   talkChoiceLabel: "\uB300\uD654\uD558\uAE30"
+  identifyChoiceLabel: "\uC720\uBB3C \uAC10\uC815"
   merchantBuyLabel: "\uAD6C\uB9E4"
   merchantSellLabel: "\uD310\uB9E4"
   inscriptionEngraveLabel: "\uC7A5\uBE44 \uAC01\uC778\uD558\uAE30"
@@ -32959,6 +32961,7 @@ MonoBehaviour:
   useDialogueBeforeFunction: 1
   functionChoiceLabel: "\uC7A5\uBE44 \uAC15\uD654\uD558\uAE30 "
   talkChoiceLabel: "\uB300\uD654\uD558\uAE30"
+  identifyChoiceLabel: "\uC720\uBB3C \uAC10\uC815"
   merchantBuyLabel: "\uAD6C\uB9E4"
   merchantSellLabel: "\uD310\uB9E4"
   inscriptionEngraveLabel: "\uC7A5\uBE44 \uAC01\uC778\uD558\uAE30"
@@ -34489,6 +34492,7 @@ MonoBehaviour:
   useDialogueBeforeFunction: 1
   functionChoiceLabel: "\uC7A5\uBE44 \uAC01\uC778\uD558\uAE30"
   talkChoiceLabel: "\uB300\uD654\uD558\uAE30"
+  identifyChoiceLabel: "\uC720\uBB3C \uAC10\uC815"
   merchantBuyLabel: "\uAD6C\uB9E4"
   merchantSellLabel: "\uD310\uB9E4"
   inscriptionEngraveLabel: "\uC7A5\uBE44 \uAC01\uC778\uD558\uAE30"
