@@ -2,11 +2,11 @@
 // 니드호그 보스의 머리 한 개 (왼쪽/오른쪽/가운데 공용)
 // EnemyBase 를 상속해 체력/피격/HP바/방어력 공식을 그대로 재사용한다.
 // 역할(HeadRole)에 따라 공격 패턴이 다르며, 가운데 머리는 좌우 머리가 모두 죽기 전까지 무적이다.
-// 공격 수치는 전부 public 으로 노출해 인스펙터에서 바로 조정할 수 있다.
-// 공격 시 바닥에 빨간 예고 존(telegraphZonePrefab)을 공격 범위 크기에 맞춰 깔아 표시한다.
-// 실제 공격 실행(투사체/장판/근접)은 역할별 메서드에서 처리한다. (2~4단계에서 채움)
-// 담당: 김보민
+// 머리마다 담당 이동 구역(BossPlayerZone)에 플레이어가 들어오면 공격하고, 공격 수치는 BossNidhogg 에서 관리한다.
+// 담당: 김보민 (보스 패턴 구현: 정건)
 
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BossHead : EnemyBase
@@ -22,100 +22,35 @@ public class BossHead : EnemyBase
     [Header("머리 역할")]
     public HeadRole role = HeadRole.Center;
 
-    [Header("공격 구역 (이 구역 안에 플레이어가 있으면 공격 시도)")]
-    [Tooltip("공격 구역 중심. 비우면 이 머리 자신의 위치를 사용")]
-    public Transform attackZoneCenter;
-    [Tooltip("공격 구역 반경 (왼쪽/오른쪽 머리에 적용)")]
-    public float attackZoneRadius = 6f;
+    [Header("담당 이동 구역 (플레이어가 이 구역 안에 있으면 공격)")]
+    [SerializeField] private BossPlayerZone playerZone;
 
-    [Header("공격 타이밍 (공통)")]
-    [Tooltip("공격과 공격 사이 쿨다운 (초)")]
-    public float attackCooldown = 2.5f;
-    [Tooltip("빨간 예고 존이 뜬 뒤 실제 공격까지의 시간 (초)")]
-    public float telegraphTime = 0.8f;
+    [Header("투사체 발사 위치 (왼쪽 머리, 비우면 머리 위치)")]
+    [SerializeField] private Transform trMouth;
 
-    [Header("빨간 공격 예고 존 (바닥 데칼 프리팹)")]
-    [Tooltip("바닥에 깔릴 빨간 원형 존 프리팹 (기본 지름 1 유닛으로 제작하면 자동 스케일)")]
-    public GameObject telegraphZonePrefab;
+    [Header("연출")]
+    [Tooltip("공격 시 Attack 트리거를 받을 애니메이터 (선택)")]
+    [SerializeField] private Animator animator;
+    [Tooltip("죽었을 때 회색으로 바꿀 렌더러들 (비우면 자식 전체)")]
+    [SerializeField] private Renderer[] deadTintRenderers;
+    [SerializeField] private Color deadColor = new Color(0.35f, 0.35f, 0.35f);
 
-    // ─────────────────────── 왼쪽 머리 — 퇴로 차단 투사체 ───────────────────────
-    [Header("[왼쪽] 투사체 공격 수치")]
-    [Tooltip("발사할 투사체 프리팹")]
-    public GameObject leftProjectilePrefab;
-    [Tooltip("투사체 데미지")]
-    public float leftProjectileDamage = 10f;
-    [Tooltip("투사체 속도")]
-    public float leftProjectileSpeed = 12f;
-    [Tooltip("투사체 착탄(빨간 존) 반경")]
-    public float leftImpactRadius = 1.5f;
-    [Tooltip("최대 연속 발사 수 (기본 2발)")]
-    public int leftMaxShots = 2;
-    [Tooltip("2번째 발사가 나갈 확률 (%). 기획: 10~15%")]
-    [Range(0f, 100f)]
-    public float leftSecondShotChancePercent = 12.5f;
-    [Tooltip("2번째 투사체가 플레이어 주변 랜덤으로 떨어지는 범위")]
-    public float leftSecondShotSpread = 2.5f;
+    private bool _bInvincible = false;
+    private bool _bStopped = false;
+    private bool _bAttacking = false;
+    private float _fCooldownTimer = 0f;
+    private Transform _trPlayer;
 
-    // ─────────────────────── 오른쪽 머리 — 이동 저하 장판 ───────────────────────
-    [Header("[오른쪽] 장판 공격 수치")]
-    [Tooltip("설치할 장판 프리팹")]
-    public GameObject rightSlowFieldPrefab;
-    [Tooltip("장판 위에서의 이동/공격 속도 저하 (%). 기획: 20~30%")]
-    [Range(0f, 100f)]
-    public float rightSlowPercent = 25f;
-    [Tooltip("장판(빨간 존) 반경")]
-    public float rightFieldRadius = 2.5f;
-    [Tooltip("장판 유지 시간 (초)")]
-    public float rightFieldDuration = 5f;
-    [Tooltip("동시에 유지되는 장판 최대 개수 (기획: 아마 안 바뀜)")]
-    public int rightFieldMaxCount = 3;
+    // 오른쪽 머리: 설치한 장판 (종류별 최대 개수 관리)
+    private readonly List<GameObject> _moveFields = new List<GameObject>();
+    private readonly List<GameObject> _attackFields = new List<GameObject>();
 
-    // ─────────────────────── 가운데 머리 — 근접 직접 공격 ───────────────────────
-    [Header("[가운데] 근접 공격 수치")]
-    [Tooltip("켜면 공격 범위가 맵 전체 — 플레이어가 어디 있든 공격한다")]
-    public bool centerWholeMap = true;
-    [Tooltip("근접 공격(빨간 존) 반경. 맵 전체가 꺼져 있을 때의 공격 범위로도 쓰인다")]
-    public float centerAttackRadius = 4f;
-    [Tooltip("근접 공격 데미지")]
-    public float centerAttackDamage = 25f;
-    [Tooltip("공격 전 이펙트 (예고)")]
-    public GameObject centerPreEffect;
-    [Tooltip("공격 후(적중) 이펙트")]
-    public GameObject centerHitEffect;
+    public HeadRole Role => role;
 
-    // ─────────────────────── 런타임 내부 상태 ───────────────────────
+    // 현재 공격 중인지 (예고가 뜬 순간부터 공격 실행까지). 죽었으면 false
+    public bool IsAttacking => _bAttacking == true && IsDead == false;
 
-    // 무적 여부 (가운데 머리는 좌우가 죽기 전까지 true)
-    private bool _invincible = false;
-
-    // 플레이어 참조
-    private Transform _player;
-
-    // 공격 상태
-    private float _attackCooldownTimer = 0f;
-    private bool _isAttacking = false;
-
-    // 이번 공격이 떨어질 위치와 반경 (예고 존과 실제 공격을 일치시키기 위해 보관)
-    private Vector3 _pendingAttackPos = Vector3.zero;
-    private float _pendingAttackRadius = 1f;
-
-    // 현재 머리의 역할
-    public HeadRole Role
-    {
-        get { return role; }
-    }
-
-    // 현재 무적 상태인지
-    public bool IsInvincible
-    {
-        get { return _invincible; }
-    }
-
-    // 현재 공격 중인지 (빨간 예고가 뜬 순간부터 실제 공격 실행까지). 죽었으면 false
-    public bool IsAttacking
-    {
-        get { return _isAttacking == true && IsDead == false; }
-    }
+    private BossNidhogg Boss => BossNidhogg.Instance;
 
     protected override void Awake()
     {
@@ -124,16 +59,16 @@ public class BossHead : EnemyBase
         // 가운데 머리는 시작 시 무적 (좌우 머리가 모두 죽으면 해제)
         if (role == HeadRole.Center)
         {
-            _invincible = true;
+            _bInvincible = true;
         }
     }
 
     private void Start()
     {
-        GameObject playerObj = GameObject.FindWithTag("Player");
-        if (playerObj != null)
+        GameObject objPlayer = GameObject.FindWithTag("Player");
+        if (objPlayer != null)
         {
-            _player = playerObj.transform;
+            _trPlayer = objPlayer.transform;
         }
     }
 
@@ -141,205 +76,284 @@ public class BossHead : EnemyBase
     {
         base.Update();
 
-        if (IsDead == true)
-        {
-            return;
-        }
-        if (_player == null)
+        if (IsDead == true || _bStopped == true || _trPlayer == null || Boss == null)
         {
             return;
         }
 
-        _attackCooldownTimer = _attackCooldownTimer - Time.deltaTime;
+        _fCooldownTimer -= Time.deltaTime;
 
-        // 공격 중이 아니고 쿨다운이 끝났고 플레이어가 공격 구역 안에 있으면 공격 시작
-        if (_isAttacking == false && _attackCooldownTimer <= 0f)
+        if (_bAttacking == false && _fCooldownTimer <= 0f && IsPlayerInZone() == true && Boss.CanHeadAttack(this) == true)
         {
-            if (IsPlayerInZone() == true)
-            {
-                StartAttack();
-            }
+            StartCoroutine(AttackRoutine());
         }
+    }
+
+    // 체력 설정 (BossNidhogg 가 시작 시 호출)
+    public void InitHealth(float _fHealth)
+    {
+        maxHealth = _fHealth;
+        _currentHealth = _fHealth;
     }
 
     // 무적 상태 설정 (BossNidhogg 가 좌우 머리 사망 시 호출)
-    public void SetVulnerable(bool vulnerable)
+    public void SetVulnerable(bool _bVulnerable)
     {
-        _invincible = (vulnerable == false);
+        _bInvincible = _bVulnerable == false;
     }
 
-    // 피격 처리 — 무적이면 데미지를 무시한다
+    // 피격 — 무적이면 무시, 아니면 머리 추가 피해와 그로기 피해 증가 적용
     public override void TakeDamage(float rawDamage)
     {
-        if (_invincible == true)
+        if (_bInvincible == true)
         {
-            // 무적일 때는 데미지를 받지 않는다 (추후 무적 피격 이펙트/사운드 추가 가능)
             return;
         }
 
-        base.TakeDamage(rawDamage);
+        float fMult = Boss != null ? Boss.DamageMultiplier : 1f;
+        base.TakeDamage(rawDamage * fMult);
     }
 
-    // 공격 구역 안에 플레이어가 있는지
+    // 사망 — 오브젝트를 없애지 않고 남김 (좌우 머리는 회색)
+    protected override void Die()
+    {
+        base.Die();
+
+        // 위험: EnemyBase.Die 가 0.5초 뒤 오브젝트를 파괴하므로 취소 (죽은 머리를 남겨둠)
+        CancelInvoke("DestroyEnemy");
+        StopAllCoroutines();
+        _bAttacking = false;
+
+        // 좌우 머리만 회색으로 남김 (가운데 머리는 Die 애니메이션으로 사라지는 연출)
+        if (role != HeadRole.Center)
+        {
+            ApplyDeadTint();
+        }
+
+        if (animator != null)
+        {
+            animator.SetTrigger("Die");
+        }
+    }
+
+    // 보스 사망 시 모든 공격 중단 (BossNidhogg 에서 호출, Die 애니메이션은 계속 재생)
+    public void StopAll()
+    {
+        _bStopped = true;
+        _bAttacking = false;
+        StopAllCoroutines();
+    }
+
+    private void ApplyDeadTint()
+    {
+        Renderer[] renderers = deadTintRenderers != null && deadTintRenderers.Length > 0 ? deadTintRenderers : GetComponentsInChildren<Renderer>();
+        foreach (Renderer rend in renderers)
+        {
+            // URP Lit 의 기본 색 (Base Map 에 곱해짐)
+            rend.material.SetColor("_BaseColor", deadColor);
+        }
+    }
+
     private bool IsPlayerInZone()
     {
-        if (_player == null)
-        {
-            return false;
-        }
-
-        // 가운데 머리가 맵 전체 모드면 플레이어가 어디 있든 공격
-        if (role == HeadRole.Center && centerWholeMap == true)
-        {
-            return true;
-        }
-
-        Vector3 center = transform.position;
-        if (attackZoneCenter != null)
-        {
-            center = attackZoneCenter.position;
-        }
-
-        float dist = Vector3.Distance(center, _player.position);
-        return dist <= attackZoneRadius;
+        return playerZone != null && playerZone.IsPlayerInside == true;
     }
 
-    // 이번 공격이 떨어질 위치와 반경을 역할별로 계산
-    // (현재는 전부 플레이어 현재 위치를 기준으로 미리보기. 2단계에서 왼쪽은 "있던 자리"로 바뀜)
-    private void GetAttackTargetAndRadius(out Vector3 pos, out float radius)
-    {
-        pos = transform.position;
-        radius = 1f;
+    // ─────────────────────── 공격 ───────────────────────
 
-        if (_player != null)
+    private IEnumerator AttackRoutine()
+    {
+        _bAttacking = true;
+
+        if (animator != null)
         {
-            pos = _player.position;
+            animator.SetTrigger("Attack");
         }
 
         if (role == HeadRole.Left)
         {
-            radius = leftImpactRadius;
+            yield return LeftAttack();
         }
         else if (role == HeadRole.Right)
         {
-            radius = rightFieldRadius;
+            RightAttack();
         }
         else
         {
-            radius = centerAttackRadius;
+            yield return CenterAttack();
         }
+
+        _fCooldownTimer = Boss.CurrentAttackDelay;
+        _bAttacking = false;
     }
 
-    // 공격 시작 (빨간 예고 존 표시 후 예고 시간 뒤 실제 공격)
-    private void StartAttack()
+    // 왼쪽: 시전 순간의 플레이어 위치 1발 + 확률로 플레이어 주변 랜덤 위치 추가 발사
+    // 투사체가 날아가는 동안 플레이어가 떠난 자리에 떨어져 퇴로를 막음 (플레이어를 따라가지 않음)
+    private IEnumerator LeftAttack()
     {
-        // 가운데 머리 단독 공격 규칙 — 컨트롤러에 공격 가능 여부를 먼저 묻는다.
-        // 가운데는 좌우가 공격 중이면 대기, 좌우는 가운데가 공격 중이면 대기한다.
-        if (BossNidhogg.Instance != null)
+        Vector3 vCastPosition = _trPlayer.position;
+
+        int nShots = 1;
+        while (nShots < Boss.maxConsecutiveShots && Random.Range(0f, 100f) < Boss.extraShotChance)
         {
-            if (BossNidhogg.Instance.CanHeadAttack(this) == false)
-            {
-                // 지금은 공격할 수 없다 (쿨다운은 건드리지 않고 다음 프레임에 다시 시도)
-                return;
-            }
+            nShots++;
         }
 
-        _isAttacking = true;
-        _attackCooldownTimer = attackCooldown;
-
-        // 이번 공격 위치/반경 계산 후 보관
-        Vector3 pos;
-        float radius;
-        GetAttackTargetAndRadius(out pos, out radius);
-        _pendingAttackPos = pos;
-        _pendingAttackRadius = radius;
-
-        // 바닥에 빨간 예고 존 표시 (공격 범위 크기에 맞춰 스케일)
-        ShowTelegraphZone(pos, radius);
-
-        // 예고 시간 뒤에 실제 공격 실행
-        Invoke(nameof(ExecuteAttack), telegraphTime);
-    }
-
-    // 바닥에 빨간 예고 존을 깐다 (반경에 맞춰 크기 자동 조정, 예고 시간 뒤 자동 삭제)
-    private void ShowTelegraphZone(Vector3 pos, float radius)
-    {
-        if (telegraphZonePrefab == null)
+        float fLongestFlight = 0f;
+        for (int i = 0; i < nShots; i++)
         {
-            return;
+            Vector3 vTarget = i == 0 ? vCastPosition : GetPointAroundPlayer(Boss.extraShotSpread);
+            fLongestFlight = Mathf.Max(fLongestFlight, FireProjectile(vTarget));
         }
 
-        GameObject zone = Instantiate(telegraphZonePrefab, pos, Quaternion.identity);
-
-        // 프리팹 기본 지름을 1 유닛으로 보고, 지름 = 반경 x 2 가 되도록 스케일
-        float diameter = radius * 2f;
-        zone.transform.localScale = new Vector3(diameter, zone.transform.localScale.y, diameter);
-
-        // 예고 시간이 지나면 존 제거
-        Destroy(zone, telegraphTime);
+        // 마지막 투사체가 떨어질 때까지 공격 중으로 유지
+        yield return new WaitForSeconds(fLongestFlight);
     }
 
-    // 실제 공격 실행 — 역할별로 분기
-    private void ExecuteAttack()
+    // 플레이어 주변 랜덤 지점 (플레이어 발밑은 피함)
+    private Vector3 GetPointAroundPlayer(float _fRange)
     {
-        if (IsDead == true)
+        float fMin = Mathf.Min(Boss.projectileImpactRadius + 0.5f, _fRange);
+        Vector2 vDir = Random.insideUnitCircle.normalized;
+        float fDist = Random.Range(fMin, _fRange);
+        return _trPlayer.position + new Vector3(vDir.x, 0f, vDir.y) * fDist;
+    }
+
+    // 투사체 발사, 비행 시간 반환
+    private float FireProjectile(Vector3 _vTarget)
+    {
+        Vector3 vStart = trMouth != null ? trMouth.position : transform.position;
+        float fFlight = Vector3.Distance(vStart, _vTarget) / Mathf.Max(0.1f, Boss.projectileSpeed);
+
+        // 착탄 지점 예고
+        StartCoroutine(Telegraph(_vTarget, Boss.projectileImpactRadius, fFlight));
+
+        GameObject objProjectile = Boss.projectilePrefab != null ? Instantiate(Boss.projectilePrefab, vStart, Quaternion.identity) : new GameObject("BossProjectile");
+        objProjectile.transform.position = vStart;
+        BossProjectile projectile = objProjectile.GetComponent<BossProjectile>();
+        if (projectile == null)
         {
-            _isAttacking = false;
-            return;
+            projectile = objProjectile.AddComponent<BossProjectile>();
         }
 
-        switch (role)
-        {
-            case HeadRole.Left:
-                ExecuteLeftAttack();
-                break;
-            case HeadRole.Right:
-                ExecuteRightAttack();
-                break;
-            case HeadRole.Center:
-                ExecuteCenterAttack();
-                break;
-        }
-
-        _isAttacking = false;
+        float fDamage = attackPower;
+        projectile.Launch(_vTarget, Boss.projectileSpeed, () => OnProjectileImpact(_vTarget, fDamage));
+        return fFlight;
     }
 
-    // 왼쪽 머리 — 퇴로 차단 투사체 (2단계에서 구현)
-    private void ExecuteLeftAttack()
+    private void OnProjectileImpact(Vector3 _vTarget, float _fDamage)
     {
-        Debug.Log("[BossHead] 왼쪽 머리 공격 (투사체) — 2단계에서 구현 예정");
-    }
-
-    // 오른쪽 머리 — 이동 저하 장판 (3단계에서 구현)
-    private void ExecuteRightAttack()
-    {
-        Debug.Log("[BossHead] 오른쪽 머리 공격 (장판) — 3단계에서 구현 예정");
-    }
-
-    // 가운데 머리 — 근접 직접 공격 (4단계에서 구현)
-    private void ExecuteCenterAttack()
-    {
-        Debug.Log("[BossHead] 가운데 머리 공격 (근접) — 4단계에서 구현 예정");
-    }
-
-#if UNITY_EDITOR
-    private void OnDrawGizmosSelected()
-    {
-        // 가운데 머리가 맵 전체 모드면 공격 구역 기즈모는 생략 (맵 전체라 의미 없음)
-        if (role == HeadRole.Center && centerWholeMap == true)
+        if (Boss == null)
         {
             return;
         }
 
-        // 공격 구역 시각화
-        Vector3 center = transform.position;
-        if (attackZoneCenter != null)
+        DamagePlayerInRadius(_vTarget, Boss.projectileImpactRadius, _fDamage);
+
+        if (Boss.leaveHazardZone == true)
         {
-            center = attackZoneCenter.position;
+            SpawnField(Boss.hazardZonePrefab, _vTarget, BossGroundField.FieldType.Damage, Boss.hazardDuration);
+        }
+    }
+
+    // 오른쪽: 플레이어 주변에 이동 속도 장판, 보스 주위에 공격 속도 장판을 동시에 설치
+    private void RightAttack()
+    {
+        GameObject objMove = SpawnField(Boss.moveSlowFieldPrefab, GetPointAroundPlayer(Boss.fieldDistance), BossGroundField.FieldType.MoveSlow, Boss.fieldDuration);
+        AddWithLimit(_moveFields, objMove);
+
+        Vector2 vRand = Random.insideUnitCircle * Boss.fieldDistance;
+        Vector3 vBossPos = Boss.BossCenterPosition + new Vector3(vRand.x, 0f, vRand.y);
+        vBossPos.y = _trPlayer.position.y;
+        GameObject objAttack = SpawnField(Boss.attackSlowFieldPrefab, vBossPos, BossGroundField.FieldType.AttackSlow, Boss.fieldDuration);
+        AddWithLimit(_attackFields, objAttack);
+    }
+
+    // 장판 최대 개수를 넘으면 가장 오래된 것부터 제거
+    private void AddWithLimit(List<GameObject> _fields, GameObject _objField)
+    {
+        _fields.RemoveAll(f => f == null);
+        _fields.Add(_objField);
+        while (_fields.Count > Boss.maxFieldCount)
+        {
+            Destroy(_fields[0]);
+            _fields.RemoveAt(0);
+        }
+    }
+
+    private GameObject SpawnField(GameObject _prefab, Vector3 _vPos, BossGroundField.FieldType _type, float _fDuration)
+    {
+        GameObject objField = _prefab != null ? Instantiate(_prefab, _vPos, Quaternion.identity) : new GameObject("BossField_" + _type);
+        objField.transform.position = _vPos;
+        BossGroundField field = objField.GetComponent<BossGroundField>();
+        if (field == null)
+        {
+            field = objField.AddComponent<BossGroundField>();
+        }
+        field.Init(_type, Boss.fieldRadius, _fDuration);
+        return objField;
+    }
+
+    // 가운데: 플레이어 위치에 범위 예고(노란색에서 빨간색) 후 머리를 휘둘러 공격
+    private IEnumerator CenterAttack()
+    {
+        Vector3 vTarget = _trPlayer.position;
+        float fTelegraph = Boss.CurrentMeleeTelegraphTime;
+
+        yield return Telegraph(vTarget, Boss.meleeRange, fTelegraph);
+        DamagePlayerInRadius(vTarget, Boss.meleeRange, attackPower);
+    }
+
+    // 바닥 예고 존 표시 (노란색, 공격 직전 빨간색), 시간이 끝나면 제거
+    private IEnumerator Telegraph(Vector3 _vPos, float _fRadius, float _fDuration)
+    {
+        if (Boss.telegraphZonePrefab == null)
+        {
+            yield return new WaitForSeconds(_fDuration);
+            yield break;
         }
 
-        Gizmos.color = new Color(1f, 0.3f, 0f, 0.25f);
-        Gizmos.DrawWireSphere(center, attackZoneRadius);
+        Vector3 vGround = new Vector3(_vPos.x, _trPlayer.position.y + 0.05f, _vPos.z);
+        GameObject objZone = Instantiate(Boss.telegraphZonePrefab, vGround, Quaternion.identity);
+        // 위험: 머리가 죽거나 보스가 멈춰 코루틴이 중단되면 아래 Destroy 까지 오지 않으므로 미리 예약
+        Destroy(objZone, _fDuration);
+        float fDiameter = _fRadius * 2f;
+        objZone.transform.localScale = new Vector3(fDiameter, objZone.transform.localScale.y, fDiameter);
+
+        Renderer rend = objZone.GetComponentInChildren<Renderer>();
+        SetZoneColor(rend, Color.yellow);
+
+        float fYellowTime = Mathf.Max(0f, _fDuration - Boss.redWarningTime);
+        yield return new WaitForSeconds(fYellowTime);
+        SetZoneColor(rend, Color.red);
+        yield return new WaitForSeconds(_fDuration - fYellowTime);
     }
-#endif
+
+    private void SetZoneColor(Renderer _rend, Color _color)
+    {
+        if (_rend == null)
+        {
+            return;
+        }
+        // 반투명 유지 (알파는 프리팹 머티리얼 값 사용), 머티리얼 복제 없이 색만 바꿈
+        Color cur = _rend.sharedMaterial.GetColor("_BaseColor");
+        MaterialPropertyBlock block = new MaterialPropertyBlock();
+        block.SetColor("_BaseColor", new Color(_color.r, _color.g, _color.b, cur.a));
+        _rend.SetPropertyBlock(block);
+    }
+
+    private void DamagePlayerInRadius(Vector3 _vCenter, float _fRadius, float _fDamage)
+    {
+        if (_trPlayer == null || PlayerStats.Instance == null)
+        {
+            return;
+        }
+
+        Vector3 vDiff = _trPlayer.position - _vCenter;
+        vDiff.y = 0f;
+        if (vDiff.magnitude <= _fRadius)
+        {
+            PlayerStats.Instance.TakeDamage(_fDamage);
+        }
+    }
 }

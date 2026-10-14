@@ -114,13 +114,22 @@ public class PlayerController : MonoBehaviour
     public bool IsSprinting => _isSprinting && _vMoveDirection.sqrMagnitude > 0.01f;
 
     /// <summary>현재 이동 속도</summary>
-    public float CurrentSpeed => (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor;
+    public float CurrentSpeed => (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor * _fExternalMoveMultiplier;
 
     // 정신력 패널티 이동 배율 (stats 없으면 1)
     private float MentalSpeedFactor => _stats != null ? _stats.MentalMoveSpeedMultiplier : 1f;
 
     // 세트 효과 이동속도 보너스 (비율. 0.05 = 5% 증가)
     private float _moveSpeedBonus = 0f;
+
+    // 외부 이동 속도 배율 (보스 장판 감속 등, 1 = 정상)
+    private float _fExternalMoveMultiplier = 1f;
+
+    /// <summary>외부 이동 속도 배율 설정 (BossGroundField 에서 호출)</summary>
+    public void SetExternalMoveMultiplier(float _fMult)
+    {
+        _fExternalMoveMultiplier = _fMult;
+    }
 
     /// <summary>이동속도 보너스 설정 (ArmorSetManager 에서 호출)</summary>
     public void SetMoveSpeedBonus(float bonus)
@@ -229,7 +238,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        float   speed   = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor;
+        float   speed   = (IsSprinting ? sprintSpeed : walkSpeed) * (1f + _moveSpeedBonus) * MentalSpeedFactor * _fExternalMoveMultiplier;
 
         _rb.linearVelocity = new Vector3(
             moveDir.x * speed,

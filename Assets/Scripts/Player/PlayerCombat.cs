@@ -47,6 +47,15 @@ public class PlayerCombat : MonoBehaviour
     /// <summary>공격 속도 보너스 설정 (ArmorSetManager 에서 호출)</summary>
     public void SetAttackSpeedBonus(float bonus) => _attackSpeedBonus = bonus;
 
+    // 외부 공격 속도 배율 (1 = 정상)
+    private float _fExternalAttackSpeedMultiplier = 1f;
+
+    /// <summary>외부 공격 속도 배율 설정 (BossGroundField 에서 호출)</summary>
+    public void SetExternalAttackSpeedMultiplier(float _fMult)
+    {
+        _fExternalAttackSpeedMultiplier = _fMult;
+    }
+
     /// <summary>공격력 보너스 설정 (ArmorSetManager 에서 호출)</summary>
     public void SetAttackDamageBonus(float bonus) => _attackDamageBonus = bonus;
 
@@ -70,6 +79,9 @@ public class PlayerCombat : MonoBehaviour
 
             // 바람 세트 공격속도 보너스 반영
             speed *= (1f + _attackSpeedBonus);
+
+            // 외부 감속 (보스 공격 속도 감소 장판 등)
+            speed *= _fExternalAttackSpeedMultiplier;
 
             return speed > 0f ? 1f / speed : float.MaxValue;
         }
