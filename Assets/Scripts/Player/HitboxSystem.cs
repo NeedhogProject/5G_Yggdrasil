@@ -134,7 +134,7 @@ public class HitboxSystem : MonoBehaviour
                 if (hitTargetsPerWave.Contains(target)) continue;
 
                 // 높이 차이 체크
-                float heightDiff = Mathf.Abs(col.transform.position.y - transform.position.y);
+                float heightDiff = GetHeightDiff(col);
                 if (heightDiff > daggerMaxHeight) continue;
 
                 hitTargetsPerWave.Add(target);
@@ -157,6 +157,13 @@ public class HitboxSystem : MonoBehaviour
     private bool IsHittable(Collider _col)
     {
         return _col.TryGetComponent<EnemyBase>(out _) || _col.TryGetComponent<ResourceNode>(out _);
+    }
+
+    // 콜라이더 범위 중 플레이어 높이에 가장 가까운 지점과의 높이 차이 (큰 적은 위치 기준이면 높이 초과로 빠짐)
+    private float GetHeightDiff(Collider _col)
+    {
+        float fClosestY = Mathf.Clamp(transform.position.y, _col.bounds.min.y, _col.bounds.max.y);
+        return Mathf.Abs(fClosestY - transform.position.y);
     }
 
     /// <summary>단검 다단히트 첫 판정부터 마지막 판정까지 걸리는 시간 (초)</summary>
@@ -192,7 +199,7 @@ public class HitboxSystem : MonoBehaviour
             Vector3 dir = targetPos - transform.position;
 
             // 높이 차이 체크
-            if (Mathf.Abs(dir.y) > swordMaxHeight) continue;
+            if (GetHeightDiff(col) > swordMaxHeight) continue;
 
             dir.y = 0f;
 
@@ -240,7 +247,7 @@ public class HitboxSystem : MonoBehaviour
             if (IsHittable(col) == false) continue;
 
             // 높이 차이 체크
-            float heightDiff = Mathf.Abs(col.transform.position.y - transform.position.y);
+            float heightDiff = GetHeightDiff(col);
             if (heightDiff > spearMaxHeight) continue;
 
             onHit(col.gameObject, 0);
