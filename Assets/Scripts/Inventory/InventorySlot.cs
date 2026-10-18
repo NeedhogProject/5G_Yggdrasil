@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class InventorySlot : MonoBehaviour,
@@ -351,6 +352,12 @@ public class InventorySlot : MonoBehaviour,
             highlightImage.gameObject.SetActive(true);
         }
 
+        // G키 드롭 대상 기록 (인벤토리의 아이템 있는 칸만)
+        if (container == SlotContainer.Inventory && isOccupied == true && InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.SetHoveredSlot(this);
+        }
+
         if (isOccupied == false)
         {
             return;
@@ -380,10 +387,23 @@ public class InventorySlot : MonoBehaviour,
             highlightImage.gameObject.SetActive(false);
         }
         UIItemTooltip.Instance?.HideTooltip();
+
+        // G키 드롭 대상에서 제외
+        if (InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.ClearHoveredSlot(this);
+        }
     }
 
     public void OnPointerClick(PointerEventData e)
     {
+        // Ctrl + 좌클릭: 인벤토리의 소모품을 퀵슬롯에 등록
+        if (e.button == PointerEventData.InputButton.Left && IsCtrlHeld() == true)
+        {
+            TryAssignToQuickSlot();
+            return;
+        }
+
         if (e.button != PointerEventData.InputButton.Right || isOccupied == false)
         {
             return;
@@ -432,6 +452,45 @@ public class InventorySlot : MonoBehaviour,
         if (source.currentItem != null)
         {
             InventorySystem.Instance?.UseItem(source.currentItem, source.CurrentInstance);
+        }
+    }
+
+    // Ctrl 키가 눌려 있는지
+    private bool IsCtrlHeld()
+    {
+        if (Keyboard.current == null)
+        {
+            return false;
+        }
+        return Keyboard.current.leftCtrlKey.isPressed == true || Keyboard.current.rightCtrlKey.isPressed == true;
+    }
+
+    // 이 칸의 소모품을 퀵슬롯에 등록 (인벤토리 칸의 소모품만 가능)
+    private void TryAssignToQuickSlot()
+    {
+        if (container != SlotContainer.Inventory || isOccupied == false)
+        {
+            return;
+        }
+
+        // 보조 칸이면 주인 슬롯 기준
+        InventorySlot source = this;
+        if (ownerSlot != null && ownerSlot != this)
+        {
+            source = ownerSlot;
+        }
+
+        ConsumableData consumable = source.currentItem as ConsumableData;
+        if (consumable == null)
+        {
+            // 소모품이 아니면 퀵슬롯에 등록할 수 없음
+            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            return;
+        }
+
+        if (QuickSlotSystem.Instance != null)
+        {
+            QuickSlotSystem.Instance.AssignConsumable(consumable);
         }
     }
 

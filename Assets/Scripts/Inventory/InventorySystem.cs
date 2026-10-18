@@ -26,6 +26,10 @@ public class InventorySystem : MonoBehaviour
     [Header("참조")]
     [SerializeField] private PlayerEquipment playerEquipment;
 
+    [Header("드롭")]
+    [Tooltip("G키로 아이템을 바닥에 버릴 때 쓸 DroppedItem 프리팹 (LootTable 과 같은 것)")]
+    [SerializeField] private GameObject droppedItemPrefab;
+
     [Header("Inventory Data")]
     public List<InventorySlot> slots = new List<InventorySlot>();
 
@@ -38,6 +42,9 @@ public class InventorySystem : MonoBehaviour
     private InventorySlot _selectedSlot = null;
     private ItemInstance _selectedInstance = null;
     private bool _isDragging = false;
+
+    // 마우스가 현재 올라가 있는 인벤토리 칸 (G키 드롭 대상)
+    private InventorySlot _hoveredSlot = null;
 
     private void Awake()
     {
@@ -105,6 +112,9 @@ public class InventorySystem : MonoBehaviour
 
                 slot.slotIndex = y * gridWidth + x;
                 slot.gridPosition = new Vector2Int(x, y);
+
+                // 빈 칸은 아이콘을 꺼진 채로 시작한다 (아이템이 들어올 때만 코드가 아이콘을 켬)
+                slot.ClearSlot();
 
                 slots.Add(slot);
             }
@@ -848,6 +858,18 @@ public class InventorySystem : MonoBehaviour
 
         if (item.itemType == ItemType.Equipment)
         {
+            // 장착 직전에 PlayerEquipment 를 다시 확보 (씬 전환/스폰 순서로 Awake 때 null 일 수 있음)
+            if (playerEquipment == null)
+            {
+                playerEquipment = FindFirstObjectByType<PlayerEquipment>();
+            }
+            // 장비를 못 찾으면 제거하지 않고 중단 (아이템이 그냥 사라지는 것 방지)
+            if (playerEquipment == null)
+            {
+                Debug.LogWarning("[InventorySystem] PlayerEquipment 를 찾지 못해 장착 불가 — 아이템 유지");
+                return;
+            }
+
             // 클릭한 칸의 인스턴스 우선, 없으면 해당 데이터의 인스턴스 찾기
             ItemInstance instance = _clickedInstance != null ? _clickedInstance : _itemInstances.Find(i => i.Data == item);
 
@@ -938,6 +960,93 @@ public class InventorySystem : MonoBehaviour
         Instantiate(item.itemPrefab, dropPosition, Quaternion.identity);
 
         Debug.Log("[InventorySystem] 아이템 버림: " + item.itemName);
+    }
+
+    // ─────────────────────── G키 드롭 (가리키는 칸) ───────────────────────
+
+    // 마우스가 올라간 칸 기록 (InventorySlot.OnPointerEnter 에서 호출)
+    public void SetHoveredSlot(InventorySlot _slot)
+    {
+        _hoveredSlot = _slot;
+    }
+
+    // 마우스가 칸에서 벗어남 (InventorySlot.OnPointerExit 에서 호출)
+    public void ClearHoveredSlot(InventorySlot _slot)
+    {
+        if (_hoveredSlot == _slot)
+        {
+            _hoveredSlot = null;
+        }
+    }
+
+    // 마우스로 가리키는 칸의 아이템을 바닥에 버린다 (G키). 줍을 수 있게 DroppedItem 으로 생성
+    public void DropHoveredItem()
+    {
+        if (_hoveredSlot == null)
+        {
+            return;
+        }
+
+        // 보조 칸이면 주인 슬롯 기준
+        InventorySlot owner = _hoveredSlot;
+        if (owner.ownerSlot != null && owner.ownerSlot != owner)
+        {
+            owner = owner.ownerSlot;
+        }
+
+        ItemData data = owner.currentItem;
+        if (data == null)
+        {
+            return;
+        }
+
+        ItemInstance instance = owner.CurrentInstance;
+
+        // 바닥에 먼저 생성해 보고, 성공했을 때만 인벤토리에서 제거 (아이템 손실 방지)
+        if (SpawnDroppedItem(instance, data) == false)
+        {
+            return;
+        }
+
+        // 인벤토리에서 제거 (인스턴스가 있으면 강화/각인 정보 보존)
+        if (instance != null)
+        {
+            RemoveItem(instance);
+        }
+        else
+        {
+            RemoveItem(data);
+        }
+
+        _hoveredSlot = null;
+        Debug.Log("[InventorySystem] 아이템 버림(G): " + data.itemName);
+    }
+
+    // 바닥에 떨어진 아이템 생성 (주울 수 있게 DroppedItem 에 인스턴스 주입). 성공하면 true
+    private bool SpawnDroppedItem(ItemInstance _instance, ItemData _data)
+    {
+        GameObject prefab = droppedItemPrefab != null ? droppedItemPrefab : _data.itemPrefab;
+        if (prefab == null)
+        {
+            Debug.LogWarning("[InventorySystem] 드롭 프리팹이 없어 바닥 생성 불가: " + _data.itemName);
+            return false;
+        }
+
+        Vector3 dropPosition = PlayerController.Instance != null
+            ? PlayerController.Instance.transform.position + PlayerController.Instance.transform.forward * 2f
+            : Vector3.zero;
+        dropPosition.y += 0.3f;
+
+        GameObject dropped = Instantiate(prefab, dropPosition, Quaternion.identity);
+
+        DroppedItem droppedComp = dropped.GetComponent<DroppedItem>();
+        if (droppedComp != null)
+        {
+            ItemInstance dropInstance = _instance != null ? _instance : CreateInstanceFromData(_data);
+            droppedComp.Initialize(dropInstance);
+        }
+
+        return true;
     }
 
     // ─────────────────────── 유틸 ───────────────────────

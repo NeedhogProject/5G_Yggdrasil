@@ -91,6 +91,12 @@ public class InventoryUI : MonoBehaviour
 
             CloseInventory();
         }
+
+        // G: 인벤토리가 열린 상태에서 마우스로 가리키는 칸의 아이템을 바닥에 버림
+        if (isOpen == true && Keyboard.current.gKey.wasPressedThisFrame == true)
+        {
+            InventorySystem.Instance?.DropHoveredItem();
+        }
     }
 
     // 상점이 같이 열려있는지 확인
@@ -180,6 +186,13 @@ public class InventoryUI : MonoBehaviour
         // 장비 격자와 각인재료를 항상 같이 표시
         itemInventoryPanel.SetActive(true);
         resourceInventoryPanel.SetActive(true);
+
+        // 패널이 방금 켜져 칸의 화면 좌표가 확정됐으니 멀티셀 아이콘 위치를 다시 잡는다.
+        // 닫힌 상태에서 주운 아이템은 좌표가 어긋나 있어, 열 때마다 제자리로 보정한다.
+        if (InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.RefreshIconPositions();
+        }
 
         Time.timeScale = 0f;
         AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
