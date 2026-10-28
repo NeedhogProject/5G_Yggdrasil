@@ -33,6 +33,10 @@ public class EnemyBase : MonoBehaviour
     [Tooltip("지급 달란 최대값 (포함)")]
     [SerializeField] protected int goldMax = 0;
 
+    [Header("처치 이펙트")]
+    [Tooltip("사망 시 생성할 이펙트 프리팹. 비워두면 생성하지 않음")]
+    [SerializeField] private GameObject deathVFX;
+
     // ─────────────────────── 런타임 상태 ───────────────────────
 
     protected float _currentHealth;
@@ -122,6 +126,12 @@ public class EnemyBase : MonoBehaviour
         _isDead = true;
 
         Debug.Log($"[{gameObject.name}] 사망");
+
+        // 처치 이펙트 생성
+        if (deathVFX != null)
+        {
+            Instantiate(deathVFX, transform.position, Quaternion.identity);
+        }
 
         // 열쇠 드롭 — StemManager 에 알림
         FloorKeyData droppedKey = StemManager.Instance?.OnEnemyDied(gameObject);
