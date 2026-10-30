@@ -19,6 +19,9 @@ EditorBuildSettings:
     guid: f9713146a30ab4b469b225e327547173
   - enabled: 1
     path: Assets/Scenes/Floor_3.unity
+    guid: d358cc7300749684d9e9474d55f047e9
+  - enabled: 1
+    path: Assets/Scenes/Floor_.unity
     guid: 0fd3e8b362d58744da21bc0bf90c0bdb
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
