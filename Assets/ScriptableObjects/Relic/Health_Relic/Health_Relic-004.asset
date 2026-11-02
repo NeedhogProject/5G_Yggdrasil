@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d04d19d0f5098df4f840e8aac0110964, type: 3}
-  m_Name: Ex Relic
+  m_Name: Health_Relic-004
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
-  _itemName: "\uC608\uC2DC \uC720\uBB3C"
+  _itemName: "\uC138\uACC4\uC218\uC758 \uC0DD\uBA85\uC758 \uBD80\uC801"
   _description: 
   _itemType: 2
   _rarity: 3
@@ -20,10 +20,10 @@ MonoBehaviour:
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
-  _price: 0
-  _isDroppable: 0
+  _price: 2500
+  _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
-  _relicEffect: 
-  _optionType: 4
+  _relicEffect: "\uC0DD\uBA85\uB825 \uC99D\uAC00 \uC720\uBB3C"
+  _optionType: 1
   _optionValue: 100
