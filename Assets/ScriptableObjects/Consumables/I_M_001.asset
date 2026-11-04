@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: I_M_001
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
   _itemName: "\uC77C\uBC18 \uC815\uC2E0\uB825 \uD3EC\uC158"
-  _description: 
+  _description: "\uC9C0\uCE5C \uC815\uC2E0\uC744 \uAC00\uB2E4\uB4EC\uC5B4 \uC8FC\uB294
+    \uB9D1\uACE0 \uC309\uC2F8\uB984\uD55C \uBB3C\uC57D"
   _itemType: 0
   _rarity: 0
   _icon: {fileID: 0}

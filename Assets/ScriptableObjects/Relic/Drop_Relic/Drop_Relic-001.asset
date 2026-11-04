@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Drop_Relic-001
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
   _itemName: "\uAE08 \uAC04 \uB3C4\uC801\uC758 \uBAA9\uAC78\uC774"
-  _description: 
+  _description: "\uC11C\uD230 \uB3C4\uC801\uC774 \uCCAB \uB3C4\uB451\uC9C8\uC758
+    \uAE30\uB150\uC73C\uB85C \uAC04\uC9C1\uD588\uB358 \uAE08 \uAC04 \uBAA9\uAC78\uC774"
   _itemType: 2
   _rarity: 0
   _icon: {fileID: 0}

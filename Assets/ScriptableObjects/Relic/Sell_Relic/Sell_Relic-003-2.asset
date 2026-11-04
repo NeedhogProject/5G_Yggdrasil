@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Sell_Relic-003-2
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
   _itemName: "\uADE0\uC5F4\uB09C \uACE0\uB300 \uC6A9\uC758 \uBE44\uB298"
-  _description: 
+  _description: "\uB2E8\uB2E8\uD55C \uD45C\uBA74\uC744 \uAC00\uB85C\uC9C0\uB974\uB294
+    \uADE0\uC5F4\uC774 \uC624\uB798\uC804 \uACA9\uC804\uC744 \uC9D0\uC791\uD558\uAC8C
+    \uD558\uB294 \uBE44\uB298"
   _itemType: 2
   _rarity: 1
   _icon: {fileID: 0}

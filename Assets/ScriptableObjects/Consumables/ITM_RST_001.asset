@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: ITM_RST_001
   m_EditorClassIdentifier: Assembly-CSharp::ConsumableData
   _itemName: "\uAC01\uC778 \uCD08\uAE30\uD654\uAD8C"
-  _description: 
+  _description: "\uC7A5\uBE44\uC5D0 \uC0C8\uACA8\uC9C4 \uAC01\uC778\uC744 \uC9C0\uC6B0\uACE0
+    \uC0C8\uB85C\uC6B4 \uAC01\uC778\uC744 \uC900\uBE44\uD560 \uB54C \uC0AC\uC6A9\uD558\uB294
+    \uC99D\uD45C"
   _itemType: 1
   _rarity: 3
   _icon: {fileID: 21300000, guid: 0aa1e84a2d75dc347ad59cf3965719ab, type: 3}

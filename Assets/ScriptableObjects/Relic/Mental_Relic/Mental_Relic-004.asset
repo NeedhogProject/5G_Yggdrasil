@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Mental_Relic-004
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
   _itemName: "\uC601\uC6C5\uC758 \uC815\uC2E0\uC758 \uC870\uAC01"
-  _description: 
+  _description: "\uC8FD\uC74C \uC55E\uC5D0\uC11C\uB3C4 \uC0AC\uBA85\uC744 \uC78A\uC9C0
+    \uC54A\uC558\uB358 \uC601\uC6C5\uC758 \uC758\uC9C0\uAC00 \uB0A8\uC740 \uC870\uAC01"
   _itemType: 2
   _rarity: 3
   _icon: {fileID: 0}

@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: Health_Relic-001
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
   _itemName: "\uB179\uC2A8 \uC0DD\uBA85\uC758 \uBD80\uC801"
-  _description: 
+  _description: "\uBD89\uAC8C \uB179\uC2A8 \uD45C\uBA74 \uC544\uB798\uB85C \uC0B4\uACE0\uC790
+    \uD588\uB358 \uB204\uAD70\uAC00\uC758 \uAE30\uB3C4\uAC00 \uB0A8\uC544 \uC788\uB294
+    \uBD80\uC801"
   _itemType: 2
   _rarity: 0
   _icon: {fileID: 0}

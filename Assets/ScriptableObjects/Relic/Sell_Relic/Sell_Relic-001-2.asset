@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Sell_Relic-001-2
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
   _itemName: "\uB0A1\uC740 \uC740\uD654"
-  _description: 
+  _description: "\uC218\uB9CE\uC740 \uC190\uC744 \uAC70\uCE58\uBA70 \uB2F3\uC558\uC9C0\uB9CC
+    \uC740\uBE5B\uC740 \uD76C\uBBF8\uD558\uAC8C \uB0A8\uC544 \uC788\uB294 \uB3D9\uC804"
   _itemType: 2
   _rarity: 1
   _icon: {fileID: 0}

@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Attack_Relic_001
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
   _itemName: "\uAE30\uC0AC \uC9C0\uB9DD\uC0DD\uC758 \uBD80\uC11C\uC9C4 \uCE7C\uB0A0"
-  _description: 
+  _description: "\uAE30\uC0AC\uAC00 \uB418\uACA0\uB2E4\uB294 \uAFC8\uC744 \uD488\uC740
+    \uCC44 \uCCAB \uC804\uD22C\uC5D0\uC11C \uBD80\uB7EC\uC9C4 \uCE7C\uB0A0"
   _itemType: 2
   _rarity: 0
   _icon: {fileID: 0}
