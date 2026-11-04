@@ -172,6 +172,7 @@ GameObject:
   - component: {fileID: 8523105275075547873}
   - component: {fileID: 3943963431526912305}
   - component: {fileID: 7012194321663823835}
+  - component: {fileID: 3667710688832732266}
   m_Layer: 0
   m_Name: Enemy_Water
   m_TagString: Untagged
@@ -337,6 +338,8 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 120
   goldMax: 240
+  deathVFX: {fileID: 0}
+  destroyDelay: 1.6
   hpBarObject: {fileID: 2682215836591526350}
   hpBarFill: {fileID: 5440655072199146071}
   hpBarHideDelay: 3
@@ -390,6 +393,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyWalkAnimator
   walkParameterName: IsWalking
   walkSpeedThreshold: 0.1
+--- !u!114 &3667710688832732266
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2905941660573076432}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd4406895c8b0445b14bbf57ba79fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDeathDissolve
+  dissolveMaterial: {fileID: 2100000, guid: ea429010c02632c4e9669cbf01671e46, type: 2}
+  duration: 1.5
 --- !u!1 &3078133979450325211
 GameObject:
   m_ObjectHideFlags: 0

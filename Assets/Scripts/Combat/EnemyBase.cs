@@ -33,6 +33,12 @@ public class EnemyBase : MonoBehaviour
     [Tooltip("지급 달란 최대값 (포함)")]
     [SerializeField] protected int goldMax = 0;
 
+    [Header("처치 이펙트")]
+    [Tooltip("사망 시 생성할 이펙트 프리팹. 비워두면 생성하지 않음")]
+    [SerializeField] private GameObject deathVFX;
+    [Tooltip("사망 후 오브젝트 제거까지 대기 시간 (초). 디졸브 연출 길이보다 길게")]
+    [SerializeField] private float destroyDelay = 0.5f;
+
     // ─────────────────────── 런타임 상태 ───────────────────────
 
     protected float _currentHealth;
@@ -123,6 +129,12 @@ public class EnemyBase : MonoBehaviour
 
         Debug.Log($"[{gameObject.name}] 사망");
 
+        // 처치 이펙트 생성
+        if (deathVFX != null)
+        {
+            Instantiate(deathVFX, transform.position, Quaternion.identity);
+        }
+
         // 열쇠 드롭 — StemManager 에 알림
         FloorKeyData droppedKey = StemManager.Instance?.OnEnemyDied(gameObject);
         if (droppedKey != null)
@@ -138,7 +150,7 @@ public class EnemyBase : MonoBehaviour
 
         // 사망 연출 후 오브젝트 제거
         // 애니메이션 있을 경우 Invoke 딜레이 조정
-        Invoke(nameof(DestroyEnemy), 0.5f);
+        Invoke(nameof(DestroyEnemy), destroyDelay);
     }
 
     private void DropKey(FloorKeyData key)

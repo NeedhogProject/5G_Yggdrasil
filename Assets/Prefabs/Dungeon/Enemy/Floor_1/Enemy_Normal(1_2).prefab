@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 7771443923993935543}
   - component: {fileID: 3239755964600238864}
   - component: {fileID: 2500647587712037980}
+  - component: {fileID: 1055612846208393058}
   m_Layer: 9
   m_Name: Enemy_Normal(1_2)
   m_TagString: Enemy
@@ -181,6 +182,8 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 100
   goldMax: 150
+  deathVFX: {fileID: 0}
+  destroyDelay: 1.6
   hpBarObject: {fileID: 7945547156959038637}
   hpBarFill: {fileID: 7032314511127212868}
   hpBarHideDelay: 3
@@ -294,10 +297,24 @@ MonoBehaviour:
     weight: 40
     minCount: 0
     maxCount: 0
-  dropCount: 5
-  skipChance: 40
+  minDropCount: 1
+  maxDropCount: 5
   droppedItemPrefab: {fileID: 9050273253143957091, guid: 990821102621e1145b36c049befa6795, type: 3}
   dropSpreadRadius: 0.5
+--- !u!114 &1055612846208393058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2532894022216980509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd4406895c8b0445b14bbf57ba79fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDeathDissolve
+  dissolveMaterial: {fileID: 2100000, guid: ea429010c02632c4e9669cbf01671e46, type: 2}
+  duration: 1.5
 --- !u!1 &4023142289271809426
 GameObject:
   m_ObjectHideFlags: 0

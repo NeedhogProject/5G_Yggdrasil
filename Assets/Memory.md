@@ -275,6 +275,17 @@
 
 ## 작업 기록 (최신순)
 
+### 2026-11-04 몬스터 처치 디졸브 연출
+- 신규: EnemyDeathDissolve (적 프리팹 루트에 부착, EnemyBase.OnDied 구독)
+  - 사망 시 모든 메쉬 렌더러 머티리얼을 디졸브 인스턴스로 교체한다. 원본 _BaseMap, _BaseColor 를 _Base_Texture, _Albedo 로 복사하고, 텍스처가 없으면 흰색을 쓴다.
+  - Cutoff Height 를 렌더러 월드 bounds 위에서 아래로 duration(1.5초) 동안 내린다. 여유값은 Noise Strength + Edge Width.
+- Dissolve.shadergraph: Position 노드를 Object 에서 World 로 변경 (몬스터마다 메쉬 스케일이 달라 Object 기준 고정값이 맞지 않음)
+- EnemyBase: destroyDelay 필드 추가 (기존 0.5초 고정). 적 프리팹 9종은 1.6초로 설정
+- 적 프리팹 9종(Floor_1, Floor_2, Resource)에 EnemyDeathDissolve 추가, Shader Graphs_Dissolve 머티리얼 연결
+- 보스 머리(BossHead)는 미적용 (사망 연출이 따로 있음)
+- DissolvePreview.cs 는 이펙트 미리보기용이라 게임에서 쓰지 않는다.
+- 3층 계단(stone5_s3_): 투명 경사로 콜라이더(Ground) 배치, Floor_3 NavMeshSurface 를 Physics Colliders 로 재베이크
+
 ### 2026-10-18 (김보민) 인벤토리 G 드롭과 퀵슬롯 등록
 - 퀵슬롯: 인벤토리 소모품을 Ctrl+좌클릭으로 빈 칸에 선착순 등록하고 1, 2키로 사용한다.
 - G키: 인벤토리를 연 상태에서 가리키는 칸의 아이템을 DroppedItem 으로 바닥에 생성한다.

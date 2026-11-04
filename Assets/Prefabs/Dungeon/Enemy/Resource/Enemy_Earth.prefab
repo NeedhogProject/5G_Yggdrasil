@@ -92,6 +92,7 @@ GameObject:
   - component: {fileID: 1334386733915654725}
   - component: {fileID: 3151956078804460815}
   - component: {fileID: 3421361723499487892}
+  - component: {fileID: 5166821261821438610}
   m_Layer: 9
   m_Name: Enemy_Earth
   m_TagString: Enemy
@@ -264,6 +265,8 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 0
   goldMax: 0
+  deathVFX: {fileID: 0}
+  destroyDelay: 1.6
   hpBarObject: {fileID: 8293915307322673379}
   hpBarFill: {fileID: 8187092997551943455}
   hpBarHideDelay: 3
@@ -303,6 +306,20 @@ MonoBehaviour:
   dropSpreadRadius: 0.6
   dropHeightOffset: 0.2
   availableFloors: 0200000003000000
+--- !u!114 &5166821261821438610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7761164601408844306}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fd4406895c8b0445b14bbf57ba79fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDeathDissolve
+  dissolveMaterial: {fileID: 2100000, guid: ea429010c02632c4e9669cbf01671e46, type: 2}
+  duration: 1.5
 --- !u!1 &8293915307322673379
 GameObject:
   m_ObjectHideFlags: 0
