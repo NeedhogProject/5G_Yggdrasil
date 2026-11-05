@@ -24,8 +24,8 @@ EditorBuildSettings:
     path: Assets/Scenes/Floor_.unity
     guid: 0fd3e8b362d58744da21bc0bf90c0bdb
   - enabled: 1
-    path: Assets/Photon/FusionDemos/Fusion-Intro-Shared/Scenes/FusionIntroShared.unity
-    guid: 0c93e24ebcb1fed489eeaf2f36cfb925
+    path: Assets/Scenes/Multi/MultiTest.unity
+    guid: 51b2ea464a236814c8341101fb686e33
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
