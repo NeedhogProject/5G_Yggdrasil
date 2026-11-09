@@ -12,15 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5be9f0b405a33c346abbdb181413fe23, type: 3}
   m_Name: Se_Wat_Scale-01
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
-  _itemName: "\uC544\uC774\uD15C"
-  _description: 
+  _itemName: "\uCD09\uCD09\uD55C \uBE44\uB298"
+  _description: "\uCD09\uCD09\uD55C \uBB3C\uAE30\uAC00 \uB290\uAEF4\uC9C0\uB294 \uBE44\uB298,
+    \uC5B4\uB518\uAC00 \uB048\uC801\uD55C \uAC83 \uAC19\uAE30\uB3C4 \uD558\uB2E4"
   _itemType: 5
   _rarity: 0
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
-  _price: 0
+  _price: 300
   _isDroppable: 1
   _isStackable: 1
   _maxStack: 99
