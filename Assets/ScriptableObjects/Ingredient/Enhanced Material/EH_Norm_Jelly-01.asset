@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5be9f0b405a33c346abbdb181413fe23, type: 3}
+  m_Name: EH_Norm_Jelly-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  _itemName: "\uC2AC\uB77C\uC784 \uC824\uB9AC"
+  _description: "\uD478\uD478\uD55C\uD14C\uC11C \uB5A8\uC5B4\uC838 \uB098\uC628 \uD0F1\uAE00\uD0F1\uAE00\uD558\uACE0
+    \uB9D0\uB791\uD55C \uBD80\uC0B0\uBB3C"
+  _itemType: 6
+  _rarity: 1
+  _icon: {fileID: 0}
+  _prefab3D: {fileID: 0}
+  _inventoryWidth: 1
+  _inventoryHeight: 1
+  _price: 100
+  _isDroppable: 1
+  _isStackable: 1
+  _maxStack: 99

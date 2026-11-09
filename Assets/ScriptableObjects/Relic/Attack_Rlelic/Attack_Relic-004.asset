@@ -10,21 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d04d19d0f5098df4f840e8aac0110964, type: 3}
-  m_Name: Attack_Relic_001
+  m_Name: Attack_Relic-004
   m_EditorClassIdentifier: Assembly-CSharp::RelicData
-  _itemName: "\uAE30\uC0AC \uC9C0\uB9DD\uC0DD\uC758 \uBD80\uC11C\uC9C4 \uCE7C\uB0A0"
-  _description: "\uAE30\uC0AC\uAC00 \uB418\uACA0\uB2E4\uB294 \uAFC8\uC744 \uD488\uC740
-    \uCC44 \uCCAB \uC804\uD22C\uC5D0\uC11C \uBD80\uB7EC\uC9C4 \uCE7C\uB0A0"
+  _itemName: "\uAE30\uC0AC\uC655\uC758 \uBD80\uC11C\uC9C4 \uCE7C\uB0A0"
+  _description: "\uBAA8\uB4E0 \uAE30\uC0AC\uC758 \uC55E\uC5D0 \uC130\uB358 \uC655\uC774
+    \uCD5C\uD6C4\uC758 \uC21C\uAC04\uAE4C\uC9C0 \uB193\uC9C0 \uC54A\uC740 \uCE7C\uB0A0"
   _itemType: 2
-  _rarity: 0
+  _rarity: 3
   _icon: {fileID: 0}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
-  _price: 600
+  _price: 3000
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
   _relicEffect: "\uACF5\uACA9\uB825 \uC99D\uAC00 \uC720\uBB3C"
   _optionType: 4
-  _optionValue: 10
+  _optionValue: 20
