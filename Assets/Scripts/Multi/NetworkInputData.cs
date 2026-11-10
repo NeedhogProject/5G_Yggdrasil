@@ -4,10 +4,16 @@ using UnityEngine;
 /// <summary>
 /// 멀티 입력 데이터 (클라이언트에서 호스트로 매 틱 전송)
 ///
-/// - 현재는 접속 테스트용 이동 방향만 담는다
-/// - 실제 게임에서는 클라이언트가 NavMesh 경로로 계산한 이동 방향을 여기에 넣는다
+/// - 분신 방식: 각자 PC 의 씬 Player 가 계산한 위치/회전/동작 상태를 그대로 보낸다
+/// - vDirection 은 MultiTest 씬의 테스트 플레이어 전용
 /// </summary>
 public struct NetworkInputData : INetworkInput
 {
-    public Vector3 vDirection;   // 이동 방향 (y 는 0)
+    public Vector3 vDirection;      // 이동 방향 (MultiTest 씬 테스트 플레이어용)
+
+    public NetworkBool bHasPlayer;  // 씬 Player 가 있어 아래 값이 유효한지
+    public Vector3 vPosition;       // 내 캐릭터 위치
+    public float fYaw;              // 내 캐릭터 Y 회전
+    public byte nMoveState;         // 0 정지, 1 걷기, 2 달리기
+    public byte nAttackCount;       // 공격할 때마다 1 증가
 }

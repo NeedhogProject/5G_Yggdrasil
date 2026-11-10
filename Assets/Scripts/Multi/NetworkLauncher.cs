@@ -183,6 +183,8 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
             }
             data.vDirection = vDir;
         }
+        // 씬 Player 가 있으면 위치/동작 상태를 함께 전송 (분신 동기화)
+        NetworkPlayerAvatar.FillInput(ref data);
         _input.Set(data);
     }
 
