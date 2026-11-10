@@ -78,7 +78,6 @@ public class YggdrasilPortal : MonoBehaviour
         {
             // 마을 → 1층
             FloorManager.Instance?.LoadFloor(1);
-            GameManager.Instance?.SyncFloor(1);
             Debug.Log("[YggdrasilPortal] 마을 → 1층");
         }
         else

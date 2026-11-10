@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -157,33 +156,10 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
         Debug.Log("[NetworkLauncher] 플레이어 퇴장: " + _player);
     }
 
-    // 로컬 키보드 입력을 매 틱 전송
+    // 씬 Player 의 위치/동작 상태를 매 틱 전송 (분신 동기화)
     public void OnInput(NetworkRunner _netRunner, NetworkInput _input)
     {
         NetworkInputData data = new NetworkInputData();
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard != null)
-        {
-            Vector3 vDir = Vector3.zero;
-            if (keyboard.wKey.isPressed == true)
-            {
-                vDir.z += 1f;
-            }
-            if (keyboard.sKey.isPressed == true)
-            {
-                vDir.z -= 1f;
-            }
-            if (keyboard.dKey.isPressed == true)
-            {
-                vDir.x += 1f;
-            }
-            if (keyboard.aKey.isPressed == true)
-            {
-                vDir.x -= 1f;
-            }
-            data.vDirection = vDir;
-        }
-        // 씬 Player 가 있으면 위치/동작 상태를 함께 전송 (분신 동기화)
         NetworkPlayerAvatar.FillInput(ref data);
         _input.Set(data);
     }

@@ -334,6 +334,16 @@
   - EnemyWalkAnimator: 에이전트가 꺼져 있으면 실제 이동량으로 걷기 판정 (클라이언트용).
   - 세션 없이 플레이하면 기존 싱글 동작 그대로.
   - 미적용: 열쇠(인벤토리 연동 자체가 없음), 보스, 죽은 플레이어 관전/부활, G키 드롭 공유, 달란 주머니.
+- 정리 (구조 점검 후)
+  - 1단계 접속 확인용이던 TestNetworkPlayer(스크립트/프리팹), MultiTest 씬, NetworkLauncher 의 WASD 입력, NetworkInputData.vDirection 을 삭제했다. 접속 테스트는 Tools > Multi > 테스트 런처 자동 생성으로 한다.
+  - EnemySpawner: 가장 가까운 플레이어를 매개변수로 넘기지 않고 기존 _player 를 갱신한다.
+  - EnemyBase/NetworkEnemy: 사망 후 제거 분기를 NetworkEnemy.ScheduleDespawn 하나로 줄였다.
+  - YggdrasilPortal: 마을 포털이 이동 요청 직후 층 번호를 미리 1로 바꾸던 호출을 제거했다 (요청이 거절되면 마을에서 층 번호만 바뀌는 문제). 층 번호는 GameManager.GoToFloor 가 이동 시점에 설정한다.
+- 알려진 구조 문제 (다음 작업)
+  - 인벤토리/창고/지도/일시정지/사망이 Time.timeScale = 0 을 쓴다. 호스트가 멈추면 몬스터가 모두 멈추고, 참가자가 멈추면 자기 캐릭터만 멈춘 채 맞는다.
+  - 사망 시 혼자 마을로 이동한다 (관전/부활 미구현). 호스트가 죽으면 몬스터가 사라지고, 참가자가 죽으면 새 몬스터가 생성되지 않는다.
+  - 접속 수단이 에디터 전용 테스트 런처뿐이라 빌드에서는 멀티에 접속할 수 없다. 참가 조건(호스트가 마을일 때만)도 없다.
+  - 보스와 자원 노드는 동기화되지 않는다 (각 PC 에서 따로 동작).
 
 ### 2026-11-05 플레이어 신규 모델 애니메이션 연결
 - MainCharacter rigging.fbx 를 Humanoid 로 설정(뼈대에 Hips 가 없어 Hips 는 mixamorig:Spine, Spine 은 Spine1, Chest 는 Spine2 로 매핑)하고 Animator Avatar 를 새 모델 Avatar 로 교체했다. 레거시 Animation 컴포넌트는 제거했다.

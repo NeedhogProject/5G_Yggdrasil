@@ -97,21 +97,17 @@ public class EnemySpawner : MonoBehaviour
             if (AliveEnemyCount >= maxSpawnCount) return; // 최대 스폰 수 초과 시 중단
 
             // 가장 가까운 플레이어 기준으로 판정 (멀티에서는 상대 플레이어 분신 포함)
-            Transform trNearest = NetworkPlayerAvatar.FindNearestPlayer(sp.transform.position);
-            if (trNearest == null)
-            {
-                trNearest = _player;
-            }
+            _player = NetworkPlayerAvatar.FindNearestPlayer(sp.transform.position);
 
-            float fDist = Vector3.Distance(trNearest.position, sp.transform.position);
+            float fDist = Vector3.Distance(_player.position, sp.transform.position);
             if (fDist <= sp.ActivationRange)
-                SpawnEnemy(sp, trNearest);
+                SpawnEnemy(sp);
         }
     }
 
     // ─────────────────────── 적 생성 ───────────────────────
 
-    private void SpawnEnemy(SpawnPoint _sp, Transform _trNearPlayer)
+    private void SpawnEnemy(SpawnPoint _sp)
     {
         // 가중치 기반 랜덤 프리팹 선택
         GameObject prefab = _sp.SelectRandomPrefab();
@@ -123,7 +119,7 @@ public class EnemySpawner : MonoBehaviour
         }
 
         // 균등 분산 + 플레이어 근접 회피 위치 계산
-        Vector3 vSpawnPos = ComputeSpawnPosition(_sp, _trNearPlayer);
+        Vector3 vSpawnPos = ComputeSpawnPosition(_sp);
 
         // 멀티 세션이면 네트워크 생성, 아니면 기존처럼 Instantiate
         GameObject enemy = NetworkEnemy.SpawnEnemyObject(prefab, vSpawnPos,
@@ -149,7 +145,7 @@ public class EnemySpawner : MonoBehaviour
     // ─────────────────────── 스폰 위치 계산 ───────────────────────
 
     // 순번 기반 균등 각도 분산 + 플레이어 근접 회피
-    private Vector3 ComputeSpawnPosition(SpawnPoint _sp, Transform _trNearPlayer)
+    private Vector3 ComputeSpawnPosition(SpawnPoint _sp)
     {
         int nIndex = _sp.SpawnedCount;              // 이번에 스폰할 적의 0-based 순번
         int nCount = Mathf.Max(1, _sp.SpawnCount);
@@ -164,16 +160,16 @@ public class EnemySpawner : MonoBehaviour
         Vector3 vCandidate = _sp.transform.position + vDir * fRadius;
 
         // 플레이어와 너무 가까우면 플레이어 반대 방향으로 최소 거리까지 밀어냄
-        if (_trNearPlayer != null)
+        if (_player != null)
         {
-            Vector3 vToCandidate = vCandidate - _trNearPlayer.position;
+            Vector3 vToCandidate = vCandidate - _player.position;
             vToCandidate.y = 0f;
             float fDistToPlayer = vToCandidate.magnitude;
 
             if (fDistToPlayer < minPlayerDistance)
             {
                 Vector3 vPushDir = fDistToPlayer > 0.01f ? vToCandidate.normalized : vDir;
-                vCandidate   = _trNearPlayer.position + vPushDir * minPlayerDistance;
+                vCandidate   = _player.position + vPushDir * minPlayerDistance;
                 vCandidate.y = _sp.transform.position.y;   // 지면 높이 유지
             }
         }

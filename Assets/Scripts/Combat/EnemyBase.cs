@@ -137,8 +137,6 @@ public class EnemyBase : MonoBehaviour
 
     protected virtual void Die()
     {
-        if (_isDead) return;
-
         // 멀티 세션 몬스터는 호스트가 모든 PC 에 사망을 알리고, 각 PC 가 DieLocal 로 처리
         if (_netEnemy != null && _netEnemy.RouteDeath() == true)
         {
@@ -190,15 +188,8 @@ public class EnemyBase : MonoBehaviour
 
         // 사망 연출 후 오브젝트 제거
         // 애니메이션 있을 경우 Invoke 딜레이 조정
-        if (_netEnemy != null && _netEnemy.IsNetworked == true)
-        {
-            // 세션 몬스터는 호스트가 네트워크에서 제거 (클라이언트는 따라서 사라짐)
-            if (bClientProxy == false)
-            {
-                _netEnemy.DespawnAfter(destroyDelay);
-            }
-        }
-        else
+        // 세션 몬스터는 호스트가 네트워크에서 제거 (클라이언트는 따라서 사라짐)
+        if (_netEnemy == null || _netEnemy.ScheduleDespawn(destroyDelay) == false)
         {
             Invoke(nameof(DestroyEnemy), destroyDelay);
         }

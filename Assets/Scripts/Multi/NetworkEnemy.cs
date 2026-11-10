@@ -32,9 +32,6 @@ public class NetworkEnemy : NetworkBehaviour
     // 호스트가 생성한 몬스터 목록 (층 이동 시 일괄 제거용)
     private static readonly List<NetworkEnemy> _hostEnemies = new List<NetworkEnemy>();
 
-    /// <summary>세션에서 생성되어 동기화 중인 몬스터인지</summary>
-    public bool IsNetworked => _bSpawned;
-
     /// <summary>세션에서 생성된 몬스터이고 내가 호스트가 아닌지 (호스트만 하는 처리를 건너뛸 때 사용)</summary>
     public bool IsClientProxy => _bSpawned == true && HasStateAuthority == false;
 
@@ -164,10 +161,22 @@ public class NetworkEnemy : NetworkBehaviour
         _base.DieLocal(_killer == Runner.LocalPlayer);
     }
 
-    /// <summary>사망 연출이 끝난 뒤 제거 예약 (호스트의 EnemyBase.DieLocal 에서 호출)</summary>
-    public void DespawnAfter(float _fDelay)
+    /// <summary>
+    /// 사망 연출이 끝난 뒤 제거 예약 (EnemyBase.DieLocal 에서 호출)
+    /// 세션 몬스터면 true (호스트만 실제로 예약), 그 외에는 false (기존 방식으로 파괴)
+    /// </summary>
+    public bool ScheduleDespawn(float _fDelay)
     {
-        Invoke(nameof(DespawnSelf), _fDelay);
+        if (_bSpawned == false)
+        {
+            return false;
+        }
+
+        if (HasStateAuthority == true)
+        {
+            Invoke(nameof(DespawnSelf), _fDelay);
+        }
+        return true;
     }
 
     private void DespawnSelf()
