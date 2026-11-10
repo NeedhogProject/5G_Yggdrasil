@@ -84,7 +84,11 @@ public class YggdrasilPortal : MonoBehaviour
         else
         {
             // 1층 → 마을
-            GameManager.Instance?.ReturnToTown();
+            // 멀티 세션 중이면 파티 전원이 마을로 이동
+            if (NetworkPlayerAvatar.RequestPartyMove(0) == false)
+            {
+                GameManager.Instance?.ReturnToTown();
+            }
             Debug.Log("[YggdrasilPortal] 1층 → 마을");
         }
     }

@@ -78,7 +78,7 @@ public class GameManager : MonoBehaviour
     // 런타임 상태
 
     // 최하층 (4층 제거, 3층에 보스 구역)
-    private const int MAX_FLOOR = 3;
+    public const int MAX_FLOOR = 3;
 
     /// <summary>현재 층 (0=마을, 1~3=던전)</summary>
     public int CurrentFloor { get; private set; } = 0;

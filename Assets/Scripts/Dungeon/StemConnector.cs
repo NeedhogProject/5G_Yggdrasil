@@ -54,6 +54,9 @@ public class StemConnector : MonoBehaviour
 
     // ─────────────────────── 상태 ───────────────────────
 
+    private const string MESSAGE_GO_UP   = "위층으로 올라가시겠습니까?";
+    private const string MESSAGE_GO_DOWN = "아래층으로 내려가시겠습니까?";
+
     public bool IsUnlocked { get; private set; } = false;
     private bool _playerInRange = false;
     private GameObject _playerObj;
@@ -88,10 +91,16 @@ public class StemConnector : MonoBehaviour
         if (IsUnlocked) return;
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
-        // 올라가기 전용 줄기는 위층에서 이미 연 줄기로 돌아가는 것이라 열쇠 없이 바로 이동
+        // 확인창이 떠 있는 동안에는 다시 열지 않음
+        if (ConfirmDialogUI.Instance != null && ConfirmDialogUI.Instance.IsOpen == true)
+        {
+            return;
+        }
+
+        // 올라가기 전용 줄기는 위층에서 이미 연 줄기로 돌아가는 것이라 열쇠 없이 확인 후 이동
         if (stemMode == StemMode.UpOnly)
         {
-            OnKeyInserted();
+            ConfirmMove(MESSAGE_GO_UP, OnKeyInserted);
             return;
         }
 
@@ -102,6 +111,25 @@ public class StemConnector : MonoBehaviour
             return;
         }
 
+        ConfirmMove(MESSAGE_GO_DOWN, InsertKey);
+    }
+
+    // 이동 전 확인창 표시 (예 선택 시에만 진행, 혼자 플레이도 동일)
+    private void ConfirmMove(string _sMessage, System.Action _onYes)
+    {
+        if (ConfirmDialogUI.Instance != null)
+        {
+            ConfirmDialogUI.Instance.Show(_sMessage, _onYes, null);
+        }
+        else
+        {
+            _onYes();
+        }
+    }
+
+    // 열쇠 확인 요청 (통과 시 StemManager 가 OnKeyInserted 호출)
+    private void InsertKey()
+    {
         StemManager.Instance?.TryInsertKey(_playerObj, this);
     }
 
@@ -158,9 +186,17 @@ public class StemConnector : MonoBehaviour
     {
         if (IsUnlocked == true) return;
 
-        // 올라가기는 열쇠 불필요
-        IsUnlocked = true;
+        // 올라가기는 열쇠 불필요, 확인 후 이동
         HideDirectionChoice();
+        ConfirmMove(MESSAGE_GO_UP, StartGoUp);
+    }
+
+    // 위로 이동 연출 시작
+    private void StartGoUp()
+    {
+        if (IsUnlocked == true) return;
+
+        IsUnlocked = true;
         PlayHoleVFX();
         Invoke(nameof(GoUp), transitionDelay);
     }
@@ -170,9 +206,9 @@ public class StemConnector : MonoBehaviour
     {
         if (IsUnlocked == true) return;
 
-        // 내려가기는 열쇠 필요: 확인 통과 시 OnKeyInserted 에서 하강 연출
+        // 내려가기는 열쇠 필요: 확인창에서 예 선택 후 열쇠 확인을 통과하면 OnKeyInserted 에서 하강 연출
         HideDirectionChoice();
-        StemManager.Instance?.TryInsertKey(_playerObj, this);
+        ConfirmMove(MESSAGE_GO_DOWN, InsertKey);
     }
 
     // ─────────────────────── 실제 이동 ───────────────────────

@@ -21,6 +21,12 @@ public class FloorManager : MonoBehaviour
     /// <summary>한 층 위로 (StemAscender 에서 호출)</summary>
     public void GoUpOneFloor()
     {
+        // 멀티 세션 중이면 파티 전원 이동 요청 (호스트 승인 후 각자 GameManager.GoToFloor)
+        if (NetworkPlayerAvatar.RequestPartyMove(Mathf.Max(CurrentFloor - 1, 0)) == true)
+        {
+            return;
+        }
+
         if (CurrentFloor <= 1)
             GameManager.Instance?.ReturnToTown();
         else
@@ -30,6 +36,12 @@ public class FloorManager : MonoBehaviour
     /// <summary>한 층 아래로 (StemConnector 에서 호출)</summary>
     public void GoDownOneFloor()
     {
+        // 최하층이 아니고 멀티 세션 중이면 파티 전원 이동 요청
+        if (CurrentFloor < GameManager.MAX_FLOOR && NetworkPlayerAvatar.RequestPartyMove(CurrentFloor + 1) == true)
+        {
+            return;
+        }
+
         GameManager.Instance?.GoToNextFloor();
     }
 
@@ -42,6 +54,11 @@ public class FloorManager : MonoBehaviour
     /// <summary>층 번호로 이동 — YggdrasilPortal 에서 호출</summary>
     public void LoadFloor(int floor)
     {
+        if (NetworkPlayerAvatar.RequestPartyMove(floor) == true)
+        {
+            return;
+        }
+
         GameManager.Instance?.GoToFloor(floor);
     }
 }

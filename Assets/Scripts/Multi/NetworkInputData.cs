@@ -16,4 +16,5 @@ public struct NetworkInputData : INetworkInput
     public float fYaw;              // 내 캐릭터 Y 회전
     public byte nMoveState;         // 0 정지, 1 걷기, 2 달리기
     public byte nAttackCount;       // 공격할 때마다 1 증가
+    public byte nFloor;             // 내가 있는 층 (0 마을)
 }

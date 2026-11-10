@@ -58,7 +58,20 @@ public class StemAscender : MonoBehaviour
         if (_playerInRange == false) return;
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
-        GoUp();
+        // 이동 전 확인창 표시 (예 선택 시에만 이동, 혼자 플레이도 동일)
+        if (ConfirmDialogUI.Instance == null)
+        {
+            GoUp();
+            return;
+        }
+        if (ConfirmDialogUI.Instance.IsOpen == true)
+        {
+            return;
+        }
+
+        int nFloor = FloorManager.Instance?.CurrentFloor ?? 1;
+        string sMessage = nFloor <= 1 ? "마을로 돌아가시겠습니까?" : "위층으로 올라가시겠습니까?";
+        ConfirmDialogUI.Instance.Show(sMessage, GoUp, null);
     }
 
     private void GoUp()
