@@ -71,6 +71,10 @@ public class EnemyAI : MonoBehaviour
     private float   _stateTimer       = 0f;
     private float   _attackCooldownTimer = 0f;
 
+    // 공격 대상 갱신 주기 (가장 가까운 플레이어 재탐색)
+    private const float TARGET_REFRESH_INTERVAL = 0.5f;
+    private float _fTargetRefreshTimer = 0f;
+
     // ─────────────────────── 초기화 ───────────────────────
 
     private void Awake()
@@ -113,6 +117,18 @@ public class EnemyAI : MonoBehaviour
 
         _stateTimer          -= Time.deltaTime;
         _attackCooldownTimer -= Time.deltaTime;
+
+        // 가장 가까운 플레이어를 대상으로 삼음 (멀티에서는 상대 플레이어 분신 포함)
+        _fTargetRefreshTimer -= Time.deltaTime;
+        if (_fTargetRefreshTimer <= 0f)
+        {
+            _fTargetRefreshTimer = TARGET_REFRESH_INTERVAL;
+            Transform trNearest = NetworkPlayerAvatar.FindNearestPlayer(transform.position);
+            if (trNearest != null)
+            {
+                _player = trNearest;
+            }
+        }
 
         switch (CurrentState)
         {
@@ -230,8 +246,12 @@ public class EnemyAI : MonoBehaviour
                 break;
 
             case AIState.Dead:
-                _agent.isStopped = true;
-                _agent.enabled   = false;
+                // 멀티 클라이언트에서는 에이전트가 이미 꺼져 있음 (꺼진 에이전트에 isStopped 설정 시 오류)
+                if (_agent.enabled == true)
+                {
+                    _agent.isStopped = true;
+                    _agent.enabled   = false;
+                }
                 enabled          = false;
                 break;
         }
@@ -249,7 +269,16 @@ public class EnemyAI : MonoBehaviour
         if (_player == null) return;
 
         PlayerStats playerStats = _player.GetComponent<PlayerStats>();
-        if (playerStats == null) return;
+        if (playerStats == null)
+        {
+            // 대상이 상대 플레이어 분신이면 그 플레이어의 PC 에서 피해 적용
+            NetworkPlayerAvatar avatar = _player.GetComponent<NetworkPlayerAvatar>();
+            if (avatar != null)
+            {
+                avatar.RPC_TakeDamage(_base.AttackPower);
+            }
+            return;
+        }
 
         float actualDamage = playerStats.TakeDamage(_base.AttackPower);
         Debug.Log($"[{gameObject.name}] 플레이어 공격 — 데미지: {actualDamage:F1}");

@@ -312,6 +312,29 @@
 
 ## 작업 기록 (최신순)
 
+### 2026-11-11 멀티 2~4단계 (multi 브랜치)
+- 방식 결정: 분신 방식. 실제 캐릭터는 각자 PC 의 씬 Player 를 그대로 쓰고, 상대 화면에 보일 분신만 네트워크로 생성한다. 기존 Player/UI 스크립트를 고치지 않기 위해 NetworkCharacterController 는 쓰지 않는다 (HUD, 인벤토리, 장비창 등 6개 스크립트가 씬 Player 를 직접 붙잡고 있음).
+- 2단계 플레이어 분신
+  - NetworkPlayerAvatar: 위치/회전/이동 상태/공격 횟수/층은 NetworkInputData 로, 장착 무기 ID 는 RPC 로 동기화한다. 내 분신은 숨기고, 3m 이상 이동은 순간이동으로 처리한다. 나와 다른 층의 분신은 숨긴다.
+  - Prefabs/Multi/PlayerAvatar: Player 프리팹 변형 (게임플레이 컴포넌트 제거, NetworkObject/NetworkTransform 추가).
+  - Editor/MultiTestLauncherMenu: Tools > Multi > 테스트 런처 자동 생성. 켜면 플레이 시 현재 씬에 NetworkLauncher 를 만든다 (씬 파일 수정 없음). Multiplayer Play Mode 로 2인 테스트.
+  - 미적용: 갑옷 색 구분. 플레이어 모델이 머티리얼 1개를 공유해 갑옷만 분리할 수 없다 (모델링 쪽 머티리얼 분리 필요).
+- 3단계 파티 층 이동
+  - 줄기/포털 상호작용 시 확인창(ConfirmDialogUI) 1회 표시 후 이동. 혼자 플레이도 동일. 2층 줄기는 위/아래 선택 후 확인창 (StemConnector, StemAscender).
+  - 세션 중에는 FloorManager, YggdrasilPortal 이 NetworkPlayerAvatar.RequestPartyMove 로 요청한다. 호스트가 먼저 온 요청만 승인(승인 후 5초 잠금)하고, 모든 PC 가 각자 GameManager.GoToFloor 로 이동한다. 요청한 사람은 바로, 다른 플레이어는 안내 후 2.5초 뒤 이동한다.
+  - 안내 문구는 임시 표시(OnGUI). 정식 UI 연결 필요.
+  - GameManager.MAX_FLOOR 를 public 으로 변경.
+- 4단계 몬스터
+  - NetworkEnemy 신규, 적 프리팹 9종에 NetworkObject/NetworkTransform/NetworkEnemy 추가.
+  - 몬스터는 호스트만 생성하고 움직인다 (EnemySpawner 는 NetworkEnemy.CanSpawn 통과 시에만 생성, 생성은 NetworkEnemy.SpawnEnemyObject). 클라이언트에서는 EnemyAI 와 NavMeshAgent 를 끈다.
+  - 피격: EnemyBase.TakeDamage 가 클라이언트에서는 피해량을 호스트로 보낸다. 체력은 호스트가 계산해 Health/MaxHealth 로 전달한다.
+  - 대상: EnemyAI 와 EnemySpawner 가 NetworkPlayerAvatar.FindNearestPlayer 로 가장 가까운 플레이어(같은 층의 상대 분신 포함)를 고른다. 분신이 맞으면 RPC_TakeDamage 로 그 플레이어 PC 에서 피해를 적용한다.
+  - 사망: EnemyBase.Die 를 Die 와 DieLocal 로 나눴다. 호스트가 막타 친 플레이어와 함께 모든 PC 에 알리고, 드롭/달란/각인 재료(ResourceDropEnemy)는 막타 친 PC 에서만 생성한다 (다른 플레이어에게 보이지 않고 주울 수 없음). 디졸브는 모든 PC 에서 재생.
+  - 층 이동: 승인 시점과 GameManager.LoadScene 직전에 호스트가 몬스터를 모두 제거한다. 새 층에서는 모든 플레이어가 도착한 뒤에 생성한다.
+  - EnemyWalkAnimator: 에이전트가 꺼져 있으면 실제 이동량으로 걷기 판정 (클라이언트용).
+  - 세션 없이 플레이하면 기존 싱글 동작 그대로.
+  - 미적용: 열쇠(인벤토리 연동 자체가 없음), 보스, 죽은 플레이어 관전/부활, G키 드롭 공유, 달란 주머니.
+
 ### 2026-11-05 플레이어 신규 모델 애니메이션 연결
 - MainCharacter rigging.fbx 를 Humanoid 로 설정(뼈대에 Hips 가 없어 Hips 는 mixamorig:Spine, Spine 은 Spine1, Chest 는 Spine2 로 매핑)하고 Animator Avatar 를 새 모델 Avatar 로 교체했다. 레거시 Animation 컴포넌트는 제거했다.
 - WeaponHolder 를 mixamorig:RightHand 아래에 다시 만들고 PlayerEquipment.weaponHolder 에 연결했다(이전 버전은 손뼈가 아닌 모델 루트 아래에 있었음).

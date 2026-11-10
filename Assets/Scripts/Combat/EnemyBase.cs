@@ -46,6 +46,12 @@ public class EnemyBase : MonoBehaviour
 
     public bool IsDead => _isDead;
 
+    // 멀티 동기화 컴포넌트 (없거나 세션 밖이면 기존 싱글 동작)
+    private NetworkEnemy _netEnemy;
+
+    /// <summary>이번 사망의 드롭/달란이 내 플레이어 몫인지 (멀티에서는 막타 친 PC 에서만 true)</summary>
+    public bool DropsForLocalPlayer { get; private set; } = true;
+
     // ─────────────────────── HP바 ───────────────────────
 
     [Header("HP바")]
@@ -80,6 +86,7 @@ public class EnemyBase : MonoBehaviour
     {
         _currentHealth = maxHealth;
         if (hpBarObject != null) hpBarObject.SetActive(false);
+        _netEnemy = GetComponent<NetworkEnemy>();
     }
 
     protected virtual void Update()
@@ -96,6 +103,12 @@ public class EnemyBase : MonoBehaviour
     public virtual void TakeDamage(float rawDamage)
     {
         if (_isDead) return;
+
+        // 멀티 세션에서 클라이언트가 때린 경우 호스트로 전달 (체력 계산은 호스트만)
+        if (_netEnemy != null && _netEnemy.RouteDamage(rawDamage) == true)
+        {
+            return;
+        }
 
         float actualDamage = CalculateDamage(rawDamage);
         _currentHealth = Mathf.Max(0f, _currentHealth - actualDamage);
@@ -125,7 +138,28 @@ public class EnemyBase : MonoBehaviour
     protected virtual void Die()
     {
         if (_isDead) return;
+
+        // 멀티 세션 몬스터는 호스트가 모든 PC 에 사망을 알리고, 각 PC 가 DieLocal 로 처리
+        if (_netEnemy != null && _netEnemy.RouteDeath() == true)
+        {
+            return;
+        }
+
+        DieLocal(true);
+    }
+
+    /// <summary>
+    /// 사망 처리 (멀티에서는 NetworkEnemy 가 모든 PC 에서 호출)
+    /// _bIsKiller: 내가 막타를 쳤는지 (드롭과 달란은 막타 친 PC 에서만 생성)
+    /// </summary>
+    public void DieLocal(bool _bIsKiller)
+    {
+        if (_isDead) return;
         _isDead = true;
+
+        // 열쇠 판정과 오브젝트 제거는 호스트(또는 싱글)만 담당
+        bool bClientProxy = _netEnemy != null && _netEnemy.IsClientProxy == true;
+        DropsForLocalPlayer = _bIsKiller;
 
         Debug.Log($"[{gameObject.name}] 사망");
 
@@ -136,21 +170,38 @@ public class EnemyBase : MonoBehaviour
         }
 
         // 열쇠 드롭 — StemManager 에 알림
-        FloorKeyData droppedKey = StemManager.Instance?.OnEnemyDied(gameObject);
-        if (droppedKey != null)
-            DropKey(droppedKey);
+        if (bClientProxy == false)
+        {
+            FloorKeyData droppedKey = StemManager.Instance?.OnEnemyDied(gameObject);
+            if (droppedKey != null)
+                DropKey(droppedKey);
+        }
 
-        // 아이템 드롭 — LootTable 연동
-        GetComponent<LootTable>()?.RollDrop(transform.position);
+        if (_bIsKiller == true)
+        {
+            // 아이템 드롭 — LootTable 연동
+            GetComponent<LootTable>()?.RollDrop(transform.position);
 
-        // 달란 지급
-        GrantGold();
+            // 달란 지급
+            GrantGold();
+        }
 
         OnDied?.Invoke(this);
 
         // 사망 연출 후 오브젝트 제거
         // 애니메이션 있을 경우 Invoke 딜레이 조정
-        Invoke(nameof(DestroyEnemy), destroyDelay);
+        if (_netEnemy != null && _netEnemy.IsNetworked == true)
+        {
+            // 세션 몬스터는 호스트가 네트워크에서 제거 (클라이언트는 따라서 사라짐)
+            if (bClientProxy == false)
+            {
+                _netEnemy.DespawnAfter(destroyDelay);
+            }
+        }
+        else
+        {
+            Invoke(nameof(DestroyEnemy), destroyDelay);
+        }
     }
 
     private void DropKey(FloorKeyData key)
@@ -207,6 +258,19 @@ public class EnemyBase : MonoBehaviour
         _hpBarVisible = true;
         _hpBarTimer   = hpBarHideDelay;
         UpdateHPBarFill();
+    }
+
+    /// <summary>호스트가 보낸 체력 반영 (클라이언트의 NetworkEnemy 에서 호출)</summary>
+    public void ApplyNetworkHealth(float _fHealth, float _fMaxHealth, bool _bShowBar)
+    {
+        maxHealth = _fMaxHealth;
+        _currentHealth = _fHealth;
+        OnHealthChanged?.Invoke(_currentHealth, maxHealth);
+
+        if (_bShowBar == true)
+        {
+            ShowHPBar();
+        }
     }
 
     private void UpdateHPBar()

@@ -42,12 +42,14 @@ public class EnemyWalkAnimator : MonoBehaviour
     // ─────────────────────── 런타임 상태 ───────────────────────
 
     private bool _isWalking = false;
+    private Vector3 _vPrevPosition;
 
     // ─────────────────────── 초기화 ───────────────────────
 
     private void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
+        _vPrevPosition = transform.position;
 
         // 애니메이터는 루트 또는 자식 모델에 있을 수 있음
         _animator = GetComponentInChildren<Animator>();
@@ -63,8 +65,9 @@ public class EnemyWalkAnimator : MonoBehaviour
 
     private void Update()
     {
-        // 에이전트가 비활성(예: 사망 처리로 disable)이면 멈춘 것으로 간주
-        float currentSpeed = _agent.enabled ? _agent.velocity.magnitude : 0f;
+        // 에이전트가 비활성이면 실제 이동량으로 판단 (사망 시 0, 멀티 클라이언트에서는 호스트가 보낸 위치 변화)
+        float currentSpeed = _agent.enabled ? _agent.velocity.magnitude : (transform.position - _vPrevPosition).magnitude / Mathf.Max(Time.deltaTime, 0.0001f);
+        _vPrevPosition = transform.position;
         bool  shouldWalk    = currentSpeed > walkSpeedThreshold;
 
         // 상태가 바뀔 때만 파라미터 갱신

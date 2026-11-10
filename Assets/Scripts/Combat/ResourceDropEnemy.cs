@@ -83,6 +83,12 @@ public class ResourceDropEnemy : MonoBehaviour
 
     private void OnEnemyDied(EnemyBase enemy)
     {
+        // 멀티에서는 막타 친 플레이어의 PC 에서만 드랍
+        if (enemy.DropsForLocalPlayer == false)
+        {
+            return;
+        }
+
         if (dropResourceData == null)
         {
             Debug.LogWarning($"[ResourceDropEnemy] {gameObject.name} — dropResourceData 미설정");

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 
@@ -44,6 +45,14 @@ public class NetworkPlayerAvatar : NetworkBehaviour
 
     // 내 분신 (세션이 없으면 null)
     private static NetworkPlayerAvatar _local;
+    // 상대 플레이어 분신 목록
+    private static readonly List<NetworkPlayerAvatar> _remotes = new List<NetworkPlayerAvatar>();
+
+    /// <summary>멀티 세션에 접속 중인지 (혼자 시작한 세션 포함)</summary>
+    public static bool InSession => _local != null;
+
+    /// <summary>현재 세션의 러너 (세션 밖이면 null)</summary>
+    public static NetworkRunner SessionRunner => _local != null ? _local.Runner : null;
     // 호스트 전용: 이 시각까지 층 이동 요청을 받지 않음
     private static float _fPartyMoveLockUntil = 0f;
     // 층 이동 안내 문구와 표시 종료 시각
@@ -78,6 +87,7 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         }
         else
         {
+            _remotes.Add(this);
             RefreshWeaponModel();
         }
 
@@ -90,6 +100,7 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         {
             _local = null;
         }
+        _remotes.Remove(this);
     }
 
     // 모델(무기 포함) 표시 여부 전환
@@ -273,6 +284,9 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         }
         _fPartyMoveLockUntil = Time.time + PARTY_MOVE_LOCK;
 
+        // 위험: 요청한 클라이언트가 먼저 떠나므로, 이 층의 몬스터를 승인 시점에 바로 제거
+        NetworkEnemy.DespawnAll();
+
         RPC_PartyMove(_nFloor);
     }
 
@@ -316,6 +330,69 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         }
 
         GUI.Box(new Rect(Screen.width * 0.5f - 220f, 60f, 440f, 36f), _sNotice);
+    }
+
+    // ─────────────────────── 몬스터 연동 ───────────────────────
+
+    /// <summary>
+    /// 지정 위치에서 가장 가까운 플레이어 (EnemyAI, EnemySpawner 에서 호출)
+    /// 내 캐릭터와, 나와 같은 층에 있는 상대 플레이어 분신 중에서 고른다. 세션 밖이면 내 캐릭터
+    /// </summary>
+    public static Transform FindNearestPlayer(Vector3 _vPosition)
+    {
+        Transform trNearest = null;
+        float fBestSqr = float.MaxValue;
+
+        if (PlayerController.Instance != null)
+        {
+            trNearest = PlayerController.Instance.transform;
+            fBestSqr = (trNearest.position - _vPosition).sqrMagnitude;
+        }
+
+        for (int i = 0; i < _remotes.Count; i++)
+        {
+            if (IsOnMyFloor(_remotes[i]) == false)
+            {
+                continue;
+            }
+
+            float fSqr = (_remotes[i].transform.position - _vPosition).sqrMagnitude;
+            if (fSqr < fBestSqr)
+            {
+                fBestSqr = fSqr;
+                trNearest = _remotes[i].transform;
+            }
+        }
+
+        return trNearest;
+    }
+
+    /// <summary>모든 상대 플레이어가 나와 같은 층에 있는지 (호스트의 몬스터 생성 시작 조건)</summary>
+    public static bool AreAllPlayersOnMyFloor()
+    {
+        for (int i = 0; i < _remotes.Count; i++)
+        {
+            if (IsOnMyFloor(_remotes[i]) == false)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static bool IsOnMyFloor(NetworkPlayerAvatar _avatar)
+    {
+        return GameManager.Instance == null || _avatar.Floor == GameManager.Instance.CurrentFloor;
+    }
+
+    /// <summary>몬스터가 이 분신의 주인을 공격 (호스트의 EnemyAI 에서 호출, 주인 PC 에서 자기 방어력으로 피해 적용)</summary>
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority)]
+    public void RPC_TakeDamage(float _fRawDamage)
+    {
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.TakeDamage(_fRawDamage);
+        }
     }
 
     // ─────────────────────── 입력 수집 ───────────────────────

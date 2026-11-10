@@ -561,6 +561,8 @@ public class GameManager : MonoBehaviour
 
         _bSceneLoading = true;
         ChangeState(nextState);
+        // 멀티 호스트: 떠나는 씬의 몬스터를 네트워크에서 먼저 제거 (세션 밖이면 아무 일도 하지 않음)
+        NetworkEnemy.DespawnAll();
         SceneManager.LoadScene(sceneName);
         Debug.Log("[GameManager] 씬 전환 후 로드: " + sceneName + " (" + nextState + ")");
     }

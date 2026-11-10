@@ -84,21 +84,34 @@ public class EnemySpawner : MonoBehaviour
 
     private void CheckSpawnPoints()
     {
+        // 멀티 세션에서는 호스트만, 모든 플레이어가 같은 층에 도착한 뒤에 생성
+        if (NetworkEnemy.CanSpawn() == false)
+        {
+            return;
+        }
+
         foreach (SpawnPoint sp in spawnPoints)
         {
             if (sp == null || sp.HasSpawned) continue;
             if (sp.SelectRandomPrefab() == null) continue;
             if (AliveEnemyCount >= maxSpawnCount) return; // 최대 스폰 수 초과 시 중단
 
-            float fDist = Vector3.Distance(_player.position, sp.transform.position);
+            // 가장 가까운 플레이어 기준으로 판정 (멀티에서는 상대 플레이어 분신 포함)
+            Transform trNearest = NetworkPlayerAvatar.FindNearestPlayer(sp.transform.position);
+            if (trNearest == null)
+            {
+                trNearest = _player;
+            }
+
+            float fDist = Vector3.Distance(trNearest.position, sp.transform.position);
             if (fDist <= sp.ActivationRange)
-                SpawnEnemy(sp);
+                SpawnEnemy(sp, trNearest);
         }
     }
 
     // ─────────────────────── 적 생성 ───────────────────────
 
-    private void SpawnEnemy(SpawnPoint _sp)
+    private void SpawnEnemy(SpawnPoint _sp, Transform _trNearPlayer)
     {
         // 가중치 기반 랜덤 프리팹 선택
         GameObject prefab = _sp.SelectRandomPrefab();
@@ -110,9 +123,10 @@ public class EnemySpawner : MonoBehaviour
         }
 
         // 균등 분산 + 플레이어 근접 회피 위치 계산
-        Vector3 vSpawnPos = ComputeSpawnPosition(_sp);
+        Vector3 vSpawnPos = ComputeSpawnPosition(_sp, _trNearPlayer);
 
-        GameObject enemy = Instantiate(prefab, vSpawnPos,
+        // 멀티 세션이면 네트워크 생성, 아니면 기존처럼 Instantiate
+        GameObject enemy = NetworkEnemy.SpawnEnemyObject(prefab, vSpawnPos,
                                        Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
 
         // 난이도 배율 적용
@@ -135,7 +149,7 @@ public class EnemySpawner : MonoBehaviour
     // ─────────────────────── 스폰 위치 계산 ───────────────────────
 
     // 순번 기반 균등 각도 분산 + 플레이어 근접 회피
-    private Vector3 ComputeSpawnPosition(SpawnPoint _sp)
+    private Vector3 ComputeSpawnPosition(SpawnPoint _sp, Transform _trNearPlayer)
     {
         int nIndex = _sp.SpawnedCount;              // 이번에 스폰할 적의 0-based 순번
         int nCount = Mathf.Max(1, _sp.SpawnCount);
@@ -150,16 +164,16 @@ public class EnemySpawner : MonoBehaviour
         Vector3 vCandidate = _sp.transform.position + vDir * fRadius;
 
         // 플레이어와 너무 가까우면 플레이어 반대 방향으로 최소 거리까지 밀어냄
-        if (_player != null)
+        if (_trNearPlayer != null)
         {
-            Vector3 vToCandidate = vCandidate - _player.position;
+            Vector3 vToCandidate = vCandidate - _trNearPlayer.position;
             vToCandidate.y = 0f;
             float fDistToPlayer = vToCandidate.magnitude;
 
             if (fDistToPlayer < minPlayerDistance)
             {
                 Vector3 vPushDir = fDistToPlayer > 0.01f ? vToCandidate.normalized : vDir;
-                vCandidate   = _player.position + vPushDir * minPlayerDistance;
+                vCandidate   = _trNearPlayer.position + vPushDir * minPlayerDistance;
                 vCandidate.y = _sp.transform.position.y;   // 지면 높이 유지
             }
         }
