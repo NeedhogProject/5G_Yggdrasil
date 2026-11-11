@@ -49,6 +49,12 @@ public class YggdrasilPortal : MonoBehaviour
         if (_playerInRange == false) return;
         if (Keyboard.current.eKey.wasPressedThisFrame == false) return;
 
+        // 주울 수 있는 아이템이 가까이 있으면 줍기를 우선
+        if (DroppedItem.AnyInRange == true)
+        {
+            return;
+        }
+
         Interact();
     }
 

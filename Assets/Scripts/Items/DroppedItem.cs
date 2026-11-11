@@ -19,6 +19,10 @@ public class DroppedItem : MonoBehaviour
 
     private ItemInstance _itemInstance;
     private bool _playerInRange = false;
+    private static int _nInRangeCount = 0;   // 플레이어가 줍기 범위 안에 있는 아이템 수
+
+    /// <summary>주울 수 있는 아이템이 범위 안에 있는지 (포털, 줄기보다 줍기를 우선)</summary>
+    public static bool AnyInRange => _nInRangeCount > 0;
     private Vector3 _startPos;
 
     private void Start()
@@ -78,14 +82,30 @@ public class DroppedItem : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") == false && other.GetComponent<PlayerStats>() == null) return;
-        _playerInRange = true;
+        SetPlayerInRange(true);
         Debug.Log($"[DroppedItem] 범위 진입 — E키로 {_itemInstance?.Data?.ItemName ?? "아이템"} 획득");
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player") == false && other.GetComponent<PlayerStats>() == null) return;
-        _playerInRange = false;
+        SetPlayerInRange(false);
+    }
+
+    // 주웠거나 씬이 바뀌어 사라질 때 범위 기록 해제
+    private void OnDestroy()
+    {
+        SetPlayerInRange(false);
+    }
+
+    private void SetPlayerInRange(bool _bInRange)
+    {
+        if (_playerInRange == _bInRange)
+        {
+            return;
+        }
+        _playerInRange = _bInRange;
+        _nInRangeCount += _bInRange == true ? 1 : -1;
     }
 
     private void TryPickup()

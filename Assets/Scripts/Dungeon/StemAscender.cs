@@ -58,6 +58,12 @@ public class StemAscender : MonoBehaviour
         if (_playerInRange == false) return;
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
+        // 주울 수 있는 아이템이 가까이 있으면 줍기를 우선
+        if (DroppedItem.AnyInRange == true)
+        {
+            return;
+        }
+
         // 이동 전 확인창 표시 (예 선택 시에만 이동, 혼자 플레이도 동일)
         if (ConfirmDialogUI.Instance == null)
         {

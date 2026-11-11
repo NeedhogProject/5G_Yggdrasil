@@ -91,6 +91,12 @@ public class StemConnector : MonoBehaviour
         if (IsUnlocked) return;
         if (InputReader.Instance == null || InputReader.Instance.InteractPressed == false) return;
 
+        // 주울 수 있는 아이템이 가까이 있으면 줍기를 우선
+        if (DroppedItem.AnyInRange == true)
+        {
+            return;
+        }
+
         // 확인창이 떠 있는 동안에는 다시 열지 않음
         if (ConfirmDialogUI.Instance != null && ConfirmDialogUI.Instance.IsOpen == true)
         {
