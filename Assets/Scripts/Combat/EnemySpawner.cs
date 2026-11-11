@@ -97,7 +97,13 @@ public class EnemySpawner : MonoBehaviour
             if (AliveEnemyCount >= maxSpawnCount) return; // 최대 스폰 수 초과 시 중단
 
             // 가장 가까운 플레이어 기준으로 판정 (멀티에서는 상대 플레이어 분신 포함)
-            _player = NetworkPlayerAvatar.FindNearestPlayer(sp.transform.position);
+            Transform trNearest = NetworkPlayerAvatar.FindNearestPlayer(sp.transform.position);
+            if (trNearest == null)
+            {
+                // 살아 있는 플레이어가 없으면 생성하지 않음
+                return;
+            }
+            _player = trNearest;
 
             float fDist = Vector3.Distance(_player.position, sp.transform.position);
             if (fDist <= sp.ActivationRange)

@@ -67,6 +67,12 @@ public class CameraFollow : MonoBehaviour
         transform.position = target.position + offset;
     }
 
+    // 추적 대상 교체 (멀티 관전용). 씬이 바뀌면 다시 플레이어를 추적
+    public void SetTarget(Transform _trTarget)
+    {
+        target = _trTarget;
+    }
+
     // 추적 켜기/끄기 (집 안 화면 고정 등)
     // 끄면 현재 카메라 위치 그대로 멈춤, 켜면 다시 플레이어 추적
     public void SetFollowEnabled(bool _bEnabled)

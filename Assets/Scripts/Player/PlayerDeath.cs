@@ -226,6 +226,12 @@ public class PlayerDeath : MonoBehaviour
         // 사망 패널티: 인벤토리 전체 삭제
         ApplyDeathPenalty();
 
+        // 멀티 세션에 동료가 있으면 게임을 멈추지 않음 (관전과 마을 귀환은 NetworkPlayerAvatar 가 처리)
+        if (NetworkPlayerAvatar.HasTeammates == true)
+        {
+            return;
+        }
+
         // GameManager 에 사망 알림
         GameManager.Instance?.OnPlayerDeath();
 

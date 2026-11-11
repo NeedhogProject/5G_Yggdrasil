@@ -267,7 +267,13 @@ public class PlayerController : MonoBehaviour
         }
         if (bMoveHeld == true)
         {
-            UpdateDestinationFromCursor();
+            // UI 위를 누르고 있을 때는 목적지를 갱신하지 않음 (멀티에서는 인벤토리를 열어도 시간이 멈추지 않아 우클릭 장착이 이동으로 이어짐)
+            bool bPointerOverUI = UnityEngine.EventSystems.EventSystem.current != null &&
+                                  UnityEngine.EventSystems.EventSystem.current.IsPointerOverGameObject() == true;
+            if (bPointerOverUI == false)
+            {
+                UpdateDestinationFromCursor();
+            }
         }
         else
         {

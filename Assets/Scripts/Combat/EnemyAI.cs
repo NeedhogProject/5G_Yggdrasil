@@ -123,11 +123,8 @@ public class EnemyAI : MonoBehaviour
         if (_fTargetRefreshTimer <= 0f)
         {
             _fTargetRefreshTimer = TARGET_REFRESH_INTERVAL;
-            Transform trNearest = NetworkPlayerAvatar.FindNearestPlayer(transform.position);
-            if (trNearest != null)
-            {
-                _player = trNearest;
-            }
+            // 살아 있는 플레이어가 없으면 null (추적 상태에서 순찰로 돌아감)
+            _player = NetworkPlayerAvatar.FindNearestPlayer(transform.position);
         }
 
         switch (CurrentState)
