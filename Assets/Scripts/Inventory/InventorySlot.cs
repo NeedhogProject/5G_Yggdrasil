@@ -423,15 +423,14 @@ public class InventorySlot : MonoBehaviour,
             source = ownerSlot;
         }
 
-        // 상점이 판매 모드면 우클릭 = 판매창에 담기 (장착보다 우선)
+        // 상점이 판매 모드면 우클릭: 안 담긴 건 판매창에 담고, 이미 담긴 건 판매 확인 팝업을 연다
         if (container == SlotContainer.Inventory && ShopSystem.Instance != null && ShopSystem.Instance.IsOpen == true && ShopSystem.Instance.IsSellMode == true)
         {
             if (source.currentItem != null)
             {
-                // 이미 담긴 슬롯이면 다시 우클릭 시 담기 취소
                 if (source.IsSaleMarked == true)
                 {
-                    ShopSystem.Instance.UnstageSlot(source);
+                    ShopSystem.Instance.OpenSellConfirm(source);
                 }
                 else
                 {

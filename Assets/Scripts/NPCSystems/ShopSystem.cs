@@ -56,6 +56,17 @@ public class ShopSystem : MonoBehaviour
     public Button confirmSellButton;
     public Button cancelSellButton;
 
+    [Header("판매 확인 팝업 (구매 팝업과 동일 구조 — 수량 선택)")]
+    public GameObject sellConfirmPopup;
+    public TMP_Text sellConfirmItemNameText;
+    public TMP_Text sellConfirmQuantityText;
+    public TMP_Text sellConfirmPriceText;
+    public TMP_Text sellConfirmBalanceText;
+    public Button sellQuantityUpButton;
+    public Button sellQuantityDownButton;
+    public Button confirmSellSingleButton;
+    public Button cancelSellSingleButton;
+
     [Header("판매 설정")]
     [SerializeField] private float sellPriceRatio = 0.3f;
 
@@ -113,6 +124,8 @@ public class ShopSystem : MonoBehaviour
     private InventoryUI _inventoryUI = null;
     private ShopItemData _pendingShopItem = null;
     private int _pendingQuantity = 1;
+    private InventorySlot _pendingSellSlot = null;
+    private int _pendingSellQuantity = 1;
     private int _talkIndex = 0;
     private List<StagedSellItem> _stagedItems = new List<StagedSellItem>();
     private bool isOpen = false;
@@ -159,6 +172,11 @@ public class ShopSystem : MonoBehaviour
         if (buyConfirmPopup != null)
         {
             buyConfirmPopup.SetActive(false);
+        }
+
+        if (sellConfirmPopup != null)
+        {
+            sellConfirmPopup.SetActive(false);
         }
 
         // 시작 시 ShopUI(자기 자신) 꺼두기
@@ -225,6 +243,23 @@ public class ShopSystem : MonoBehaviour
         if (cancelSellButton != null)
         {
             cancelSellButton.onClick.AddListener(CancelSell);
+        }
+
+        if (sellQuantityUpButton != null)
+        {
+            sellQuantityUpButton.onClick.AddListener(OnSellQuantityUpClicked);
+        }
+        if (sellQuantityDownButton != null)
+        {
+            sellQuantityDownButton.onClick.AddListener(OnSellQuantityDownClicked);
+        }
+        if (confirmSellSingleButton != null)
+        {
+            confirmSellSingleButton.onClick.AddListener(ConfirmSellSingle);
+        }
+        if (cancelSellSingleButton != null)
+        {
+            cancelSellSingleButton.onClick.AddListener(CloseSellConfirm);
         }
 
         _isSetup = true;
@@ -491,6 +526,13 @@ public class ShopSystem : MonoBehaviour
         if (buyConfirmPopup != null && buyConfirmPopup.activeSelf == true)
         {
             CloseBuyConfirm();
+            return;
+        }
+
+        // 판매 확인 팝업이 떠 있으면 팝업만 닫기
+        if (sellConfirmPopup != null && sellConfirmPopup.activeSelf == true)
+        {
+            CloseSellConfirm();
             return;
         }
 
@@ -996,6 +1038,164 @@ public class ShopSystem : MonoBehaviour
         UpdateGoldDisplay();
         RefreshSellStaging();
         AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+    }
+
+    // 판매창에 담긴 아이템을 우클릭하면 판매 확인 팝업을 연다 (InventorySlot 에서 호출)
+    public void OpenSellConfirm(InventorySlot slot)
+    {
+        if (slot == null || slot.currentItem == null)
+        {
+            return;
+        }
+
+        // 판매창에 담긴(마킹된) 아이템만 확인 팝업 대상
+        if (slot.IsSaleMarked == false)
+        {
+            return;
+        }
+
+        _pendingSellSlot = slot;
+        _pendingSellQuantity = 1;
+
+        if (sellConfirmPopup != null)
+        {
+            sellConfirmPopup.SetActive(true);
+        }
+
+        RefreshSellConfirm();
+    }
+
+    // 판매 가능한 최대 수량 (슬롯의 현재 묶음 수)
+    private int GetMaxSellQuantity(InventorySlot slot)
+    {
+        if (slot == null || slot.CurrentInstance == null)
+        {
+            return 1;
+        }
+        return Mathf.Max(1, slot.CurrentInstance.StackCount);
+    }
+
+    // 판매 수량 변경 (± 버튼, 구매와 동일 방식)
+    private void ChangeSellQuantity(int delta)
+    {
+        if (_pendingSellSlot == null)
+        {
+            return;
+        }
+
+        int maxQ = GetMaxSellQuantity(_pendingSellSlot);
+        _pendingSellQuantity = _pendingSellQuantity + delta;
+
+        if (_pendingSellQuantity < 1)
+        {
+            _pendingSellQuantity = 1;
+        }
+        if (_pendingSellQuantity > maxQ)
+        {
+            _pendingSellQuantity = maxQ;
+        }
+
+        RefreshSellConfirm();
+    }
+
+    private void OnSellQuantityUpClicked()
+    {
+        ChangeSellQuantity(1);
+    }
+
+    private void OnSellQuantityDownClicked()
+    {
+        ChangeSellQuantity(-1);
+    }
+
+    // 판매 확인 팝업 내용 갱신 (이름, 수량, 판매 금액, 판매 후 잔액)
+    private void RefreshSellConfirm()
+    {
+        if (_pendingSellSlot == null || _pendingSellSlot.currentItem == null)
+        {
+            return;
+        }
+
+        int total = GetSellPrice(_pendingSellSlot.currentItem) * _pendingSellQuantity;
+        int balanceAfter = PlayerStats.Instance.gold + total;
+
+        if (sellConfirmItemNameText != null)
+        {
+            sellConfirmItemNameText.text = _pendingSellSlot.currentItem.itemName;
+        }
+        if (sellConfirmQuantityText != null)
+        {
+            sellConfirmQuantityText.text = _pendingSellQuantity.ToString();
+        }
+        if (sellConfirmPriceText != null)
+        {
+            sellConfirmPriceText.text = total + " 달란";
+        }
+        if (sellConfirmBalanceText != null)
+        {
+            sellConfirmBalanceText.text = balanceAfter + " 달란";
+        }
+    }
+
+    // 확인 버튼: 선택한 수량만큼 판매 (골드 지급, 인벤에서 수량 차감)
+    public void ConfirmSellSingle()
+    {
+        if (_pendingSellSlot == null || _pendingSellSlot.currentItem == null)
+        {
+            CloseSellConfirm();
+            return;
+        }
+
+        int maxQ = GetMaxSellQuantity(_pendingSellSlot);
+        int sellQuantity = Mathf.Clamp(_pendingSellQuantity, 1, maxQ);
+        int total = GetSellPrice(_pendingSellSlot.currentItem) * sellQuantity;
+
+        // 담긴 목록에서 이 슬롯 제거
+        for (int i = _stagedItems.Count - 1; i >= 0; i--)
+        {
+            if (_stagedItems[i].slot == _pendingSellSlot)
+            {
+                _stagedItems.RemoveAt(i);
+            }
+        }
+
+        // 담김 표시 해제 후, 묶음에서 판매 수량만큼 감소 (0이 되면 슬롯 비우기)
+        ItemInstance instance = _pendingSellSlot.CurrentInstance;
+        _pendingSellSlot.SetSaleMarked(false);
+        if (instance != null)
+        {
+            instance.RemoveStack(sellQuantity);
+
+            if (instance.IsEmpty == true)
+            {
+                InventorySystem.Instance.RemoveItemAtSlot(_pendingSellSlot);
+            }
+            else
+            {
+                _pendingSellSlot.SetItem(instance);
+            }
+        }
+
+        PlayerStats.Instance.gold += total;
+
+        SetDialogue(GetRandomLine(sellLines));
+        UpdateGoldDisplay();
+        RefreshSellStaging();
+        AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+
+        CloseSellConfirm();
+    }
+
+    // 취소 버튼: 팝업만 닫는다
+    public void CloseSellConfirm()
+    {
+        _pendingSellSlot = null;
+        _pendingSellQuantity = 1;
+
+        if (sellConfirmPopup != null)
+        {
+            sellConfirmPopup.SetActive(false);
+        }
     }
 
     // 취소: 담긴 것 모두 마킹 해제 (인벤은 그대로라 추가 복원 불필요)
