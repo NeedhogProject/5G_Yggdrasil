@@ -41,6 +41,7 @@ public class NetworkPlayerAvatar : NetworkBehaviour
 
     private Animator _animator;
     private NetworkTransform _netTransform;
+    private CapsuleCollider _collider;      // 상대 플레이어와 겹치지 않게 막는 충돌체
     private ChangeDetector _changes;
     private GameObject _objWeaponModel;
     private bool _bModelVisible = true;
@@ -83,6 +84,7 @@ public class NetworkPlayerAvatar : NetworkBehaviour
     {
         _animator = GetComponentInChildren<Animator>();
         _netTransform = GetComponent<NetworkTransform>();
+        _collider = GetComponent<CapsuleCollider>();
         _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
 
         // 층 이동으로 씬이 바뀌어도 분신이 유지되도록 함
@@ -117,6 +119,8 @@ public class NetworkPlayerAvatar : NetworkBehaviour
     {
         _bModelVisible = _bVisible;
         _animator.gameObject.SetActive(_bVisible);
+        // 보이는 분신만 길을 막음 (내 분신은 항상 숨김이라 내 캐릭터와 충돌하지 않음)
+        _collider.enabled = _bVisible;
     }
 
     // 호스트(와 예측 중인 본인)가 입력으로 받은 상태를 분신에 반영
