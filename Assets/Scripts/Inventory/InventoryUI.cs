@@ -92,8 +92,9 @@ public class InventoryUI : MonoBehaviour
             CloseInventory();
         }
 
-        // G: 인벤토리가 열린 상태에서 마우스로 가리키는 칸의 아이템을 바닥에 버림
-        if (isOpen == true && Keyboard.current.gKey.wasPressedThisFrame == true)
+        // G: 인벤토리가 단독으로 열린 상태에서만 마우스로 가리키는 칸의 아이템을 바닥에 버림
+        // 창고/상점과 같이 열렸을 때는 드랍을 막는다 (엉뚱한 칸이 버려져 아이템이 사라지는 문제 방지)
+        if (isOpen == true && _openedBeside == false && Keyboard.current.gKey.wasPressedThisFrame == true)
         {
             InventorySystem.Instance?.DropHoveredItem();
         }
