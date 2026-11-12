@@ -12,45 +12,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
   m_Name: W-002-4-1
   m_EditorClassIdentifier: Assembly-CSharp::WeaponData
-  _itemName: "\uAE30\uC0AC\uC655\uC758 \uC7A5\uAC80"
-  _description: "\uC61B \uAE30\uC0AC\uC655\uC774 \uC0AC\uC6A9\uD558\uC600\uB358 \uC7A5\uAC80\uC774\uB2E4.
-    \uB2E4\uB978 \uC7A5\uAC80\uBCF4\uB2E4 \uD488\uC9C8\uC774 \uB354\uC6B1 \uB354
-    \uC88B\uB2E4."
+  _itemName: "\uC601\uC6C5\uC758 \uC7A5\uAC80"
+  _description: "\uC61B \uC601\uC6C5\uC774 \uC0AC\uC6A9\uD558\uC600\uB358 \uC911\uAC80\uC774\uB2E4.
+    \uC911\uAC80\uCE58\uACE0\uB294 \uB354\uC6B1 \uBB34\uAC81\uC9C0\uB9CC, \uB354\uC6B1
+    \uB354 \uAC15\uB825\uD558\uAC8C \uACF5\uACA9\uD560 \uC218 \uC788\uB2E4."
   _itemType: 0
   _rarity: 3
   _icon: {fileID: 0}
   _prefab3D: {fileID: 1988220813982816162, guid: 9585a470da26e244bb13bd2122e002f7, type: 3}
   _inventoryWidth: 2
   _inventoryHeight: 3
-  _price: 12000
+  _price: 4800
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1
   weaponType: 1
   _weaponRarity: 3
-  baseDamage: 50
+  baseDamage: 58
   attackSpeed: 1
-  reach: 3
+  reach: 2.5
   attackWidth: 1.5
+  attackLockTime: 0.25
   weaponModelPrefab: {fileID: 1988220813982816162, guid: 9585a470da26e244bb13bd2122e002f7, type: 3}
   enhancementLevel: 0
-  enhanceSuccessRates:
-  - 90
-  - 75
-  - 45
-  - 25
-  - 10
-  attackMultipliers:
-  - 1
-  - 1.08
-  - 1.15
-  - 1.21
-  - 1.26
-  - 1.3
-  speedMultipliers:
-  - 1
-  - 1
-  - 1
-  - 1.02
-  - 1.03
-  - 1.07

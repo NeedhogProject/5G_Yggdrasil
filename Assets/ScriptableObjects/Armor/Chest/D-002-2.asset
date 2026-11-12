@@ -13,14 +13,15 @@ MonoBehaviour:
   m_Name: D-002-2
   m_EditorClassIdentifier: Assembly-CSharp::ArmorData
   _itemName: "\uD3C9\uBC94\uD55C \uAC11\uC637"
-  _description: 
+  _description: "\uBAB8\uD1B5\uC758 \uAE09\uC18C\uB97C \uACE0\uB974\uAC8C \uAC10\uC2F8\uB3C4\uB85D
+    \uCCA0\uD310\uC744 \uC774\uC5B4 \uB9CC\uB4E0 \uC2E4\uC6A9\uC801\uC778 \uAC11\uC637\uC774\uB2E4"
   _itemType: 0
   _rarity: 1
   _icon: {fileID: 0}
   _prefab3D: {fileID: 8443062034035735841, guid: 34ee1a45851571b45b908c35f6d50dd9, type: 3}
   _inventoryWidth: 3
   _inventoryHeight: 2
-  _price: 0
+  _price: 3000
   _isDroppable: 1
   _isStackable: 0
   _maxStack: 1

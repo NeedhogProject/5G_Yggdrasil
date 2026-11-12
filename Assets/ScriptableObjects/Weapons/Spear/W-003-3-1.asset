@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8ddeee76d3868d44a2987b5cfad64f4, type: 3}
+  m_Name: W-003-3-1
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponData
+  _itemName: "\uAE30\uC0AC\uB2E8\uC7A5\uC758 \uBCBC\uB824\uC9C4 \uCC3D"
+  _description: "\uC218\uB9CE\uC740 \uC804\uD22C\uB97C \uC774\uB04C\uC5C8\uB358 \uAE30\uC0AC\uB2E8\uC7A5\uC758
+    \uCC3D\uC73C\uB85C, \uC2B9\uC804\uC758 \uD754\uC801\uC774 \uB0A8\uC544\uC788\uB2E4."
+  _itemType: 0
+  _rarity: 0
+  _icon: {fileID: 0}
+  _prefab3D: {fileID: 0}
+  _inventoryWidth: 4
+  _inventoryHeight: 2
+  _price: 3800
+  _isDroppable: 1
+  _isStackable: 0
+  _maxStack: 1
+  weaponType: 2
+  _weaponRarity: 2
+  baseDamage: 50
+  attackSpeed: 0.78
+  reach: 3.5
+  attackWidth: 0.2
+  attackLockTime: 0.3
+  weaponModelPrefab: {fileID: 0}
+  enhancementLevel: 0
