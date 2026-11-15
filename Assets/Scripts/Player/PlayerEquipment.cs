@@ -186,6 +186,8 @@ public class PlayerEquipment : MonoBehaviour
         playerStats?.AddEquipmentMaxHealth(newArmor.MaxHealthBonus);
         armorSetManager?.OnArmorEquipped(newArmor); // 추가
 
+        Debug.Log("[PlayerEquipment] 방어구 장착: " + newArmor.Data?.ItemName + " (" + slot.ToString() + ")");
+
         // 각인 색상 UI 갱신
         ArmorInstance.InscriptionInfo info = newArmor.GetInscription();
 

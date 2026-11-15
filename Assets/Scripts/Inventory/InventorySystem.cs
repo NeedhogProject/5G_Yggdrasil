@@ -1185,6 +1185,80 @@ public class InventorySystem : MonoBehaviour
         return false;
     }
 
+    // 지정한 소모품(등급 단위, ConsumableData)의 보유 총 수량 (등급별 단축키 표시용)
+    // 같은 종류라도 등급(에셋)이 다르면 따로 센다.
+    public int GetConsumableCountByData(ConsumableData data)
+    {
+        if (data == null)
+        {
+            return 0;
+        }
+
+        int total = 0;
+        for (int i = 0; i < _itemInstances.Count; i++)
+        {
+            ConsumableInstance consumable = _itemInstances[i] as ConsumableInstance;
+            if (consumable == null || consumable.ConsumableData == null)
+            {
+                continue;
+            }
+            if (consumable.ConsumableData == data)
+            {
+                total = total + consumable.StackCount;
+            }
+        }
+        return total;
+    }
+
+    // 지정한 소모품(등급 단위, ConsumableData)을 1개 사용한다 (등급별 단축키에서 호출)
+    // 효과 적용 + 1개 차감. 수량 0이면 인벤토리에서 제거, 아니면 슬롯 수량 표시 갱신.
+    // 사용 성공 시 true, 보유 없음/최대치 등 사용 불가면 false.
+    public bool UseConsumableByData(ConsumableData data)
+    {
+        if (data == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _itemInstances.Count; i++)
+        {
+            ConsumableInstance consumable = _itemInstances[i] as ConsumableInstance;
+            if (consumable == null || consumable.ConsumableData == null)
+            {
+                continue;
+            }
+            if (consumable.ConsumableData != data)
+            {
+                continue;
+            }
+
+            // 효과 적용 + 1개 차감 (이미 최대치 등이면 false)
+            bool success = consumable.TryUse(PlayerStats.Instance);
+            if (success == false)
+            {
+                return false;
+            }
+
+            if (consumable.IsEmpty == true)
+            {
+                RemoveItem(consumable);
+            }
+            else
+            {
+                InventorySlot owner = slots.Find(s => s.CurrentInstance == consumable);
+                if (owner != null)
+                {
+                    owner.SetItem(consumable);
+                }
+            }
+
+            return true;
+        }
+
+        // 해당 등급의 소모품이 인벤토리에 없음
+        return false;
+    }
+
     /// <summary>
     /// 슬롯에 실제 배치된 모든 아이템을 인스턴스로 반환 (저장용)
     /// 데이터 전용으로 추가된 아이템(_itemInstances 에 없는 것)도

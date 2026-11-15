@@ -17,7 +17,7 @@ MonoBehaviour:
     \uCC3D\uC73C\uB85C, \uC2B9\uC804\uC758 \uD754\uC801\uC774 \uB0A8\uC544\uC788\uB2E4."
   _itemType: 0
   _rarity: 0
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 48daa08861239dc45a6dba6fe8e50fbb, type: 3}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 4
   _inventoryHeight: 2

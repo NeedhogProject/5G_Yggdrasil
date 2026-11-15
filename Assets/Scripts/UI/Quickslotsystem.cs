@@ -139,7 +139,7 @@ public class QuickSlotSystem : MonoBehaviour
             return;
         }
 
-        bool success = InventorySystem.Instance.UseConsumableByType(slot.consumable.ConsumableType);
+        bool success = InventorySystem.Instance.UseConsumableByData(slot.consumable);
 
         if (success == false)
         {
@@ -202,7 +202,7 @@ public class QuickSlotSystem : MonoBehaviour
         int count = 0;
         if (InventorySystem.Instance != null)
         {
-            count = InventorySystem.Instance.GetConsumableCount(slot.consumable.ConsumableType);
+            count = InventorySystem.Instance.GetConsumableCountByData(slot.consumable);
         }
 
         // 수량 텍스트
