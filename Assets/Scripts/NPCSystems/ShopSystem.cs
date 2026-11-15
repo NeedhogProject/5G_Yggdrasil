@@ -262,7 +262,33 @@ public class ShopSystem : MonoBehaviour
             cancelSellSingleButton.onClick.AddListener(CloseSellConfirm);
         }
 
+        // 표시용 텍스트가 수량 버튼 위를 덮어 클릭을 가로채지 않도록 레이캐스트를 끈다
+        // (특히 수량 숫자 텍스트 상자가 넓어 +/- 버튼을 덮는 문제 방지)
+        DisableTextRaycast(confirmItemNameText);
+        DisableTextRaycast(quantityText);
+        DisableTextRaycast(totalPriceText);
+        DisableTextRaycast(balanceAfterText);
+        DisableTextRaycast(sellConfirmItemNameText);
+        DisableTextRaycast(sellConfirmQuantityText);
+        DisableTextRaycast(sellConfirmPriceText);
+        DisableTextRaycast(sellConfirmBalanceText);
+
         _isSetup = true;
+    }
+
+    // 표시용 텍스트의 레이캐스트 타겟을 꺼서 아래 버튼 클릭을 막지 않게 한다
+    private void DisableTextRaycast(TMP_Text text)
+    {
+        if (text == null)
+        {
+            return;
+        }
+
+        Graphic graphic = text.GetComponent<Graphic>();
+        if (graphic != null)
+        {
+            graphic.raycastTarget = false;
+        }
     }
 
     // 탭 버튼 콜백 (람다 대신 명시 메서드로 — 코드 스타일)
@@ -1072,7 +1098,40 @@ public class ShopSystem : MonoBehaviour
         {
             return 1;
         }
+
+        // 유물은 한 칸에 쌓이지 않으므로, 같은 종류(감정된) 유물 칸 수를 최대 수량으로 쓴다
+        if (slot.CurrentInstance is RelicInstance)
+        {
+            return Mathf.Max(1, CountSameRelics(slot.CurrentInstance.Data));
+        }
+
         return Mathf.Max(1, slot.CurrentInstance.StackCount);
+    }
+
+    // 인벤토리에서 같은 종류의 감정된 유물이 들어있는 칸 수를 센다 (유물 묶음 판매용)
+    private int CountSameRelics(ItemData relicData)
+    {
+        if (relicData == null || InventorySystem.Instance == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        List<InventorySlot> allSlots = InventorySystem.Instance.slots;
+        for (int i = 0; i < allSlots.Count; i++)
+        {
+            InventorySlot current = allSlots[i];
+            if (current == null || current.IsOwner == false)
+            {
+                continue;
+            }
+
+            if (current.CurrentInstance is RelicInstance relic && relic.IsIdentified == true && relic.Data == relicData)
+            {
+                count = count + 1;
+            }
+        }
+        return count;
     }
 
     // 판매 수량 변경 (± 버튼, 구매와 동일 방식)
@@ -1148,7 +1207,23 @@ public class ShopSystem : MonoBehaviour
 
         int maxQ = GetMaxSellQuantity(_pendingSellSlot);
         int sellQuantity = Mathf.Clamp(_pendingSellQuantity, 1, maxQ);
-        int total = GetSellPrice(_pendingSellSlot.currentItem) * sellQuantity;
+        int unitPrice = GetSellPrice(_pendingSellSlot.currentItem);
+
+        // 유물은 한 칸에 쌓이지 않으므로, 같은 종류 유물 칸을 수량만큼 찾아 한 번에 판매한다
+        if (_pendingSellSlot.CurrentInstance is RelicInstance)
+        {
+            SellRelicsByCount(_pendingSellSlot.CurrentInstance.Data, sellQuantity, unitPrice);
+
+            SetDialogue(GetRandomLine(sellLines));
+            UpdateGoldDisplay();
+            RefreshSellStaging();
+            AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+
+            CloseSellConfirm();
+            return;
+        }
+
+        int total = unitPrice * sellQuantity;
 
         // 담긴 목록에서 이 슬롯 제거
         for (int i = _stagedItems.Count - 1; i >= 0; i--)
@@ -1186,6 +1261,70 @@ public class ShopSystem : MonoBehaviour
         CloseSellConfirm();
     }
 
+    // 같은 종류의 감정된 유물을 지정 수량만큼 인벤에서 찾아 판매 처리한다 (유물 전용)
+    // 담긴(마킹된) 팝업 대상 칸을 먼저 처리하고, 모자라면 같은 종류의 다른 칸을 추가로 판다
+    private void SellRelicsByCount(ItemData relicData, int count, int unitPrice)
+    {
+        if (relicData == null || InventorySystem.Instance == null)
+        {
+            return;
+        }
+
+        // 판매 대상 칸 모으기 (1순위: 현재 팝업 대상 칸, 2순위: 같은 종류의 다른 감정 유물 칸)
+        List<InventorySlot> targets = new List<InventorySlot>();
+
+        if (_pendingSellSlot != null)
+        {
+            targets.Add(_pendingSellSlot);
+        }
+
+        List<InventorySlot> allSlots = InventorySystem.Instance.slots;
+        for (int i = 0; i < allSlots.Count; i++)
+        {
+            InventorySlot current = allSlots[i];
+            if (current == null || current.IsOwner == false)
+            {
+                continue;
+            }
+            if (current == _pendingSellSlot)
+            {
+                continue;
+            }
+
+            if (current.CurrentInstance is RelicInstance relic && relic.IsIdentified == true && relic.Data == relicData)
+            {
+                targets.Add(current);
+            }
+        }
+
+        // 모은 칸에서 count 개 만큼만 실제 판매
+        int sold = 0;
+        for (int i = 0; i < targets.Count; i++)
+        {
+            if (sold >= count)
+            {
+                break;
+            }
+
+            InventorySlot current = targets[i];
+
+            // 담긴 목록에서 제거
+            for (int j = _stagedItems.Count - 1; j >= 0; j--)
+            {
+                if (_stagedItems[j].slot == current)
+                {
+                    _stagedItems.RemoveAt(j);
+                }
+            }
+
+            current.SetSaleMarked(false);
+            InventorySystem.Instance.RemoveItemAtSlot(current);
+            sold = sold + 1;
+        }
+
+        PlayerStats.Instance.gold += unitPrice * sold;
+    }
+
     // 취소 버튼: 팝업만 닫는다
     public void CloseSellConfirm()
     {
@@ -1219,7 +1358,7 @@ public class ShopSystem : MonoBehaviour
         {
             GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
             ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
-            itemUI.SetupSellItem(_stagedItems[i].data, this);
+            itemUI.SetupSellItem(_stagedItems[i].data, _stagedItems[i].slot, this);
         }
 
         int total = 0;

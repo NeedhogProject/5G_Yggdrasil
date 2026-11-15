@@ -267,6 +267,8 @@ public class NPCInteractable : MonoBehaviour
                 return;
             }
             scholar.OpenScholar();
+            // ESC 로 닫으면 이 학자 메뉴로 다시 돌아오게 연결
+            scholar.onBackToMenu = OpenScholar;
         };
 
         string[] labels = new string[] { functionChoiceLabel, identifyChoiceLabel };
