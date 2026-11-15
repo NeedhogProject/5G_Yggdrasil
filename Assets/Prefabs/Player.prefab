@@ -49,6 +49,7 @@ GameObject:
   - component: {fileID: 3731365602666153022}
   - component: {fileID: 7483592433788517892}
   - component: {fileID: 2333802226974840277}
+  - component: {fileID: 1803725478684613465}
   m_Layer: 8
   m_Name: Player
   m_TagString: Player
@@ -94,6 +95,7 @@ MonoBehaviour:
   setDefensePercent: 0
   setMentalBonus: 0
   setShieldPercent: 0
+  setDamageReductionPercent: 0
   relicMentalBonus: 0
   relicGoldBonus: 0
   relicAttackBonus: 0
@@ -232,6 +234,7 @@ MonoBehaviour:
   playerEquipment: {fileID: 0}
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
+  setEffectController: {fileID: 0}
   gameOverPanel: {fileID: 0}
   gameOverPanelName: GameOverPanel
   retryButtonName: RetryButton
@@ -251,6 +254,7 @@ MonoBehaviour:
   playerStats: {fileID: 3693487522456573021}
   playerCombat: {fileID: 0}
   playerController: {fileID: 0}
+  setEffectController: {fileID: 0}
   setEffectDatabase:
   - {fileID: 11400000, guid: 10467ebbe4e1608428c1ef7840334247, type: 2}
   - {fileID: 11400000, guid: bf797f4e072615e4c8a3840dcc8c0217, type: 2}
@@ -273,6 +277,59 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   equipOnStart: {fileID: 11400000, guid: fc0153f49253eb64681560a263596813, type: 2}
   bAlreadyGranted: 0
+--- !u!114 &1803725478684613465
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3523993642365406597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8ec40ea039d205469ff8b62477cbb31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SetEffectController
+  enemyLayer:
+    serializedVersion: 2
+    m_Bits: 512
+  combatTimeout: 5
+  igniteChance: 0.25
+  igniteDuration: 3
+  igniteDamagePerSecond: 10
+  igniteCooldown: 3
+  prefabIgniteVFX: {fileID: 0}
+  explosionRadius: 3
+  explosionDamageRatio: 0.13
+  prefabExplosionVFX: {fileID: 0}
+  waterSlowPercent: 0.05
+  waterSlowDuration: 2
+  regenDuration: 3
+  regenPercentPerSecond: 3
+  regenCooldown: 5
+  waterHealthThreshold: 0.5
+  waterHighHealthAttackBonus: 0.15
+  waterLowHealthRegenMultiplier: 2
+  tornadoAttackCount: 3
+  tornadoDamage: 10
+  tornadoHalfWidth: 1
+  tornadoDistance: 8
+  tornadoSpeed: 12
+  prefabTornadoVFX: {fileID: 0}
+  shieldPercent: 7
+  shieldInterval: 15
+  prefabShieldVFX: {fileID: 0}
+  shieldAttackBonus: 0.05
+  stunRadius: 4
+  stunDuration: 1.5
+  soulAttackPerStack: 0.03
+  soulMaxStacks: 10
+  soulDecayInterval: 1
+  darkHealthThreshold: 0.5
+  darkLowHealthAttackBonus: 0.09
+  reviveHealPercentPerStack: 5
+  reviveLifeSteal: 0.04
+  reviveLifeStealDuration: 5
+  reviveCooldown: 90
 --- !u!1 &4525919307855606178
 GameObject:
   m_ObjectHideFlags: 0

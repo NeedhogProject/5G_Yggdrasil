@@ -10,7 +10,8 @@ using System.Linq;
 /// - 불/물/바람/땅 : 2개부터 Tier2 발동
 /// - 어둠           : 1개부터 Tier1 발동
 /// - 크로스 세트    : 불2+물2 → 불 Tier2 + 물 Tier2 각각 독립 발동 (원소 간 합산)
-/// - 같은 원소의 Tier 는 비중첩 — 단계가 오르면 이전 Tier 효과는 지워지고 현재 Tier 효과로 교체
+/// - 같은 원소의 Tier 는 누적 — N세트 착용 시 1~N 단계 효과 모두 적용
+/// - 확률/지속형 특수 효과는 SetEffectController 가 처리
 /// - 수치 보너스 단위: 정신력은 포인트(최대치 가산), 나머지는 %
 /// - 흡혈(LifeSteal) → PlayerCombat / 보호막(Shield) → PlayerStats (비전투 15초 후 재충전)
 ///
@@ -27,6 +28,7 @@ public class ArmorSetManager : MonoBehaviour
     [SerializeField] private PlayerStats playerStats;
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerController playerController;
+    [SerializeField] private SetEffectController setEffectController;
 
     [Header("세트 효과 데이터베이스 (원소별 SetEffectData 5개 등록)")]
     [SerializeField] private List<SetEffectData> setEffectDatabase = new List<SetEffectData>();
@@ -54,6 +56,8 @@ public class ArmorSetManager : MonoBehaviour
             playerCombat = GetComponent<PlayerCombat>();
         if (playerController == null)
             playerController = GetComponent<PlayerController>();
+        if (setEffectController == null)
+            setEffectController = GetComponent<SetEffectController>();
 
         // 모든 원소 카운트 0으로 초기화
         foreach (RuneElement e in System.Enum.GetValues(typeof(RuneElement)))
@@ -126,7 +130,7 @@ public class ArmorSetManager : MonoBehaviour
         ApplyAllStatBonuses();
     }
 
-    // ─────────────────────── 수치 보너스 (현재 Tier 만, 원소 간 합산) ───────────────────────
+    // ─────────────────────── 수치 보너스 (1~현재 Tier 누적, 원소 간 합산) ───────────────────────
 
     private void ApplyAllStatBonuses()
     {
@@ -138,6 +142,7 @@ public class ArmorSetManager : MonoBehaviour
         float moveSpeedPercent   = 0f;
         float lifeStealPercent   = 0f;
         float shieldPercent      = 0f;
+        float damageReductionPercent = 0f;
 
         foreach (KeyValuePair<RuneElement, SetTier> kv in _activeTiers)
         {
@@ -145,26 +150,33 @@ public class ArmorSetManager : MonoBehaviour
             SetEffectData data = GetData(kv.Key);
             if (data == null) continue;
 
-            // 비중첩 — 현재 Tier 의 보너스만 적용 (이전 Tier 효과는 현재 값으로 교체된 상태)
-            foreach (StatBonus bonus in data.GetStatBonuses(kv.Value))
+            // 누적 — 1단계부터 현재 단계까지 보너스 합산
+            for (int nTier = (int)SetTier.Tier1; nTier <= (int)kv.Value; nTier++)
             {
-                switch (bonus.bonusType)
+                foreach (StatBonus bonus in data.GetStatBonuses((SetTier)nTier))
                 {
-                    case StatBonusType.AttackDamage: attackPercent      += bonus.percent; break;
-                    case StatBonusType.Defense:      defensePercent     += bonus.percent; break;
-                    case StatBonusType.Health:       healthPercent      += bonus.percent; break;
-                    case StatBonusType.Mental:       mentalBonus        += bonus.percent; break;
-                    case StatBonusType.AttackSpeed:  attackSpeedPercent += bonus.percent; break;
-                    case StatBonusType.MoveSpeed:    moveSpeedPercent   += bonus.percent; break;
-                    case StatBonusType.LifeSteal:    lifeStealPercent   += bonus.percent; break;
-                    case StatBonusType.Shield:       shieldPercent      += bonus.percent; break;
+                    switch (bonus.bonusType)
+                    {
+                        case StatBonusType.AttackDamage: attackPercent      += bonus.percent; break;
+                        case StatBonusType.Defense:      defensePercent     += bonus.percent; break;
+                        case StatBonusType.Health:       healthPercent      += bonus.percent; break;
+                        case StatBonusType.Mental:       mentalBonus        += bonus.percent; break;
+                        case StatBonusType.AttackSpeed:  attackSpeedPercent += bonus.percent; break;
+                        case StatBonusType.MoveSpeed:    moveSpeedPercent   += bonus.percent; break;
+                        case StatBonusType.LifeSteal:    lifeStealPercent   += bonus.percent; break;
+                        case StatBonusType.Shield:       shieldPercent      += bonus.percent; break;
+                        case StatBonusType.DamageReduction: damageReductionPercent += bonus.percent; break;
+                    }
                 }
             }
-        }
+            }
 
         // PlayerStats: 체력 % / 방어 % / 정신력 포인트 / 보호막 %
         if (playerStats != null)
+        {
             playerStats.SetSetBonusPercents(healthPercent, defensePercent, mentalBonus, shieldPercent);
+            playerStats.SetDamageReductionPercent(damageReductionPercent);
+        }
 
         // PlayerCombat: 공격력 / 공격속도 / 흡혈 (비율로 전달)
         if (playerCombat != null)
@@ -177,6 +189,10 @@ public class ArmorSetManager : MonoBehaviour
         // PlayerController: 이동속도 (비율로 전달)
         if (playerController != null)
             playerController.SetMoveSpeedBonus(moveSpeedPercent / 100f);
+
+        // 특수 효과 단계 전달 (보호막 등 SetSetBonusPercents 이후 적용)
+        if (setEffectController != null)
+            setEffectController.ApplyTiers(_activeTiers);
     }
 
     // ─────────────────────── 유틸 ───────────────────────

@@ -31,6 +31,7 @@ public class PlayerCombat : MonoBehaviour
     [Tooltip("공격 시 상체 레이어가 켜지고 꺼지는 속도")]
     [SerializeField] private float upperBodyBlendSpeed = 10f;
     private PlayerStats _stats;
+    private SetEffectController _setEffect;
 
     // ─────────────────────── 장착 무기 ───────────────────────
 
@@ -126,6 +127,7 @@ public class PlayerCombat : MonoBehaviour
         _stats = GetComponent<PlayerStats>();
         _animator = GetComponentInChildren<Animator>();
         _controller = GetComponent<PlayerController>();
+        _setEffect = GetComponent<SetEffectController>();
     }
 
     // ─────────────────────── 업데이트 ───────────────────────
@@ -248,6 +250,12 @@ public class PlayerCombat : MonoBehaviour
 
         // 판정 실행 — onHit 콜백으로 피격 처리
         _hitbox.PerformAttack(CurrentWeapon, OnHit);
+
+        // 세트 특수 효과 공격 횟수 알림 (바람 4세트 회오리)
+        if (_setEffect != null)
+        {
+            _setEffect.OnBasicAttack(transform.forward);
+        }
     }
 
     // 장착 무기의 경직 시간 (단검은 다단히트가 끝나기 전에 캔슬되지 않도록 최소 보장)
@@ -275,6 +283,12 @@ public class PlayerCombat : MonoBehaviour
         {
             float damage = CalculateDamage(hitIndex);
             enemy.TakeDamage(damage);
+
+            // 세트 특수 효과 (점화/둔화/회복/영혼 등)
+            if (_setEffect != null)
+            {
+                _setEffect.OnEnemyHit(enemy, damage);
+            }
 
             // 불 4세트 흡혈 — 입힌 데미지 비례 회복
             if (_lifeStealPercent > 0f && _stats != null)
@@ -306,21 +320,32 @@ public class PlayerCombat : MonoBehaviour
     {
         if (CurrentWeapon == null) return 0f;
 
-        // 유물 공격력은 무기 공격력에 고정값으로 더함
-        float baseDamage = CurrentWeapon.FinalDamage + (_stats != null ? _stats.RelicAttackBonus : 0f);
-
-        // 정신력 배율 (정신력 낮을수록 공격력 감소, 강도는 PlayerStats 인스펙터)
-        float mentalMult = _stats != null ? _stats.MentalAttackMultiplier : 1f;
-
         // 단검 다단히트 배율
         float hitMult = CurrentWeapon.WeaponData.WeaponType == WeaponType.Dagger
             ? _hitbox.GetDaggerHitMultiplier(hitIndex)
             : 1f;
 
-        // 세트 공격력 보너스
-        float setBonus = 1f + _attackDamageBonus;
+        return AttackPower * hitMult;
+    }
 
-        return baseDamage * mentalMult * hitMult * setBonus;
+    /// <summary>플레이어 공격력 = 무기 공격력 x 정신력 배율 x 세트 공격력 보너스 (세트 특수 효과 피해 기준)</summary>
+    public float AttackPower
+    {
+        get
+        {
+            if (CurrentWeapon == null) return 0f;
+
+            // 유물 공격력은 무기 공격력에 고정값으로 더함
+            float baseDamage = CurrentWeapon.FinalDamage + (_stats != null ? _stats.RelicAttackBonus : 0f);
+
+            // 정신력 배율 (정신력 낮을수록 공격력 감소, 강도는 PlayerStats 인스펙터)
+            float mentalMult = _stats != null ? _stats.MentalAttackMultiplier : 1f;
+
+            // 세트 공격력 보너스 (고정 수치 + 조건부 특수 효과)
+            float setBonus = 1f + _attackDamageBonus + (_setEffect != null ? _setEffect.DynamicAttackBonus : 0f);
+
+            return baseDamage * mentalMult * setBonus;
+        }
     }
 
     // ─────────────────────── 무기 장착/해제 ───────────────────────

@@ -25,6 +25,7 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float setDefensePercent = 0f;
     [SerializeField] private float setMentalBonus = 0f;       // 최대 정신력 포인트 가산
     [SerializeField] private float setShieldPercent = 0f;     // 최대 체력 비례 보호막 %
+    [SerializeField] private float setDamageReductionPercent = 0f; // 받는 피해 감소 %
 
     [Header("유물 보너스 (PlayerEquipment 가 설정)")]
     [SerializeField] private float relicMentalBonus = 0f;     // 최대 정신력 포인트 가산
@@ -97,6 +98,9 @@ public class PlayerStats : MonoBehaviour
 
     /// <summary>현재 보호막 수치 (피해 선흡수)</summary>
     public float Shield => _shield;
+
+    /// <summary>마지막 공격/피격 시각 (SetEffectController 전투 판정용)</summary>
+    public float LastCombatTime => _lastCombatTime;
 
     // ── 이벤트 ────────────────────────────────────
     public event Action<float> OnHealthChanged;
@@ -376,8 +380,11 @@ public class PlayerStats : MonoBehaviour
         health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
         mental = Mathf.Clamp(mental, MIN_STAT, MaxMental);
 
-        // 세트 구성 변경 시 보호막 즉시 충전
-        _shield = ShieldMax;
+        // 세트 구성 변경 시 보호막 즉시 충전 (보호막 % 보너스가 있을 때만, 땅 3세트 보호막 유지)
+        if (setShieldPercent > 0f)
+        {
+            _shield = ShieldMax;
+        }
 
         if (OnHealthChanged != null)
         {
@@ -391,6 +398,22 @@ public class PlayerStats : MonoBehaviour
         {
             OnMentalChanged.Invoke(mental);
         }
+        if (OnStatsChanged != null)
+        {
+            OnStatsChanged.Invoke();
+        }
+    }
+
+    /// <summary>받는 피해 감소 % 설정 (ArmorSetManager 가 호출)</summary>
+    public void SetDamageReductionPercent(float _fPercent)
+    {
+        setDamageReductionPercent = _fPercent;
+    }
+
+    /// <summary>보호막 수치 직접 설정 (땅 3세트, SetEffectController 가 호출)</summary>
+    public void SetShieldValue(float _fValue)
+    {
+        _shield = Mathf.Max(0f, _fValue);
         if (OnStatsChanged != null)
         {
             OnStatsChanged.Invoke();
@@ -432,6 +455,9 @@ public class PlayerStats : MonoBehaviour
         dd = Mathf.Clamp(dd, 0f, 95f);
         float damageRatio = 1f - (dd / 100f);
         float actualDamage = rawDamage * Mathf.Max(damageRatio, 0.05f);
+
+        // 세트 받는 피해 감소 (땅 2세트)
+        actualDamage *= Mathf.Max(0f, 1f - setDamageReductionPercent / 100f);
 
         // 피격 — 보호막 재충전 타이머 리셋
         _lastCombatTime = Time.time;

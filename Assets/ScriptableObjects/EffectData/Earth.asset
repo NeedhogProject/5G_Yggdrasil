@@ -15,21 +15,7 @@ MonoBehaviour:
   element: 3
   tier1Bonuses: []
   tier2Bonuses:
-  - bonusType: 3
+  - bonusType: 9
     percent: 5
-  - bonusType: 2
-    percent: 5
-  tier3Bonuses:
-  - bonusType: 3
-    percent: 10
-  - bonusType: 2
-    percent: 10
-  - bonusType: 8
-    percent: 10
-  tier4Bonuses:
-  - bonusType: 3
-    percent: 15
-  - bonusType: 2
-    percent: 15
-  - bonusType: 8
-    percent: 20
+  tier3Bonuses: []
+  tier4Bonuses: []

@@ -34,6 +34,7 @@ public class PlayerDeath : MonoBehaviour
     [SerializeField] private PlayerEquipment playerEquipment;
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerController playerController;
+    [SerializeField] private SetEffectController setEffectController;
 
     [Header("사망 UI (GameOverPanel)")]
     [Tooltip("다시하기/종료 버튼이 있는 UI 패널. 비워두면 이름으로 자동 검색한다.")]
@@ -74,6 +75,10 @@ public class PlayerDeath : MonoBehaviour
         if (playerController == null)
         {
             playerController = GetComponent<PlayerController>();
+        }
+        if (setEffectController == null)
+        {
+            setEffectController = GetComponent<SetEffectController>();
         }
 
         // 체력 변화 이벤트 구독
@@ -204,6 +209,11 @@ public class PlayerDeath : MonoBehaviour
         }
         if (currentHealth <= 0f)
         {
+            // 어둠 4세트 부활 성공 시 사망 처리 생략
+            if (setEffectController != null && setEffectController.TryRevive() == true)
+            {
+                return;
+            }
             Die();
         }
     }
@@ -225,12 +235,6 @@ public class PlayerDeath : MonoBehaviour
 
         // 사망 패널티: 인벤토리 전체 삭제
         ApplyDeathPenalty();
-
-        // 멀티 세션에 동료가 있으면 게임을 멈추지 않음 (관전과 마을 귀환은 NetworkPlayerAvatar 가 처리)
-        if (NetworkPlayerAvatar.HasTeammates == true)
-        {
-            return;
-        }
 
         // GameManager 에 사망 알림
         GameManager.Instance?.OnPlayerDeath();
