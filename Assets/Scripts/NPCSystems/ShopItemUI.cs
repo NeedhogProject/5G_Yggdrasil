@@ -15,6 +15,7 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
     private ShopSystem _shopSystem;
     private ShopItemData _shopItemData;
     private ItemData _sellItemData;
+    private InventorySlot _sellSlot;
     private bool _isBuyMode;
 
     // 구매 슬롯 초기화
@@ -38,11 +39,12 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // 판매 슬롯 초기화 (판매 로직은 4단계에서 연결)
-    public void SetupSellItem(ItemData item, ShopSystem shop)
+    // 판매 슬롯 초기화 (우클릭 시 이 슬롯으로 판매 확인 팝업을 연다)
+    public void SetupSellItem(ItemData item, InventorySlot slot, ShopSystem shop)
     {
         _shopSystem = shop;
         _sellItemData = item;
+        _sellSlot = slot;
         _isBuyMode = false;
 
         if (itemIcon != null)
@@ -59,25 +61,31 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // 좌클릭: 구매 모드면 구매 팝업, 판매 모드면 판매창에서 빼기
+    // 구매 모드: 좌클릭 = 구매 팝업 / 판매 모드: 우클릭 = 판매 확인 팝업, 좌클릭 = 판매창에서 빼기
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left)
-        {
-            return;
-        }
-
         if (_isBuyMode == true)
         {
             // 구매 모드: 좌클릭 시 구매 확인 팝업
-            if (_shopSystem != null)
+            if (eventData.button == PointerEventData.InputButton.Left && _shopSystem != null)
             {
                 _shopSystem.OpenBuyConfirm(_shopItemData);
             }
+            return;
         }
-        else
+
+        // 판매 모드
+        if (eventData.button == PointerEventData.InputButton.Right)
         {
-            // 판매 모드: 좌클릭 시 판매창에서 빼기 (마킹 해제)
+            // 우클릭: 판매 확인 팝업 열기
+            if (_shopSystem != null && _sellSlot != null)
+            {
+                _shopSystem.OpenSellConfirm(_sellSlot);
+            }
+        }
+        else if (eventData.button == PointerEventData.InputButton.Left)
+        {
+            // 좌클릭: 판매창에서 빼기 (마킹 해제)
             if (_shopSystem != null && _sellItemData != null)
             {
                 _shopSystem.UnstageItem(_sellItemData);

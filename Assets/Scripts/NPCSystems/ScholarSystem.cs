@@ -1,5 +1,7 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using TMPro;
 
 /// <summary>
@@ -22,6 +24,9 @@ public class ScholarSystem : MonoBehaviour
     [Header("감정 설정")]
     public int identifyCost = 50;
 
+    // 감정창에서 ESC 로 닫을 때 돌아갈 NPC 대화 메뉴 콜백 (NPCInteractable 가 설정)
+    public System.Action onBackToMenu = null;
+
     public static ScholarSystem Instance { get; private set; }
 
     private RelicInstance selectedRelic;
@@ -41,6 +46,46 @@ public class ScholarSystem : MonoBehaviour
 
         identifyButton.onClick.AddListener(OnIdentifyClicked);
         closeButton.onClick.AddListener(CloseScholar);
+    }
+
+    private void Update()
+    {
+        if (isOpen == false)
+        {
+            return;
+        }
+        if (Keyboard.current == null)
+        {
+            return;
+        }
+        if (Keyboard.current.escapeKey.wasPressedThisFrame == false)
+        {
+            return;
+        }
+
+        // ESC: 감정창을 닫고 학자 대화 메뉴로 돌아간다
+        GoBackToMenu();
+    }
+
+    // 감정창을 닫고 NPC 대화 선택 메뉴로 복귀 (ESC)
+    private void GoBackToMenu()
+    {
+        // 콜백을 먼저 보관 (CloseScholar 에서 비우므로)
+        System.Action back = onBackToMenu;
+
+        CloseScholar();
+
+        // 인벤토리 닫힘과 겹치지 않게 한 프레임 뒤에 메뉴를 다시 연다
+        if (back != null)
+        {
+            StartCoroutine(ReopenMenuNextFrame(back));
+        }
+    }
+
+    private IEnumerator ReopenMenuNextFrame(System.Action back)
+    {
+        yield return null;
+        back?.Invoke();
     }
 
     public void OpenScholar()
@@ -69,6 +114,7 @@ public class ScholarSystem : MonoBehaviour
         isOpen = false;
 
         selectedRelic = null;
+        onBackToMenu = null;
 
         FindFirstObjectByType<InventoryUI>()?.CloseInventory();
 

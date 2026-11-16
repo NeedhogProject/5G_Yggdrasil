@@ -2413,6 +2413,8 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 0
   goldMax: 0
+  deathVFX: {fileID: 0}
+  destroyDelay: 0.5
   hpBarObject: {fileID: 0}
   hpBarFill: {fileID: 0}
   hpBarHideDelay: 3
@@ -5142,6 +5144,7 @@ MonoBehaviour:
   inventoryUI: {fileID: 1324902177}
   iconOverlay: {fileID: 378318221}
   playerEquipment: {fileID: 0}
+  droppedItemPrefab: {fileID: 0}
   slots: []
   items: []
 --- !u!114 &1324902177
@@ -8000,6 +8003,8 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 0
   goldMax: 0
+  deathVFX: {fileID: 0}
+  destroyDelay: 0.5
   hpBarObject: {fileID: 0}
   hpBarFill: {fileID: 0}
   hpBarHideDelay: 3
@@ -8142,6 +8147,8 @@ MonoBehaviour:
   goldDropChance: 1
   goldMin: 0
   goldMax: 0
+  deathVFX: {fileID: 0}
+  destroyDelay: 0.5
   hpBarObject: {fileID: 0}
   hpBarFill: {fileID: 0}
   hpBarHideDelay: 3
