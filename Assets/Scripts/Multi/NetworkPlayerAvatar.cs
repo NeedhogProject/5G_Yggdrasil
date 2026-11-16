@@ -23,10 +23,6 @@ public class NetworkPlayerAvatar : NetworkBehaviour
     [Tooltip("무기 모델을 붙일 위치 (오른손 WeaponHolder)")]
     [SerializeField] private Transform weaponHolder;
 
-    [Tooltip("Animator 의 UpperBody 레이어 인덱스 (PlayerCombat 과 동일)")]
-    [SerializeField] private int upperBodyLayerIndex = 1;
-    [SerializeField] private float upperBodyBlendSpeed = 10f;
-
     [Networked] public byte MoveState { get; set; }               // 0 정지, 1 걷기, 2 달리기
     [Networked] public byte AttackCount { get; set; }             // 공격할 때마다 1 증가
     [Networked] public NetworkString<_64> WeaponId { get; set; }  // 장착 무기 아이템 ID (없으면 빈 문자열)
@@ -206,26 +202,6 @@ public class NetworkPlayerAvatar : NetworkBehaviour
 
         _animator.SetFloat("Speed", MoveState > 0 ? 1f : 0f);
         _animator.SetBool("IsSprinting", MoveState == 2);
-        UpdateUpperBodyLayer();
-    }
-
-    // 공격 모션 동안만 상체 레이어를 켬 (PlayerCombat 과 같은 방식)
-    private void UpdateUpperBodyLayer()
-    {
-        if (_animator.layerCount <= upperBodyLayerIndex)
-        {
-            return;
-        }
-
-        bool bAttacking = _animator.GetCurrentAnimatorStateInfo(upperBodyLayerIndex).IsName("Attack");
-        if (bAttacking == false && _animator.IsInTransition(upperBodyLayerIndex) == true)
-        {
-            bAttacking = _animator.GetNextAnimatorStateInfo(upperBodyLayerIndex).IsName("Attack");
-        }
-
-        float fTarget = bAttacking ? 1f : 0f;
-        float fCurrent = _animator.GetLayerWeight(upperBodyLayerIndex);
-        _animator.SetLayerWeight(upperBodyLayerIndex, Mathf.MoveTowards(fCurrent, fTarget, upperBodyBlendSpeed * Time.deltaTime));
     }
 
     // ─────────────────────── 무기 동기화 ───────────────────────

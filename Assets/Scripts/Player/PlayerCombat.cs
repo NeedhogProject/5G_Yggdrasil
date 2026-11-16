@@ -24,12 +24,6 @@ public class PlayerCombat : MonoBehaviour
     private HitboxSystem _hitbox;
     private Animator _animator;
     private PlayerController _controller;
-
-    [Header("상체 공격 레이어 (B 방식)")]
-    [Tooltip("Animator 의 UpperBody 레이어 인덱스 (보통 1)")]
-    [SerializeField] private int upperBodyLayerIndex = 1;
-    [Tooltip("공격 시 상체 레이어가 켜지고 꺼지는 속도")]
-    [SerializeField] private float upperBodyBlendSpeed = 10f;
     private PlayerStats _stats;
     private SetEffectController _setEffect;
 
@@ -142,8 +136,8 @@ public class PlayerCombat : MonoBehaviour
             _fAttackLockTimer -= Time.deltaTime;
         }
 
-        // 상체 Attack 클립 재생 여부로 공격 중 상태 갱신 (레이어 weight 와 CanAttack 가드 공용)
-        _isAttacking = IsUpperBodyAttacking();
+        // Attack 스테이트 재생 여부로 공격 중 상태 갱신 (캔슬되어 이동을 시작하면 애니메이터가 Walk 로 전환)
+        _isAttacking = IsAttackStatePlaying();
 
         // 모션이 끝나면 캔슬 상태 해제
         if (_isAttacking == false)
@@ -164,37 +158,21 @@ public class PlayerCombat : MonoBehaviour
 #if UNITY_EDITOR
         _currentAttackInterval = AttackInterval;
 #endif
-
-        UpdateUpperBodyLayer();
     }
 
-    // 공격 중에만 상체 레이어 weight 를 1 로 (걷기/달리기 하체 유지하며 상체만 공격)
-    private void UpdateUpperBodyLayer()
-    {
-        if (_animator == null) return;
-        if (_animator.layerCount <= upperBodyLayerIndex) return;
-
-        // 캔슬되면 남은 모션이 재생 중이어도 상체 레이어를 꺼서 이동 모션으로 전환
-        float fTarget = IsAttacking ? 1f : 0f;
-        float fCurrent = _animator.GetLayerWeight(upperBodyLayerIndex);
-        float fNext = Mathf.MoveTowards(fCurrent, fTarget, upperBodyBlendSpeed * Time.deltaTime);
-        _animator.SetLayerWeight(upperBodyLayerIndex, fNext);
-    }
-
-    // 상체 레이어가 현재 Attack 스테이트(또는 그쪽으로 전환 중)인지 판정
-    private bool IsUpperBodyAttacking()
+    // Attack 스테이트를 재생 중인지 (또는 그쪽으로 전환 중인지) 판정
+    private bool IsAttackStatePlaying()
     {
         if (_animator == null) return false;
-        if (_animator.layerCount <= upperBodyLayerIndex) return false;
 
-        if (_animator.GetCurrentAnimatorStateInfo(upperBodyLayerIndex).IsName("Attack") == true)
+        if (_animator.GetCurrentAnimatorStateInfo(0).IsName("Attack") == true)
         {
             return true;
         }
 
-        // Any State 에서 Attack 으로 전환되는 구간도 켜 둠 (전환 중 깜빡임 방지)
-        if (_animator.IsInTransition(upperBodyLayerIndex) == true
-            && _animator.GetNextAnimatorStateInfo(upperBodyLayerIndex).IsName("Attack") == true)
+        // Any State 에서 Attack 으로 전환되는 구간도 공격 중으로 판정
+        if (_animator.IsInTransition(0) == true
+            && _animator.GetNextAnimatorStateInfo(0).IsName("Attack") == true)
         {
             return true;
         }

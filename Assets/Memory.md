@@ -117,7 +117,7 @@
   - 다시하기를 누르면 집(Spawn_House)에서 부활하고, 기본 무기를 재지급하며, 카메라는 바로 추적한다.
   - 사망 연출은 PlayerDeathDissolve(몬스터 처치와 같은 디졸브)이고, 부활할 때 원래 머티리얼로 되돌린다.
 - Animator 파라미터(코드 기준): Speed(Float), IsSprinting(Bool), Attack(Trigger)
-  - 공격 모션은 UpperBody 레이어에서 재생한다. 아바타 마스크는 11.16 에 제거해 전신에 적용된다 (PlayerCombat 이 공격 중에만 레이어 가중치를 올린다).
+  - 공격 모션은 Base Layer 의 Attack 스테이트다 (UpperBody 레이어와 아바타 마스크는 11.16 에 제거). Any State 에서 Attack 트리거로 들어가고, 끝나면 Idle 로, 캔슬되어 이동을 시작하면(Speed 0.1 초과) Walk 로 전환한다.
 - UI 가 열린 동안 이동 잠금: PlayerInteractionLock(김보민)이 인스펙터 패널 목록을 보고 PlayerController.enabled 를 끈다.
 
 ### 3. 적과 던전
@@ -310,6 +310,15 @@
 ---
 
 ## 작업 기록 (최신순)
+
+### 2026-11-16 UpperBody 레이어 제거, Attack 을 Base Layer 로 이동 (multi 브랜치)
+- 상태: 컴파일 확인만 했다. 플레이 테스트 전.
+- Player.controller: Attack 스테이트를 Base Layer 로 옮기고 UpperBody 레이어를 제거했다. 모션, 재생 속도(2.5), Any State 전이와 종료 전이 설정은 기존 값을 그대로 옮겼다.
+- 추가한 전이: Attack 에서 Walk (Speed 0.1 초과, 전환 0.1초). 공격 캔슬 후 이동을 시작하면 공격 모션에서 빠져나온다. 캔슬 전에는 이동이 멈춰 Speed 가 0 이라 발동하지 않는다.
+- PlayerCombat: 레이어 가중치 코드(UpdateUpperBodyLayer)와 인스펙터 필드 2개를 삭제했다. 공격 중 판정은 Base Layer 의 Attack 스테이트 기준(IsAttackStatePlaying)이다.
+- NetworkPlayerAvatar: 같은 레이어 가중치 코드와 필드를 삭제했다. 분신은 같은 컨트롤러를 쓰므로 동작이 같다.
+- 달라지는 점: 이전에는 캔슬해도 숨겨진 레이어에서 모션이 끝날 때까지 다음 공격을 막았다. 이제 캔슬하면 스테이트를 바로 벗어나므로, 다음 공격은 공격 쿨다운만 지나면 가능하다.
+- PlayerUpperBody.mask 에셋은 쓰이지 않는 채로 남아 있다.
 
 ### 2026-11-16 보스 동기화, 아바타 마스크 제거 (multi 브랜치)
 - 상태: 컴파일 확인만 했다. 보스전 플레이 테스트(싱글, 2인) 전.
