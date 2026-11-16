@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
@@ -15,6 +16,7 @@ using UnityEngine.SceneManagement;
 /// [저장]
 /// - 슬롯 없이 SaveSystem 파일 1개. 타이틀 이어하기로 불러오기
 /// - 마을 도착, 층 이동 때 자동 저장 (새 게임은 설정창 저장 버튼을 처음 누른 뒤부터)
+/// - 게임 나가기(타이틀)와 종료 때도 저장하며, 이때는 위치까지 저장해 이어하기가 그 위치에서 시작
 /// - CurrentSlot 프로퍼티는 다른 파일 호환을 위해 남겨둠
 ///
 /// [씬 이름 설정]
@@ -101,6 +103,9 @@ public class GameManager : MonoBehaviour
 
     // 이어하기로 불러온 데이터 (씬 로드 후 플레이어에 적용하고 비움)
     private SaveSystem.SaveData _pendingLoad = null;
+
+    // 이어하기 위치 보정: 저장된 위치에서 이 거리 안의 NavMesh 로 옮김
+    private const float SAVED_POSITION_SNAP_RANGE = 2f;
 
     // 게임 시작 흐름
 
@@ -305,6 +310,7 @@ public class GameManager : MonoBehaviour
             if (CurrentState == GameState.Dungeon)
             {
                 MovePlayerToSpawn("Spawn_DungeonStart");
+                RestoreSavedPosition();
             }
             return;
         }
@@ -330,6 +336,8 @@ public class GameManager : MonoBehaviour
             MovePlayerToSpawn("Spawn_House");
             StartCoroutine(EnableCameraFollowNextFrame());
         }
+
+        RestoreSavedPosition();
     }
 
     // 인벤토리 칸이 만들어진 뒤 이어하기 데이터 적용, 이후 자동 저장
@@ -388,17 +396,45 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // 위치 직접 설정 후 속도 0 으로 (옮긴 뒤 미끄러짐 방지)
+        MovePlayerTo(spawn.transform.position);
+    }
+
+    // 위치 직접 설정 후 속도 0 으로 (옮긴 뒤 미끄러짐 방지)
+    private void MovePlayerTo(Vector3 _vPosition)
+    {
         Rigidbody body = PlayerController.Instance.GetComponent<Rigidbody>();
 
         if (body != null)
         {
-            body.position = spawn.transform.position;
+            body.position = _vPosition;
             body.linearVelocity = Vector3.zero;
         }
         else
         {
-            PlayerController.Instance.transform.position = spawn.transform.position;
+            PlayerController.Instance.transform.position = _vPosition;
+        }
+    }
+
+    // 이어하기: 나가기 저장 때의 위치로 이동 (NavMesh 위로 보정, 근처에 NavMesh 가 없으면 시작 지점 유지)
+    private void RestoreSavedPosition()
+    {
+        if (_pendingLoad == null || _pendingLoad.hasPosition == false || PlayerController.Instance == null)
+        {
+            return;
+        }
+
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(_pendingLoad.position, out hit, SAVED_POSITION_SNAP_RANGE, NavMesh.AllAreas) == false)
+        {
+            return;
+        }
+
+        MovePlayerTo(hit.position);
+
+        // 집 안에서 나갔으면 카메라를 집 고정 위치로 (추적 설정 뒤에 실행되도록 한 프레임 뒤)
+        if (_pendingLoad.inHouse == true)
+        {
+            StartCoroutine(MoveCameraToHouseNextFrame());
         }
     }
 
@@ -448,6 +484,11 @@ public class GameManager : MonoBehaviour
     /// <summary>타이틀로 복귀</summary>
     public void GoToTitle()
     {
+        // 나가기 저장 (층 번호를 바꾸기 전에, 위치 포함)
+        SaveSystem.SaveOnExit();
+        // 멀티 세션에서 나감 (호스트면 참가자도 저장 후 타이틀로 돌아감)
+        NetworkPlayerAvatar.LeaveSession();
+
         CurrentFloor = 0;
 
         // 타이틀 씬에 플레이어/인벤토리가 남지 않도록 영속 오브젝트 정리
@@ -591,6 +632,8 @@ public class GameManager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        // 종료 저장 (위치 포함)
+        SaveSystem.SaveOnExit();
         Time.timeScale = 1f;
     }
 

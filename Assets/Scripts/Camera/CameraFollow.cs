@@ -80,6 +80,9 @@ public class CameraFollow : MonoBehaviour
         _bFollowEnabled = _bEnabled;
     }
 
+    // 추적 중인지 (집 안 화면 고정이면 false, 나가기 저장에서 확인)
+    public bool IsFollowEnabled => _bFollowEnabled;
+
     // 지정 오브젝트 위치로 카메라를 옮기고 추적 정지 (회전은 마을과 동일하게 현재 각도 유지)
     // 집 안 시작 등 고정 위치가 필요할 때 호출
     public void MoveToFixedPoint(Transform _trPoint)

@@ -30,6 +30,7 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
     private string _sRoomCode = "";
     private string _sStatus = "";
     private bool _bStarting = false;
+    private bool _bJoinedAsClient = false;   // 참가자로 접속했는지 (호스트가 나가면 타이틀로 복귀)
 
     // ─────────────────────── 접속 UI (테스트용) ───────────────────────
 
@@ -123,6 +124,7 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
         else
         {
+            _bJoinedAsClient = _eMode == GameMode.Client;
             _sStatus = "접속 성공";
             Debug.Log("[NetworkLauncher] 접속 성공: " + _eMode + " / " + args.SessionName);
         }
@@ -170,6 +172,14 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
         _runner = null;
         _sStatus = "연결 종료: " + _reason;
         Debug.Log("[NetworkLauncher] 연결 종료: " + _reason);
+
+        // 호스트가 나가서 끊긴 참가자는 저장 후 타이틀로 복귀 (내가 직접 나간 경우는 Ok)
+        bool bHostLeft = _bJoinedAsClient == true && _reason != ShutdownReason.Ok;
+        _bJoinedAsClient = false;
+        if (bHostLeft == true && GameManager.Instance != null)
+        {
+            GameManager.Instance.GoToTitle();
+        }
     }
 
     public void OnDisconnectedFromServer(NetworkRunner _netRunner, NetDisconnectReason _reason)

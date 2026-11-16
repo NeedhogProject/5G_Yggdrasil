@@ -19,6 +19,7 @@ public class DroppedItem : MonoBehaviour
 
     private ItemInstance _itemInstance;
     private bool _playerInRange = false;
+    private int _nSharedId = 0;              // 멀티 공유 드롭 번호 (0 이면 내 화면에만 있는 아이템)
     private static int _nInRangeCount = 0;   // 플레이어가 줍기 범위 안에 있는 아이템 수
 
     /// <summary>주울 수 있는 아이템이 범위 안에 있는지 (포털, 줄기보다 줍기를 우선)</summary>
@@ -50,6 +51,19 @@ public class DroppedItem : MonoBehaviour
         SpawnModel();
 
         Debug.Log($"[DroppedItem] {item?.Data?.ItemName ?? "아이템"} 바닥에 스폰");
+    }
+
+    /// <summary>멀티 공유 드롭으로 지정 (NetworkPlayerAvatar 에서 호출)</summary>
+    public void SetSharedId(int _nId)
+    {
+        _nSharedId = _nId;
+    }
+
+    /// <summary>호스트가 줍기를 승인함. 내 화면에만 있는 아이템으로 바꾼 뒤 기존 방식으로 획득</summary>
+    public void PickupGranted()
+    {
+        _nSharedId = 0;
+        TryPickup();
     }
 
     // 아이템 데이터의 3D 프리팹을 자식으로 생성 (드롭 비주얼)
@@ -113,6 +127,12 @@ public class DroppedItem : MonoBehaviour
         if (_itemInstance == null)
         {
             Debug.LogWarning("[DroppedItem] _itemInstance null — testItemData 슬롯 확인 필요");
+            return;
+        }
+
+        // 위험: 멀티 공유 드롭은 호스트 승인 후에 획득 (두 사람이 동시에 주워 복사되는 것 방지)
+        if (_nSharedId != 0 && NetworkPlayerAvatar.RequestSharedPickup(_nSharedId) == true)
+        {
             return;
         }
 

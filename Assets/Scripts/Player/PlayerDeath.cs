@@ -12,7 +12,7 @@ using UnityEngine.InputSystem;
 /// - 사망 시 "다시하기 / 종료" UI 표시
 /// - 다시하기: 체력/정신력 완전 회복 → 마을 복귀
 /// - 종료: 게임 종료 (Application.Quit)
-/// - 사망 연출: 보류 (추후 추가)
+/// - 사망 연출: 디졸브 (PlayerDeathDissolve, 몬스터 처치 연출과 같은 셰이더)
 ///
 /// [연동]
 /// - PlayerStats.OnHealthChanged 구독 → 체력 0 감지
@@ -35,6 +35,7 @@ public class PlayerDeath : MonoBehaviour
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerController playerController;
     [SerializeField] private SetEffectController setEffectController;
+    [SerializeField] private PlayerDeathDissolve deathDissolve;
 
     [Header("사망 UI (GameOverPanel)")]
     [Tooltip("다시하기/종료 버튼이 있는 UI 패널. 비워두면 이름으로 자동 검색한다.")]
@@ -79,6 +80,10 @@ public class PlayerDeath : MonoBehaviour
         if (setEffectController == null)
         {
             setEffectController = GetComponent<SetEffectController>();
+        }
+        if (deathDissolve == null)
+        {
+            deathDissolve = GetComponent<PlayerDeathDissolve>();
         }
 
         // 체력 변화 이벤트 구독
@@ -236,13 +241,23 @@ public class PlayerDeath : MonoBehaviour
         // 사망 패널티: 인벤토리 전체 삭제
         ApplyDeathPenalty();
 
+        // 사망 연출 (몬스터 처치와 같은 디졸브, 부활 때 복구)
+        if (deathDissolve != null)
+        {
+            deathDissolve.Play();
+        }
+
+        // 멀티 세션에 동료가 있으면 게임을 멈추지 않음 (관전과 마을 귀환은 NetworkPlayerAvatar 가 처리)
+        if (NetworkPlayerAvatar.HasTeammates == true)
+        {
+            return;
+        }
+
         // GameManager 에 사망 알림
         GameManager.Instance?.OnPlayerDeath();
 
         // 사망 UI 표시
         ShowGameOverUI();
-
-        // TODO: 사망 연출 (애니메이션/페이드 등) — 보류
     }
 
     // ─────────────────────── 사망 패널티 ───────────────────────
@@ -315,6 +330,11 @@ public class PlayerDeath : MonoBehaviour
         }
 
         IsDead = false;
+
+        if (deathDissolve != null)
+        {
+            deathDissolve.Restore();
+        }
 
         // 사망 패널티로 비워진 장비 대신 기본 무기 재지급
         StartingEquipment startingEquipment = GetComponent<StartingEquipment>();

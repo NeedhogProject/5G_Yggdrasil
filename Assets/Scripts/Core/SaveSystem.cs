@@ -7,6 +7,7 @@ using System.Collections.Generic;
 ///
 /// [기획 반영]
 /// - 자동 저장: 마을 도착, 층 이동, 강화/각인 결과가 나왔을 때
+/// - 게임 나가기/종료 저장: 플레이어 위치와 집 안 여부까지 저장하고, 이어하기는 그 위치에서 시작
 /// - 새 게임은 기존 저장을 건드리지 않고, 플레이어가 설정창 저장 버튼(SaveGameButton)을 처음 누른 뒤부터 자동 저장
 /// - 타이틀 이어하기로 불러오기 (이어하기는 처음부터 자동 저장)
 /// - 저장 항목: 인벤토리, 장착 장비, 유물 칸, 창고, 달란, 체력/정신력, 각인 재료, 현재 층
@@ -41,6 +42,9 @@ public static class SaveSystem
         public List<SavedItem> relics = new List<SavedItem>();
         public List<SavedItem> storage = new List<SavedItem>();
         public List<int> resources = new List<int>();   // RESOURCE_TYPES 순서
+        public bool hasPosition;       // 나가기/종료 저장이면 true (이어하기 때 이 위치에서 시작)
+        public Vector3 position;
+        public bool inHouse;           // 집 안(카메라 고정)에서 나갔는지
     }
 
     private const string FILE_NAME = "save.json";
@@ -66,13 +70,23 @@ public static class SaveSystem
         {
             return;
         }
-        WriteSave();
+        WriteSave(false);
+    }
+
+    /// <summary>게임 나가기/종료 저장 — 플레이어 위치까지 저장. 저장 버튼을 누르기 전 새 게임이면 저장 안 함</summary>
+    public static void SaveOnExit()
+    {
+        if (IsAutoSaveEnabled == false)
+        {
+            return;
+        }
+        WriteSave(true);
     }
 
     /// <summary>설정창 저장 버튼 — 저장하고 이후 자동 저장을 켬, 저장 성공 여부 반환</summary>
     public static bool SaveManually()
     {
-        if (WriteSave() == false)
+        if (WriteSave(false) == false)
         {
             return false;
         }
@@ -81,7 +95,7 @@ public static class SaveSystem
     }
 
     // 현재 상태를 파일로 저장 (플레이어가 없는 화면이면 저장하지 않음)
-    private static bool WriteSave()
+    private static bool WriteSave(bool _bWithPosition)
     {
         PlayerStats stats = PlayerStats.Instance;
         InventorySystem inventory = InventorySystem.Instance;
@@ -92,6 +106,13 @@ public static class SaveSystem
 
         // 사망 화면(체력 0, 아이템 잃은 상태)에서는 저장하지 않음
         if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.GameOver)
+        {
+            return false;
+        }
+
+        // 멀티에서 죽어 관전 중일 때도(체력 0, 아이템 잃은 상태) 저장하지 않음
+        PlayerDeath death = stats.GetComponent<PlayerDeath>();
+        if (death != null && death.IsDead == true)
         {
             return false;
         }
@@ -108,6 +129,15 @@ public static class SaveSystem
         data.health = stats.Health;
         data.mental = stats.Mental;
         data.gold = stats.gold;
+
+        // 나가기/종료 저장만 위치를 기록 (자동 저장은 층 시작 지점에서 이어하기)
+        if (_bWithPosition == true)
+        {
+            CameraFollow follow = Camera.main != null ? Camera.main.GetComponent<CameraFollow>() : null;
+            data.hasPosition = true;
+            data.position = stats.transform.position;
+            data.inHouse = follow != null && follow.IsFollowEnabled == false;
+        }
 
         foreach (ItemInstance item in inventory.GetAllItemsForSave())
         {
@@ -260,7 +290,7 @@ public static class SaveSystem
     // ─────────────────────── 변환 ───────────────────────
 
     // 런타임 아이템을 저장 데이터로 (없으면 이름 빈 칸)
-    private static SavedItem ToSaved(ItemInstance _item)
+    public static SavedItem ToSaved(ItemInstance _item)
     {
         SavedItem saved = new SavedItem();
         if (_item == null || _item.Data == null || ItemDataRegistry.Instance == null)
@@ -289,7 +319,7 @@ public static class SaveSystem
     }
 
     // 저장 데이터를 런타임 아이템으로 (강화, 각인, 감정, 수량 복원)
-    private static ItemInstance FromSaved(SavedItem _saved)
+    public static ItemInstance FromSaved(SavedItem _saved)
     {
         if (_saved == null || string.IsNullOrEmpty(_saved.itemId) == true)
         {

@@ -10,6 +10,7 @@ using UnityEngine;
 /// - 위치/회전/이동/공격은 NetworkInputData 로, 장착 무기는 RPC 로 호스트에 전달한다
 /// - 층 이동은 호스트가 승인한 뒤 모든 PC 가 각자 GameManager.GoToFloor 로 씬을 옮긴다 (파티 전원 이동)
 /// - 동료가 있는 동안에는 시간을 멈추지 않는다. 죽으면 살아 있는 동료를 관전하고, 파티가 마을로 돌아오면 집에서 부활한다
+/// - G키로 버린 아이템은 모든 PC 에 생성하고, 줍기는 호스트가 먼저 온 요청만 승인한다
 ///
 /// [설정]
 /// 1. Player 프리팹 변형에서 게임플레이 컴포넌트를 제거한 프리팹(PlayerAvatar)에 부착
@@ -67,6 +68,10 @@ public class NetworkPlayerAvatar : NetworkBehaviour
     // 층 이동 안내 문구와 표시 종료 시각
     private static string _sNotice = "";
     private static float _fNoticeUntil = 0f;
+    // 공유 드롭: 내 PC 에 생성된 바닥 아이템(번호로 찾음), 내가 버린 횟수, 호스트 전용 이미 주운 번호
+    private static readonly Dictionary<int, DroppedItem> _sharedDrops = new Dictionary<int, DroppedItem>();
+    private static readonly HashSet<int> _pickedDropIds = new HashSet<int>();
+    private static int _nDropCounter = 0;
 
     // 내 분신 전용: 씬 Player 의 장비와 마지막으로 보낸 무기 ID
     private PlayerEquipment _localEquipment;
@@ -110,6 +115,8 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         if (_local == this)
         {
             _local = null;
+            _sharedDrops.Clear();
+            _pickedDropIds.Clear();
         }
         _remotes.Remove(this);
     }
@@ -429,6 +436,135 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         if (_playerDeath != null && _playerDeath.IsDead == true)
         {
             _playerDeath.OnRetryClicked();
+        }
+    }
+
+    // ─────────────────────── 공유 드롭 (G키로 버린 아이템) ───────────────────────
+
+    /// <summary>
+    /// G키로 버린 아이템을 모든 플레이어 화면에 생성 (InventorySystem 에서 호출)
+    /// 멀티 세션 중이 아니면 false 를 돌려주며, 호출한 쪽이 내 화면에만 생성한다
+    /// </summary>
+    public static bool ShareDrop(ItemInstance _item, Vector3 _vPosition)
+    {
+        if (_local == null)
+        {
+            return false;
+        }
+
+        SaveSystem.SavedItem saved = SaveSystem.ToSaved(_item);
+        if (string.IsNullOrEmpty(saved.itemId) == true)
+        {
+            return false;
+        }
+
+        // 플레이어 번호를 섞어 두 PC 의 번호가 겹치지 않게 함
+        _nDropCounter++;
+        int nDropId = _local.Object.InputAuthority.PlayerId * 100000 + _nDropCounter;
+        byte nFloor = GameManager.Instance != null ? (byte)GameManager.Instance.CurrentFloor : (byte)0;
+
+        _local.RPC_ShareDrop(nDropId, saved.itemId, saved.stackCount, saved.enhancementLevel, saved.rune, saved.identified, _vPosition, nFloor);
+        return true;
+    }
+
+    // 버린 플레이어의 분신에서 모든 PC 로 전달: 각 PC 가 자기 화면에 바닥 아이템을 생성
+    [Rpc(RpcSources.InputAuthority, RpcTargets.All)]
+    public void RPC_ShareDrop(int _nDropId, string _sItemId, int _nStackCount, int _nEnhancementLevel, int _nRune, NetworkBool _bIdentified, Vector3 _vPosition, byte _nFloor)
+    {
+        // 다른 층에 있으면(층 이동 도중) 생성하지 않음
+        if (GameManager.Instance != null && GameManager.Instance.CurrentFloor != _nFloor)
+        {
+            return;
+        }
+        if (InventorySystem.Instance == null)
+        {
+            return;
+        }
+
+        SaveSystem.SavedItem saved = new SaveSystem.SavedItem();
+        saved.itemId = _sItemId;
+        saved.stackCount = _nStackCount;
+        saved.enhancementLevel = _nEnhancementLevel;
+        saved.rune = _nRune;
+        saved.identified = _bIdentified;
+
+        ItemInstance item = SaveSystem.FromSaved(saved);
+        if (item == null)
+        {
+            return;
+        }
+
+        DroppedItem drop = InventorySystem.Instance.SpawnDroppedItemAt(item, _vPosition);
+        if (drop == null)
+        {
+            return;
+        }
+
+        drop.SetSharedId(_nDropId);
+        _sharedDrops[_nDropId] = drop;
+    }
+
+    /// <summary>
+    /// 공유 드롭 줍기 요청 (DroppedItem 에서 호출)
+    /// 멀티 세션 중이 아니면 false 를 돌려주며, 호출한 쪽이 바로 줍는다
+    /// </summary>
+    public static bool RequestSharedPickup(int _nDropId)
+    {
+        if (_local == null)
+        {
+            return false;
+        }
+
+        _local.RPC_RequestSharedPickup(_nDropId);
+        return true;
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RPC_RequestSharedPickup(int _nDropId)
+    {
+        // 위험: 두 사람이 동시에 주우면 아이템이 복사되므로 호스트가 먼저 온 요청만 승인
+        if (_pickedDropIds.Add(_nDropId) == false)
+        {
+            return;
+        }
+
+        RPC_SharedPickup(_nDropId);
+    }
+
+    // 주운 플레이어의 분신에서 모든 PC 로 전달: 주운 본인은 인벤토리에 넣고, 다른 플레이어는 바닥에서 제거
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_SharedPickup(int _nDropId)
+    {
+        if (_sharedDrops.TryGetValue(_nDropId, out DroppedItem drop) == false)
+        {
+            return;
+        }
+        _sharedDrops.Remove(_nDropId);
+
+        // 씬 이동으로 이미 사라진 아이템
+        if (drop == null)
+        {
+            return;
+        }
+
+        if (HasInputAuthority == true)
+        {
+            drop.PickupGranted();
+        }
+        else
+        {
+            Destroy(drop.gameObject);
+        }
+    }
+
+    // ─────────────────────── 세션 나가기 ───────────────────────
+
+    /// <summary>멀티 세션에서 나감 (GameManager.GoToTitle 에서 호출). 세션 밖이면 아무 일도 하지 않음</summary>
+    public static void LeaveSession()
+    {
+        if (_local != null && _local.Runner != null && _local.Runner.IsShutdown == false)
+        {
+            _local.Runner.Shutdown();
         }
     }
 

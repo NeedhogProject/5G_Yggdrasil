@@ -1042,29 +1042,54 @@ public class InventorySystem : MonoBehaviour
     // 바닥에 떨어진 아이템 생성 (주울 수 있게 DroppedItem 에 인스턴스 주입). 성공하면 true
     private bool SpawnDroppedItem(ItemInstance _instance, ItemData _data)
     {
-        GameObject prefab = droppedItemPrefab != null ? droppedItemPrefab : _data.itemPrefab;
-        // 위험: DroppedItem 이 없는 프리팹은 주울 수 없으므로 생성하지 않음 (인벤토리에서만 사라지는 것 방지)
-        if (prefab == null || prefab.GetComponent<DroppedItem>() == null)
+        if (FindDropPrefab(_data) == null)
         {
             Debug.LogWarning("[InventorySystem] 드롭 프리팹이 없거나 DroppedItem 이 없어 바닥 생성 불가: " + _data.itemName);
             return false;
         }
 
+        // 플레이어가 서 있는 위치에 생성 (벽 안이나 허공에 생기지 않게)
         Vector3 dropPosition = PlayerController.Instance != null
-            ? PlayerController.Instance.transform.position + PlayerController.Instance.transform.forward * 2f
+            ? PlayerController.Instance.transform.position
             : Vector3.zero;
         dropPosition.y += 0.3f;
 
-        GameObject dropped = Instantiate(prefab, dropPosition, Quaternion.identity);
+        ItemInstance dropInstance = _instance != null ? _instance : CreateInstanceFromData(_data);
 
-        DroppedItem droppedComp = dropped.GetComponent<DroppedItem>();
-        if (droppedComp != null)
+        // 멀티 세션 중이면 모든 플레이어 화면에 생성 (누구나 주울 수 있음)
+        if (NetworkPlayerAvatar.ShareDrop(dropInstance, dropPosition) == true)
         {
-            ItemInstance dropInstance = _instance != null ? _instance : CreateInstanceFromData(_data);
-            droppedComp.Initialize(dropInstance);
+            return true;
         }
 
+        SpawnDroppedItemAt(dropInstance, dropPosition);
         return true;
+    }
+
+    // 바닥 아이템으로 쓸 프리팹 (없으면 null)
+    private GameObject FindDropPrefab(ItemData _data)
+    {
+        GameObject prefab = droppedItemPrefab != null ? droppedItemPrefab : _data.itemPrefab;
+        // 위험: DroppedItem 이 없는 프리팹은 주울 수 없으므로 생성하지 않음 (인벤토리에서만 사라지는 것 방지)
+        if (prefab == null || prefab.GetComponent<DroppedItem>() == null)
+        {
+            return null;
+        }
+        return prefab;
+    }
+
+    /// <summary>지정 위치에 바닥 아이템 생성 (G키 드롭, 멀티 공유 드롭). 프리팹이 없으면 null</summary>
+    public DroppedItem SpawnDroppedItemAt(ItemInstance _instance, Vector3 _vPosition)
+    {
+        GameObject prefab = FindDropPrefab(_instance.Data);
+        if (prefab == null)
+        {
+            return null;
+        }
+
+        DroppedItem dropped = Instantiate(prefab, _vPosition, Quaternion.identity).GetComponent<DroppedItem>();
+        dropped.Initialize(_instance);
+        return dropped;
     }
 
     // ─────────────────────── 유틸 ───────────────────────
