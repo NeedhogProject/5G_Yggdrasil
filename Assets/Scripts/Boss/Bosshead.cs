@@ -47,6 +47,9 @@ public class BossHead : EnemyBase
 
     public HeadRole Role => role;
 
+    // 무적이거나 죽은 머리는 피해와 적중 효과를 받지 않음
+    public override bool IsDamageable => base.IsDamageable == true && _bInvincible == false;
+
     // 현재 공격 중인지 (예고가 뜬 순간부터 공격 실행까지). 죽었으면 false
     public bool IsAttacking => _bAttacking == true && IsDead == false;
 

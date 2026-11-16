@@ -8,14 +8,14 @@ using System.Collections.Generic;
 ///
 /// [기획 반영]
 /// - 불   3세트: 적중 시 확률로 [점화] (초당 피해, 적용 후 쿨타임)
-///        4세트: [점화] 상태의 적 공격 시 범위 폭발 (플레이어 공격력 비례)
+///        4세트: [점화] 상태의 적 공격 시 범위 폭발 (플레이어 공격력 비례, 공격 1회당 1번, 단검은 첫 타격만 판정)
 /// - 물   2세트: 적중한 적 이동 속도 감소
 ///        3세트: 적중 시 일정 시간 초당 최대 체력 % 회복 (적용 후 쿨타임)
 ///        4세트: 체력 기준 이상이면 공격력 증가, 미만이면 3세트 회복량 배율
 /// - 바람 4세트: 기본 공격 N회마다 공격 방향으로 회오리
-/// - 땅   3세트: 일정 주기마다 최대 체력 비례 보호막 갱신
+/// - 땅   3세트: 일정 주기마다 최대 체력 비례 보호막 갱신 (세트를 해제해도 주기 유지)
 ///        4세트: 보호막 유지 중 공격력 증가, 보호막 갱신 시 주변 적 기절 (보스 제외)
-/// - 어둠 1세트: 처치/보스 적중 시 [영혼] 스택 (스택당 공격력), 비전투 시 소멸
+/// - 어둠 1세트: 처치/보스 적중 시 [영혼] 스택 (스택당 공격력, 보스 적중은 공격 1회당 1스택), 비전투 시 소멸
 ///        3세트: 체력 기준 미만이면 공격력 증가
 ///        4세트: 전투 중 사망 시 [영혼] 소모해 부활 + 일정 시간 흡혈 (쿨타임)
 /// - 고정 수치 보너스(공격력/이동속도 등)는 SetEffectData 에셋에서 ArmorSetManager 가 처리
@@ -23,6 +23,8 @@ using System.Collections.Generic;
 /// [사용법]
 /// - Player 오브젝트에 부착 (ArmorSetManager/PlayerCombat/PlayerDeath 가 자동 탐색)
 /// </summary>
+[RequireComponent(typeof(PlayerStats))]
+[RequireComponent(typeof(PlayerCombat))]
 public class SetEffectController : MonoBehaviour
 {
     [Header("공통")]
@@ -112,6 +114,8 @@ public class SetEffectController : MonoBehaviour
     private float _fRegenTimer = 0f;
     private float _fRegenCooldownTimer = 0f;
     private int _nAttackCount = 0;
+    private bool _bExplodedThisAttack = false;
+    private bool _bBossSoulThisAttack = false;
     private float _fShieldTimer = 0f;
     private bool _bEarthShieldActive = false;
     private GameObject _objShieldVFX;
@@ -127,9 +131,9 @@ public class SetEffectController : MonoBehaviour
     public int SoulStacks => _nSoulStacks;
     public int SoulMaxStacks => soulMaxStacks;
 
-    private bool IsInCombat => _stats != null && Time.time - _stats.LastCombatTime < combatTimeout;
+    private bool IsInCombat => Time.time - _stats.LastCombatTime < combatTimeout;
 
-    private float HealthRatio => _stats != null && _stats.MaxHealth > 0f ? _stats.Health / _stats.MaxHealth : 1f;
+    private float HealthRatio => _stats.Health / _stats.MaxHealth;
 
     /// <summary>조건부 공격력 보너스 합계 (PlayerCombat 데미지 계산에서 매번 조회)</summary>
     public float DynamicAttackBonus
@@ -141,7 +145,7 @@ public class SetEffectController : MonoBehaviour
             {
                 fBonus += waterHighHealthAttackBonus;
             }
-            if (GetCount(RuneElement.Earth) >= 4 && _stats != null && _stats.Shield > 0f)
+            if (GetCount(RuneElement.Earth) >= 4 && _stats.Shield > 0f)
             {
                 fBonus += shieldAttackBonus;
             }
@@ -163,37 +167,36 @@ public class SetEffectController : MonoBehaviour
         _combat = GetComponent<PlayerCombat>();
     }
 
+    private void OnEnable()
+    {
+        EnemyBase.OnAnyDied += OnEnemyDied;
+    }
+
+    private void OnDisable()
+    {
+        EnemyBase.OnAnyDied -= OnEnemyDied;
+    }
+
     // 원소 활성 단계를 착용 수(1~4)로 반환
     private int GetCount(RuneElement _element)
     {
-        SetTier tier;
-        if (_tiers.TryGetValue(_element, out tier) == false)
-        {
-            return 0;
-        }
-        return (int)tier;
+        return _tiers.TryGetValue(_element, out SetTier tier) == true ? (int)tier : 0;
     }
 
     /// <summary>세트 단계 갱신 (ArmorSetManager 재계산 시 호출)</summary>
     public void ApplyTiers(Dictionary<RuneElement, SetTier> _activeTiers)
     {
-        // 위험: 로드 순서상 Awake 보다 먼저 호출될 수 있어 참조 보장
-        if (_stats == null)
-        {
-            _stats = GetComponent<PlayerStats>();
-        }
         _tiers.Clear();
         foreach (KeyValuePair<RuneElement, SetTier> kv in _activeTiers)
         {
             _tiers[kv.Key] = kv.Value;
         }
 
-        // 땅 3세트 보호막: 새로 맞췄을 때만 부여 (장비 교체로 재충전 방지), 해제 시 제거
+        // 땅 3세트 해제 시 보호막 제거 (부여는 UpdateShield 에서 쿨타임이 끝났을 때만)
         bool bEarth = GetCount(RuneElement.Earth) >= 3;
-        if (_stats != null && bEarth != _bEarthShieldActive)
+        if (bEarth == false && _bEarthShieldActive == true)
         {
-            _stats.SetShieldValue(bEarth == true ? _stats.MaxHealth * shieldPercent / 100f : 0f);
-            _fShieldTimer = shieldInterval;
+            _stats.SetShieldValue(0f);
         }
         _bEarthShieldActive = bEarth;
 
@@ -202,43 +205,32 @@ public class SetEffectController : MonoBehaviour
         {
             SetSoulStacks(0);
         }
-        if (GetCount(RuneElement.Wind) < 4)
-        {
-            _nAttackCount = 0;
-        }
     }
 
     private void Update()
     {
         float fDt = Time.deltaTime;
 
-        if (_fIgniteCooldownTimer > 0f)
-        {
-            _fIgniteCooldownTimer -= fDt;
-        }
-        if (_fRegenCooldownTimer > 0f)
-        {
-            _fRegenCooldownTimer -= fDt;
-        }
-        if (_fReviveCooldownTimer > 0f)
-        {
-            _fReviveCooldownTimer -= fDt;
-        }
-        if (_fLifeStealTimer > 0f)
-        {
-            _fLifeStealTimer -= fDt;
-        }
+        // 쿨타임/지속 시간 (0 이하면 끝난 상태)
+        _fIgniteCooldownTimer -= fDt;
+        _fRegenCooldownTimer -= fDt;
+        _fReviveCooldownTimer -= fDt;
+        _fLifeStealTimer -= fDt;
+        _fShieldTimer -= fDt;
 
         UpdateRegen(fDt);
-        UpdateShield(fDt);
+        UpdateShield();
         UpdateSoulDecay(fDt);
     }
 
     // ─────────────────────── 외부 호출 (PlayerCombat) ───────────────────────
 
-    /// <summary>기본 공격 실행 시 호출 (바람 4세트 회오리 카운트)</summary>
-    public void OnBasicAttack(Vector3 _vDirection)
+    /// <summary>기본 공격 입력 시 판정 전에 호출 (공격 1회당 제한 초기화, 바람 4세트 회오리 카운트)</summary>
+    public void OnBasicAttack()
     {
+        _bExplodedThisAttack = false;
+        _bBossSoulThisAttack = false;
+
         if (GetCount(RuneElement.Wind) < 4)
         {
             return;
@@ -250,34 +242,21 @@ public class SetEffectController : MonoBehaviour
             return;
         }
         _nAttackCount = 0;
-
-        _vDirection.y = 0f;
-        if (_vDirection.sqrMagnitude < 0.001f)
-        {
-            _vDirection = transform.forward;
-        }
-        StartCoroutine(TornadoRoutine(_vDirection.normalized));
+        StartCoroutine(TornadoRoutine(transform.forward));
     }
 
-    /// <summary>기본 공격으로 적에게 피해를 준 직후 호출</summary>
-    public void OnEnemyHit(EnemyBase _enemy, float _fDamage)
+    /// <summary>기본 공격으로 적에게 피해를 준 직후 호출 (_nHitIndex: 단검 타격 회차, 장검/창은 항상 0)</summary>
+    public void OnEnemyHit(EnemyBase _enemy, float _fDamage, int _nHitIndex)
     {
-        if (_enemy == null)
+        // 어둠 1세트: 보스 적중 시 영혼, 공격 1회당 1스택 (처치는 OnEnemyDied 에서 처리)
+        if (GetCount(RuneElement.Darkness) >= 1 && _enemy is BossHead && _bBossSoulThisAttack == false)
         {
-            return;
-        }
-
-        bool bKilled = _enemy.IsDead;
-        bool bBoss = _enemy is BossHead;
-
-        // 어둠 1세트: 처치 또는 보스 적중 시 영혼
-        if (GetCount(RuneElement.Darkness) >= 1 && (bKilled == true || bBoss == true))
-        {
+            _bBossSoulThisAttack = true;
             SetSoulStacks(_nSoulStacks + 1);
         }
 
         // 어둠 4세트 부활 후 흡혈
-        if (_fLifeStealTimer > 0f && _stats != null)
+        if (_fLifeStealTimer > 0f)
         {
             _stats.ModifyHealth(_fDamage * reviveLifeSteal);
         }
@@ -289,23 +268,24 @@ public class SetEffectController : MonoBehaviour
             _fRegenCooldownTimer = regenCooldown;
         }
 
-        if (bKilled == true)
+        if (_enemy.IsDead == true)
         {
             return;
         }
 
         EnemyStatusEffect status = EnemyStatusEffect.GetOrAdd(_enemy);
 
-        // 불 4세트: 이미 점화된 적이면 폭발 (이번 적중으로 막 점화된 경우는 제외하려고 점화보다 먼저 판정)
-        if (GetCount(RuneElement.Fire) >= 4 && status.IsIgnited == true)
+        // 불 4세트: 첫 타격에 맞은 적이 이미 점화 상태면 폭발, 공격 1회당 1번 (막 점화된 적은 제외하려고 점화보다 먼저 판정)
+        if (GetCount(RuneElement.Fire) >= 4 && _nHitIndex == 0 && _bExplodedThisAttack == false && status.IsIgnited == true)
         {
+            _bExplodedThisAttack = true;
             Explode(_enemy);
         }
 
         // 불 3세트: 확률 점화 (적용 후 쿨타임)
         if (GetCount(RuneElement.Fire) >= 3 && _fIgniteCooldownTimer <= 0f && UnityEngine.Random.value < igniteChance)
         {
-            status.ApplyIgnite(igniteDuration, igniteDamagePerSecond, prefabIgniteVFX, OnKillBySetEffect);
+            status.ApplyIgnite(igniteDuration, igniteDamagePerSecond, prefabIgniteVFX);
             _fIgniteCooldownTimer = igniteCooldown;
         }
 
@@ -325,11 +305,7 @@ public class SetEffectController : MonoBehaviour
         {
             return true;
         }
-        if (GetCount(RuneElement.Darkness) < 4 || _nSoulStacks <= 0 || _fReviveCooldownTimer > 0f)
-        {
-            return false;
-        }
-        if (IsInCombat == false)
+        if (GetCount(RuneElement.Darkness) < 4 || _nSoulStacks <= 0 || _fReviveCooldownTimer > 0f || IsInCombat == false)
         {
             return false;
         }
@@ -358,18 +334,11 @@ public class SetEffectController : MonoBehaviour
 
     private void UpdateRegen(float _fDt)
     {
-        if (_fRegenTimer <= 0f || _stats == null)
+        if (_fRegenTimer <= 0f || GetCount(RuneElement.Water) < 3)
         {
             return;
         }
         _fRegenTimer -= _fDt;
-
-        // 세트 해제 시 남은 회복 중단
-        if (GetCount(RuneElement.Water) < 3)
-        {
-            _fRegenTimer = 0f;
-            return;
-        }
 
         float fMult = 1f;
         if (GetCount(RuneElement.Water) >= 4 && HealthRatio < waterHealthThreshold)
@@ -381,28 +350,25 @@ public class SetEffectController : MonoBehaviour
 
     // ─────────────────────── 땅 ───────────────────────
 
-    private void UpdateShield(float _fDt)
+    private void UpdateShield()
     {
         bool bActive = GetCount(RuneElement.Earth) >= 3;
 
-        if (bActive == true && _stats != null)
+        // 쿨타임은 세트를 해제해도 Update 에서 계속 흐름 (재착용으로 즉시 재충전 방지)
+        if (bActive == true && _fShieldTimer <= 0f)
         {
-            _fShieldTimer -= _fDt;
-            if (_fShieldTimer <= 0f)
-            {
-                _fShieldTimer = shieldInterval;
-                _stats.SetShieldValue(_stats.MaxHealth * shieldPercent / 100f);
+            _fShieldTimer = shieldInterval;
+            _stats.SetShieldValue(_stats.MaxHealth * shieldPercent / 100f);
 
-                // 땅 4세트: 보호막 갱신 시 주변 적 기절
-                if (GetCount(RuneElement.Earth) >= 4)
-                {
-                    StunNearby();
-                }
+            // 땅 4세트: 보호막 갱신 시 주변 적 기절
+            if (GetCount(RuneElement.Earth) >= 4)
+            {
+                StunNearby();
             }
         }
 
         // 보호막 이펙트 표시
-        bool bShowVFX = bActive == true && _stats != null && _stats.Shield > 0f;
+        bool bShowVFX = bActive == true && _stats.Shield > 0f;
         if (bShowVFX == true && _objShieldVFX == null && prefabShieldVFX != null)
         {
             _objShieldVFX = Instantiate(prefabShieldVFX, transform.position, Quaternion.identity, transform);
@@ -458,10 +424,10 @@ public class SetEffectController : MonoBehaviour
         }
     }
 
-    // 세트 특수 효과(점화/폭발/회오리)로 적 처치 시 영혼
-    private void OnKillBySetEffect()
+    // 어둠 1세트: 내가 막타 친 적 처치 시 영혼 (보스는 적중 시 획득하므로 제외, 멀티는 막타 PC 만)
+    private void OnEnemyDied(EnemyBase _enemy)
     {
-        if (GetCount(RuneElement.Darkness) >= 1)
+        if (GetCount(RuneElement.Darkness) >= 1 && _enemy.DropsForLocalPlayer == true && (_enemy is BossHead) == false)
         {
             SetSoulStacks(_nSoulStacks + 1);
         }
@@ -472,7 +438,7 @@ public class SetEffectController : MonoBehaviour
     private void Explode(EnemyBase _target)
     {
         Vector3 vCenter = _target.transform.position;
-        float fDamage = (_combat != null ? _combat.AttackPower : 0f) * explosionDamageRatio;
+        float fDamage = _combat.AttackPower * explosionDamageRatio;
 
         if (prefabExplosionVFX != null)
         {
@@ -485,7 +451,7 @@ public class SetEffectController : MonoBehaviour
             {
                 continue;
             }
-            DealDamage(enemy, fDamage);
+            enemy.TakeDamage(fDamage);
         }
     }
 
@@ -519,23 +485,10 @@ public class SetEffectController : MonoBehaviour
             {
                 if (hitSet.Add(enemy) == true)
                 {
-                    DealDamage(enemy, tornadoDamage);
+                    enemy.TakeDamage(tornadoDamage);
                 }
             }
             yield return null;
-        }
-    }
-
-    private void DealDamage(EnemyBase _enemy, float _fDamage)
-    {
-        if (_enemy.IsDead == true)
-        {
-            return;
-        }
-        _enemy.TakeDamage(_fDamage);
-        if (_enemy.IsDead == true)
-        {
-            OnKillBySetEffect();
         }
     }
 

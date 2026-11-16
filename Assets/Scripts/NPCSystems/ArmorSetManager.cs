@@ -169,7 +169,7 @@ public class ArmorSetManager : MonoBehaviour
                     }
                 }
             }
-            }
+        }
 
         // PlayerStats: 체력 % / 방어 % / 정신력 포인트 / 보호막 %
         if (playerStats != null)

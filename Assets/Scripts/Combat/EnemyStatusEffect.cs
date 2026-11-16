@@ -17,13 +17,13 @@ public class EnemyStatusEffect : MonoBehaviour
     private EnemyBase _base;
     private EnemyAI _ai;
     private NavMeshAgent _agent;
+    private NetworkEnemy _netEnemy;
 
     // 점화
     private float _fIgniteTimer = 0f;
     private float _fIgniteDps = 0f;
     private float _fIgniteTickTimer = 0f;
     private GameObject _objIgniteVFX;
-    private System.Action _onIgniteKill;   // 점화로 처치 시 콜백 (어둠 영혼)
 
     // 둔화
     private float _fSlowTimer = 0f;
@@ -52,11 +52,12 @@ public class EnemyStatusEffect : MonoBehaviour
         _base = GetComponent<EnemyBase>();
         _ai = GetComponent<EnemyAI>();
         _agent = GetComponent<NavMeshAgent>();
+        _netEnemy = GetComponent<NetworkEnemy>();
     }
 
     private void Update()
     {
-        if (_base == null || _base.IsDead == true)
+        if (_base.IsDead == true)
         {
             ClearIgniteVFX();
             return;
@@ -70,9 +71,8 @@ public class EnemyStatusEffect : MonoBehaviour
     // ─────────────────────── 점화 ───────────────────────
 
     /// <summary>점화 적용 (재적용 시 지속 시간 갱신)</summary>
-    public void ApplyIgnite(float _fDuration, float _fDps, GameObject _prefabVFX, System.Action _onKill)
+    public void ApplyIgnite(float _fDuration, float _fDps, GameObject _prefabVFX)
     {
-        _onIgniteKill = _onKill;
         _fIgniteTimer = _fDuration;
         _fIgniteDps = _fDps;
         _fIgniteTickTimer = 1f;
@@ -98,10 +98,6 @@ public class EnemyStatusEffect : MonoBehaviour
         {
             _fIgniteTickTimer += 1f;
             _base.TakeDamage(_fIgniteDps);
-            if (_base.IsDead == true && _onIgniteKill != null)
-            {
-                _onIgniteKill.Invoke();
-            }
         }
 
         if (_fIgniteTimer <= 0f)
@@ -124,18 +120,20 @@ public class EnemyStatusEffect : MonoBehaviour
     /// <summary>이동 속도 감소 적용 (_fPercent 0.05 = 5%)</summary>
     public void ApplySlow(float _fPercent, float _fDuration)
     {
+        // 멀티 클라이언트는 호스트로 전달 (몬스터 이동은 호스트가 처리)
+        if (_netEnemy != null && _netEnemy.IsClientProxy == true)
+        {
+            _netEnemy.RPC_Slow(_fPercent, _fDuration);
+            return;
+        }
+
         _fSlowPercent = _fPercent;
         _fSlowTimer = _fDuration;
     }
 
     private void UpdateSlow()
     {
-        if (_agent == null || _agent.enabled == false)
-        {
-            return;
-        }
-
-        if (_fSlowTimer <= 0f)
+        if (_agent == null || _fSlowTimer <= 0f)
         {
             return;
         }
@@ -150,6 +148,13 @@ public class EnemyStatusEffect : MonoBehaviour
     /// <summary>기절 적용 (AI 정지)</summary>
     public void ApplyStun(float _fDuration)
     {
+        // 멀티 클라이언트는 호스트로 전달 (몬스터 AI 는 호스트가 처리)
+        if (_netEnemy != null && _netEnemy.IsClientProxy == true)
+        {
+            _netEnemy.RPC_Stun(_fDuration);
+            return;
+        }
+
         if (_fStunTimer <= 0f)
         {
             if (_ai != null)

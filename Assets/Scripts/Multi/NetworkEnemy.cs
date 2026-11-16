@@ -134,6 +134,22 @@ public class NetworkEnemy : NetworkBehaviour
         _bRemoteHit = false;
     }
 
+    // ─────────────────────── 상태 이상 ───────────────────────
+
+    // 클라이언트가 건 둔화를 호스트에서 적용 (몬스터 이동은 호스트가 처리)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_Slow(float _fPercent, float _fDuration)
+    {
+        EnemyStatusEffect.GetOrAdd(_base).ApplySlow(_fPercent, _fDuration);
+    }
+
+    // 클라이언트가 건 기절을 호스트에서 적용 (몬스터 AI 는 호스트가 처리)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RPC_Stun(float _fDuration)
+    {
+        EnemyStatusEffect.GetOrAdd(_base).ApplyStun(_fDuration);
+    }
+
     // ─────────────────────── 사망 ───────────────────────
 
     /// <summary>

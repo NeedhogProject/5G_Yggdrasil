@@ -46,6 +46,9 @@ public class EnemyBase : MonoBehaviour
 
     public bool IsDead => _isDead;
 
+    /// <summary>지금 피해를 받을 수 있는지 (사망 시 false, 보스 머리는 무적일 때도 false)</summary>
+    public virtual bool IsDamageable => _isDead == false;
+
     // 멀티 동기화 컴포넌트 (없거나 세션 밖이면 기존 싱글 동작)
     private NetworkEnemy _netEnemy;
 
@@ -71,6 +74,8 @@ public class EnemyBase : MonoBehaviour
 
     public event Action<float, float> OnHealthChanged; // (current, max)
     public event Action<EnemyBase>    OnDied;
+    /// <summary>적 사망 전역 알림 (SetEffectController 영혼 스택용)</summary>
+    public static event Action<EnemyBase> OnAnyDied;
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
@@ -185,6 +190,7 @@ public class EnemyBase : MonoBehaviour
         }
 
         OnDied?.Invoke(this);
+        OnAnyDied?.Invoke(this);
 
         // 사망 연출 후 오브젝트 제거
         // 애니메이션 있을 경우 Invoke 딜레이 조정

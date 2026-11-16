@@ -248,14 +248,14 @@ public class PlayerCombat : MonoBehaviour
         // 공격 — 보호막 재충전 타이머 리셋 (비전투 판정)
         _stats?.NotifyCombatAction();
 
-        // 판정 실행 — onHit 콜백으로 피격 처리
-        _hitbox.PerformAttack(CurrentWeapon, OnHit);
-
-        // 세트 특수 효과 공격 횟수 알림 (바람 4세트 회오리)
+        // 세트 특수 효과 공격 알림 (장검/창은 판정이 즉시 나가므로 판정보다 먼저 호출)
         if (_setEffect != null)
         {
-            _setEffect.OnBasicAttack(transform.forward);
+            _setEffect.OnBasicAttack();
         }
+
+        // 판정 실행 — onHit 콜백으로 피격 처리
+        _hitbox.PerformAttack(CurrentWeapon, OnHit);
     }
 
     // 장착 무기의 경직 시간 (단검은 다단히트가 끝나기 전에 캔슬되지 않도록 최소 보장)
@@ -281,16 +281,22 @@ public class PlayerCombat : MonoBehaviour
         // 적 피격
         if (target.TryGetComponent<EnemyBase>(out EnemyBase enemy))
         {
+            // 죽어서 남아 있는 적이나 무적인 보스 머리는 피해와 적중 효과(세트 효과, 흡혈) 제외
+            if (enemy.IsDamageable == false)
+            {
+                return;
+            }
+
             float damage = CalculateDamage(hitIndex);
             enemy.TakeDamage(damage);
 
             // 세트 특수 효과 (점화/둔화/회복/영혼 등)
             if (_setEffect != null)
             {
-                _setEffect.OnEnemyHit(enemy, damage);
+                _setEffect.OnEnemyHit(enemy, damage, hitIndex);
             }
 
-            // 불 4세트 흡혈 — 입힌 데미지 비례 회복
+            // 세트 흡혈 수치 보너스 — 입힌 데미지 비례 회복
             if (_lifeStealPercent > 0f && _stats != null)
             {
                 _stats.ModifyHealth(damage * _lifeStealPercent);
