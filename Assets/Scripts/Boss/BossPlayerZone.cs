@@ -9,9 +9,21 @@ using UnityEngine;
 public class BossPlayerZone : MonoBehaviour
 {
     private int _nInside = 0;
+    private Collider _collider;
+
+    private void Awake()
+    {
+        _collider = GetComponent<Collider>();
+    }
 
     /// <summary>플레이어가 구역 안에 있는지 — BossHead 참조</summary>
     public bool IsPlayerInside => _nInside > 0;
+
+    /// <summary>지정 위치가 구역 안인지 (멀티에서 상대 플레이어 분신 확인용, 분신은 트리거에 잡히지 않음)</summary>
+    public bool Contains(Vector3 _vPosition)
+    {
+        return (_collider.ClosestPoint(_vPosition) - _vPosition).sqrMagnitude < 0.0001f;
+    }
 
     private void OnTriggerEnter(Collider _other)
     {

@@ -3,6 +3,7 @@
 // 좌우 머리가 모두 죽어야 가운데 머리의 무적이 풀리고, 가운데 머리까지 죽으면 보스 사망 처리.
 // 몸통 이동/박치기 패턴은 기획에서 삭제됨 — 머리 3개만 고정 위치에서 전투.
 // 전투 단계(전투 시작, 한쪽 머리 파괴, 그로기, 중앙 최종전, 보스 사망, 엔딩)와 보스전 수치를 한곳에서 관리한다.
+// 멀티: 공격 결정과 체력 계산은 호스트만 하고, 전투 단계는 각 PC 가 머리 사망 알림을 받아 따라간다.
 // 담당: 김보민 (보스 패턴 구현: 정건)
 
 using System.Collections;
@@ -311,6 +312,20 @@ public class BossNidhogg : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    /// <summary>역할로 머리 찾기 (멀티 동기화에서 사용)</summary>
+    public BossHead GetHead(BossHead.HeadRole _role)
+    {
+        if (_role == BossHead.HeadRole.Left)
+        {
+            return leftHead;
+        }
+        if (_role == BossHead.HeadRole.Right)
+        {
+            return rightHead;
+        }
+        return centerHead;
     }
 
     // 보스 머리 위치 (오른쪽 머리의 공격 속도 장판 설치용)

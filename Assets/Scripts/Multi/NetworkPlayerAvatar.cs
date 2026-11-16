@@ -11,6 +11,7 @@ using UnityEngine;
 /// - 층 이동은 호스트가 승인한 뒤 모든 PC 가 각자 GameManager.GoToFloor 로 씬을 옮긴다 (파티 전원 이동)
 /// - 동료가 있는 동안에는 시간을 멈추지 않는다. 죽으면 살아 있는 동료를 관전하고, 파티가 마을로 돌아오면 집에서 부활한다
 /// - G키로 버린 아이템은 모든 PC 에 생성하고, 줍기는 호스트가 먼저 온 요청만 승인한다
+/// - 보스: 공격 결정과 체력 계산은 호스트가 하고, 공격/체력/사망을 모든 PC 에 전달한다 (BossHead 가 호출)
 ///
 /// [설정]
 /// 1. Player 프리팹 변형에서 게임플레이 컴포넌트를 제거한 프리팹(PlayerAvatar)에 부착
@@ -72,6 +73,9 @@ public class NetworkPlayerAvatar : NetworkBehaviour
     private static readonly Dictionary<int, DroppedItem> _sharedDrops = new Dictionary<int, DroppedItem>();
     private static readonly HashSet<int> _pickedDropIds = new HashSet<int>();
     private static int _nDropCounter = 0;
+    // 보스 (호스트 전용): 마지막으로 머리를 때린 플레이어, 참가자가 보낸 피해를 적용하는 중인지
+    private static PlayerRef _bossLastAttacker;
+    private static bool _bBossRemoteHit = false;
 
     // 내 분신 전용: 씬 Player 의 장비와 마지막으로 보낸 무기 ID
     private PlayerEquipment _localEquipment;
@@ -565,6 +569,155 @@ public class NetworkPlayerAvatar : NetworkBehaviour
         if (_local != null && _local.Runner != null && _local.Runner.IsShutdown == false)
         {
             _local.Runner.Shutdown();
+        }
+    }
+
+    // ─────────────────────── 보스 동기화 (BossHead 에서 호출) ───────────────────────
+
+    /// <summary>내가 세션의 참가자인지 (호스트나 세션 밖이면 false)</summary>
+    public static bool IsSessionClient => _local != null && _local.Runner.IsServer == false;
+
+    /// <summary>내 캐릭터가 죽어 있는지</summary>
+    public static bool IsLocalPlayerDead => _playerDeath != null && _playerDeath.IsDead == true;
+
+    /// <summary>보스 구역 안에 있는 살아 있는 상대 플레이어 분신 (없으면 null)</summary>
+    public static Transform FindRemoteInZone(BossPlayerZone _zone)
+    {
+        for (int i = 0; i < _remotes.Count; i++)
+        {
+            if (_remotes[i].IsDead == true || IsOnMyFloor(_remotes[i]) == false)
+            {
+                continue;
+            }
+            // 발밑은 구역 경계에 걸릴 수 있어 몸통 높이로 확인
+            if (_zone.Contains(_remotes[i].transform.position + Vector3.up) == true)
+            {
+                return _remotes[i].transform;
+            }
+        }
+        return null;
+    }
+
+    private static BossHead FindBossHead(byte _nRole)
+    {
+        return BossNidhogg.Instance != null ? BossNidhogg.Instance.GetHead((BossHead.HeadRole)_nRole) : null;
+    }
+
+    /// <summary>
+    /// 보스 머리 피격 (BossHead.TakeDamage 에서 호출)
+    /// 참가자면 피해를 호스트로 보내고 true (로컬 체력 계산 생략), 그 외에는 false
+    /// </summary>
+    public static bool RouteBossDamage(BossHead.HeadRole _role, float _fRawDamage)
+    {
+        if (_local == null)
+        {
+            return false;
+        }
+
+        if (_local.Runner.IsServer == true)
+        {
+            // 호스트 본인이 때린 경우 막타 후보로 기록
+            if (_bBossRemoteHit == false)
+            {
+                _bossLastAttacker = _local.Runner.LocalPlayer;
+            }
+            return false;
+        }
+
+        _local.RPC_BossDamage((byte)_role, _fRawDamage);
+        return true;
+    }
+
+    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority)]
+    public void RPC_BossDamage(byte _nRole, float _fRawDamage)
+    {
+        BossHead head = FindBossHead(_nRole);
+        if (head == null)
+        {
+            return;
+        }
+
+        _bossLastAttacker = Object.InputAuthority;
+        _bBossRemoteHit = true;
+        head.TakeDamage(_fRawDamage);
+        _bBossRemoteHit = false;
+    }
+
+    /// <summary>호스트가 계산한 보스 머리 체력을 참가자에게 전달 (호스트가 아니면 아무 일도 하지 않음)</summary>
+    public static void SendBossHealth(BossHead.HeadRole _role, float _fHealth)
+    {
+        if (_local != null && _local.Runner.IsServer == true)
+        {
+            _local.RPC_BossHealth((byte)_role, _fHealth);
+        }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_BossHealth(byte _nRole, float _fHealth)
+    {
+        // 호스트는 이미 직접 계산함
+        if (Runner.IsServer == true)
+        {
+            return;
+        }
+
+        BossHead head = FindBossHead(_nRole);
+        if (head != null && head.IsDead == false)
+        {
+            head.ApplyNetworkHealth(_fHealth, head.MaxHealth, true);
+        }
+    }
+
+    /// <summary>
+    /// 보스 머리 사망 (BossHead.Die 에서 호출)
+    /// 세션 중이면 호스트가 모든 PC 에 알리고 true, 세션 밖이면 false (호출한 쪽이 바로 처리)
+    /// </summary>
+    public static bool RouteBossDeath(BossHead.HeadRole _role)
+    {
+        if (_local == null)
+        {
+            return false;
+        }
+
+        if (_local.Runner.IsServer == true)
+        {
+            _local.RPC_BossDeath((byte)_role, _bossLastAttacker);
+        }
+        return true;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_BossDeath(byte _nRole, PlayerRef _killer)
+    {
+        BossHead head = FindBossHead(_nRole);
+        if (head != null)
+        {
+            head.ProcessDeath(_killer == Runner.LocalPlayer);
+        }
+    }
+
+    /// <summary>
+    /// 호스트가 정한 보스 공격을 모든 PC 에서 재생 (BossHead 에서 호출)
+    /// 세션 밖이면 false 를 돌려주며, 호출한 쪽이 바로 재생한다
+    /// </summary>
+    public static bool SendBossAttack(BossHead.HeadRole _role, Vector3 _vA, Vector3 _vB, float _fTime)
+    {
+        if (_local == null)
+        {
+            return false;
+        }
+
+        _local.RPC_BossAttack((byte)_role, _vA, _vB, _fTime);
+        return true;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_BossAttack(byte _nRole, Vector3 _vA, Vector3 _vB, float _fTime)
+    {
+        BossHead head = FindBossHead(_nRole);
+        if (head != null)
+        {
+            head.ExecuteAttack(_vA, _vB, _fTime);
         }
     }
 

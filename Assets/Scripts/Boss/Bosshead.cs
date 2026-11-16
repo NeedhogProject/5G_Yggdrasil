@@ -3,6 +3,7 @@
 // EnemyBase 를 상속해 체력/피격/HP바/방어력 공식을 그대로 재사용한다.
 // 역할(HeadRole)에 따라 공격 패턴이 다르며, 가운데 머리는 좌우 머리가 모두 죽기 전까지 무적이다.
 // 머리마다 담당 이동 구역(BossPlayerZone)에 플레이어가 들어오면 공격하고, 공격 수치는 BossNidhogg 에서 관리한다.
+// 멀티: 공격 결정과 체력 계산은 호스트만 한다. 호스트가 보낸 공격을 각 PC 가 재생하고, 피해는 각 PC 가 자기 플레이어에게 적용한다.
 // 담당: 김보민 (보스 패턴 구현: 정건)
 
 using System.Collections;
@@ -84,11 +85,21 @@ public class BossHead : EnemyBase
             return;
         }
 
+        // 멀티 참가자는 공격을 결정하지 않음 (호스트가 보낸 공격만 재생)
+        if (NetworkPlayerAvatar.IsSessionClient == true)
+        {
+            return;
+        }
+
         _fCooldownTimer -= Time.deltaTime;
 
-        if (_bAttacking == false && _fCooldownTimer <= 0f && IsPlayerInZone() == true && Boss.CanHeadAttack(this) == true)
+        if (_bAttacking == false && _fCooldownTimer <= 0f && Boss.CanHeadAttack(this) == true)
         {
-            StartCoroutine(AttackRoutine());
+            Transform trTarget = FindTargetInZone();
+            if (trTarget != null)
+            {
+                StartCoroutine(AttackRoutine(trTarget.position));
+            }
         }
     }
 
@@ -113,14 +124,40 @@ public class BossHead : EnemyBase
             return;
         }
 
+        // 멀티 참가자는 피해를 호스트로 보냄 (체력과 피해 배율 계산은 호스트만)
+        if (NetworkPlayerAvatar.RouteBossDamage(role, rawDamage) == true)
+        {
+            return;
+        }
+
         float fMult = Boss != null ? Boss.DamageMultiplier : 1f;
         base.TakeDamage(rawDamage * fMult);
+
+        // 멀티 호스트는 바뀐 체력을 참가자에게 알림
+        NetworkPlayerAvatar.SendBossHealth(role, _currentHealth);
     }
 
     // 사망 — 오브젝트를 없애지 않고 남김 (좌우 머리는 회색)
     protected override void Die()
     {
-        base.Die();
+        // 멀티 세션에서는 호스트가 모든 PC 에 사망을 알리고, 각 PC 가 ProcessDeath 로 처리
+        if (NetworkPlayerAvatar.RouteBossDeath(role) == true)
+        {
+            return;
+        }
+
+        ProcessDeath(true);
+    }
+
+    /// <summary>사망 처리 (멀티에서는 NetworkPlayerAvatar 가 모든 PC 에서 호출). _bIsKiller: 내가 막타를 쳤는지</summary>
+    public void ProcessDeath(bool _bIsKiller)
+    {
+        if (IsDead == true)
+        {
+            return;
+        }
+
+        DieLocal(_bIsKiller);
 
         // 위험: EnemyBase.Die 가 0.5초 뒤 오브젝트를 파괴하므로 취소 (죽은 머리를 남겨둠)
         CancelInvoke("DestroyEnemy");
@@ -157,16 +194,65 @@ public class BossHead : EnemyBase
         }
     }
 
-    private bool IsPlayerInZone()
+    // 담당 구역 안의 공격 대상 (살아 있는 내 캐릭터 우선, 없으면 구역 안의 상대 플레이어 분신). 없으면 null
+    private Transform FindTargetInZone()
     {
-        return playerZone != null && playerZone.IsPlayerInside == true;
+        if (playerZone == null)
+        {
+            return null;
+        }
+        if (playerZone.IsPlayerInside == true && NetworkPlayerAvatar.IsLocalPlayerDead == false)
+        {
+            return _trPlayer;
+        }
+        return NetworkPlayerAvatar.FindRemoteInZone(playerZone);
     }
 
     // ─────────────────────── 공격 ───────────────────────
 
-    private IEnumerator AttackRoutine()
+    // 공격 결정 (싱글 또는 멀티 호스트만 실행). 대상 위치와 무작위 값을 정해 모든 PC 에서 재생시킨다
+    private IEnumerator AttackRoutine(Vector3 _vTargetPos)
     {
         _bAttacking = true;
+
+        if (role == HeadRole.Left)
+        {
+            yield return LeftAttack(_vTargetPos);
+        }
+        else if (role == HeadRole.Right)
+        {
+            RightAttack(_vTargetPos);
+        }
+        else
+        {
+            float fTelegraph = Boss.CurrentMeleeTelegraphTime;
+            SendAttack(_vTargetPos, Vector3.zero, fTelegraph);
+            yield return new WaitForSeconds(fTelegraph);
+        }
+
+        _fCooldownTimer = Boss.CurrentAttackDelay;
+        _bAttacking = false;
+    }
+
+    // 정한 공격을 재생 (멀티 세션이면 모든 PC 에서, 아니면 바로)
+    private void SendAttack(Vector3 _vA, Vector3 _vB, float _fTime)
+    {
+        if (NetworkPlayerAvatar.SendBossAttack(role, _vA, _vB, _fTime) == false)
+        {
+            ExecuteAttack(_vA, _vB, _fTime);
+        }
+    }
+
+    /// <summary>
+    /// 공격 재생 (멀티에서는 NetworkPlayerAvatar 가 모든 PC 에서 호출). 피해는 각 PC 가 자기 플레이어에게 적용
+    /// 왼쪽: _vA 로 투사체 1발 / 오른쪽: _vA 에 이동 속도 장판, _vB 에 공격 속도 장판 / 가운데: _vA 에 _fTime 초 예고 후 근접
+    /// </summary>
+    public void ExecuteAttack(Vector3 _vA, Vector3 _vB, float _fTime)
+    {
+        if (IsDead == true || _bStopped == true || Boss == null || _trPlayer == null)
+        {
+            return;
+        }
 
         if (animator != null)
         {
@@ -175,27 +261,23 @@ public class BossHead : EnemyBase
 
         if (role == HeadRole.Left)
         {
-            yield return LeftAttack();
+            FireProjectile(_vA);
         }
         else if (role == HeadRole.Right)
         {
-            RightAttack();
+            AddWithLimit(_moveFields, SpawnField(Boss.moveSlowFieldPrefab, _vA, BossGroundField.FieldType.MoveSlow, Boss.fieldDuration));
+            AddWithLimit(_attackFields, SpawnField(Boss.attackSlowFieldPrefab, _vB, BossGroundField.FieldType.AttackSlow, Boss.fieldDuration));
         }
         else
         {
-            yield return CenterAttack();
+            StartCoroutine(CenterAttack(_vA, _fTime));
         }
-
-        _fCooldownTimer = Boss.CurrentAttackDelay;
-        _bAttacking = false;
     }
 
-    // 왼쪽: 시전 순간의 플레이어 위치 1발 + 확률로 플레이어 주변 랜덤 위치 추가 발사
+    // 왼쪽: 시전 순간의 대상 위치 1발 + 확률로 대상 주변 랜덤 위치 추가 발사
     // 투사체가 날아가는 동안 플레이어가 떠난 자리에 떨어져 퇴로를 막음 (플레이어를 따라가지 않음)
-    private IEnumerator LeftAttack()
+    private IEnumerator LeftAttack(Vector3 _vTargetPos)
     {
-        Vector3 vCastPosition = _trPlayer.position;
-
         int nShots = 1;
         while (nShots < Boss.maxConsecutiveShots && Random.Range(0f, 100f) < Boss.extraShotChance)
         {
@@ -205,31 +287,38 @@ public class BossHead : EnemyBase
         float fLongestFlight = 0f;
         for (int i = 0; i < nShots; i++)
         {
-            Vector3 vTarget = i == 0 ? vCastPosition : GetPointAroundPlayer(Boss.extraShotSpread);
-            fLongestFlight = Mathf.Max(fLongestFlight, FireProjectile(vTarget));
+            Vector3 vTarget = i == 0 ? _vTargetPos : GetPointAround(_vTargetPos, Boss.extraShotSpread);
+            fLongestFlight = Mathf.Max(fLongestFlight, GetFlightTime(vTarget));
+            SendAttack(vTarget, Vector3.zero, 0f);
         }
 
         // 마지막 투사체가 떨어질 때까지 공격 중으로 유지
         yield return new WaitForSeconds(fLongestFlight);
     }
 
-    // 플레이어 주변 랜덤 지점 (플레이어 발밑은 피함)
-    private Vector3 GetPointAroundPlayer(float _fRange)
+    // 대상 주변 랜덤 지점 (대상 발밑은 피함)
+    private Vector3 GetPointAround(Vector3 _vCenter, float _fRange)
     {
         float fMin = Mathf.Min(Boss.projectileImpactRadius + 0.5f, _fRange);
         Vector2 vDir = Random.insideUnitCircle.normalized;
         float fDist = Random.Range(fMin, _fRange);
-        return _trPlayer.position + new Vector3(vDir.x, 0f, vDir.y) * fDist;
+        return _vCenter + new Vector3(vDir.x, 0f, vDir.y) * fDist;
     }
 
-    // 투사체 발사, 비행 시간 반환
-    private float FireProjectile(Vector3 _vTarget)
+    // 투사체 비행 시간
+    private float GetFlightTime(Vector3 _vTarget)
     {
         Vector3 vStart = trMouth != null ? trMouth.position : transform.position;
-        float fFlight = Vector3.Distance(vStart, _vTarget) / Mathf.Max(0.1f, Boss.projectileSpeed);
+        return Vector3.Distance(vStart, _vTarget) / Mathf.Max(0.1f, Boss.projectileSpeed);
+    }
+
+    // 투사체 발사
+    private void FireProjectile(Vector3 _vTarget)
+    {
+        Vector3 vStart = trMouth != null ? trMouth.position : transform.position;
 
         // 착탄 지점 예고
-        StartCoroutine(Telegraph(_vTarget, Boss.projectileImpactRadius, fFlight));
+        StartCoroutine(Telegraph(_vTarget, Boss.projectileImpactRadius, GetFlightTime(_vTarget)));
 
         GameObject objProjectile = Boss.projectilePrefab != null ? Instantiate(Boss.projectilePrefab, vStart, Quaternion.identity) : new GameObject("BossProjectile");
         objProjectile.transform.position = vStart;
@@ -241,7 +330,6 @@ public class BossHead : EnemyBase
 
         float fDamage = attackPower;
         projectile.Launch(_vTarget, Boss.projectileSpeed, () => OnProjectileImpact(_vTarget, fDamage));
-        return fFlight;
     }
 
     private void OnProjectileImpact(Vector3 _vTarget, float _fDamage)
@@ -259,17 +347,16 @@ public class BossHead : EnemyBase
         }
     }
 
-    // 오른쪽: 플레이어 주변에 이동 속도 장판, 보스 주위에 공격 속도 장판을 동시에 설치
-    private void RightAttack()
+    // 오른쪽: 대상 주변에 이동 속도 장판, 보스 주위에 공격 속도 장판을 동시에 설치
+    private void RightAttack(Vector3 _vTargetPos)
     {
-        GameObject objMove = SpawnField(Boss.moveSlowFieldPrefab, GetPointAroundPlayer(Boss.fieldDistance), BossGroundField.FieldType.MoveSlow, Boss.fieldDuration);
-        AddWithLimit(_moveFields, objMove);
+        Vector3 vMovePos = GetPointAround(_vTargetPos, Boss.fieldDistance);
 
         Vector2 vRand = Random.insideUnitCircle * Boss.fieldDistance;
-        Vector3 vBossPos = Boss.BossCenterPosition + new Vector3(vRand.x, 0f, vRand.y);
-        vBossPos.y = _trPlayer.position.y;
-        GameObject objAttack = SpawnField(Boss.attackSlowFieldPrefab, vBossPos, BossGroundField.FieldType.AttackSlow, Boss.fieldDuration);
-        AddWithLimit(_attackFields, objAttack);
+        Vector3 vAttackPos = Boss.BossCenterPosition + new Vector3(vRand.x, 0f, vRand.y);
+        vAttackPos.y = _vTargetPos.y;
+
+        SendAttack(vMovePos, vAttackPos, 0f);
     }
 
     // 장판 최대 개수를 넘으면 가장 오래된 것부터 제거
@@ -297,14 +384,11 @@ public class BossHead : EnemyBase
         return objField;
     }
 
-    // 가운데: 플레이어 위치에 범위 예고(노란색에서 빨간색) 후 머리를 휘둘러 공격
-    private IEnumerator CenterAttack()
+    // 가운데: 지정 위치에 범위 예고(노란색에서 빨간색) 후 머리를 휘둘러 공격
+    private IEnumerator CenterAttack(Vector3 _vTarget, float _fTelegraph)
     {
-        Vector3 vTarget = _trPlayer.position;
-        float fTelegraph = Boss.CurrentMeleeTelegraphTime;
-
-        yield return Telegraph(vTarget, Boss.meleeRange, fTelegraph);
-        DamagePlayerInRadius(vTarget, Boss.meleeRange, attackPower);
+        yield return Telegraph(_vTarget, Boss.meleeRange, _fTelegraph);
+        DamagePlayerInRadius(_vTarget, Boss.meleeRange, attackPower);
     }
 
     // 바닥 예고 존 표시 (노란색, 공격 직전 빨간색), 시간이 끝나면 제거
