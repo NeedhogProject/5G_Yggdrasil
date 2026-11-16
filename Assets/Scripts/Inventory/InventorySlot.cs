@@ -395,6 +395,15 @@ public class InventorySlot : MonoBehaviour,
         }
     }
 
+    // 인벤토리를 닫으면 OnPointerExit 가 오지 않으므로 G키 드롭 대상 기록을 직접 해제
+    private void OnDisable()
+    {
+        if (InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.ClearHoveredSlot(this);
+        }
+    }
+
     public void OnPointerClick(PointerEventData e)
     {
         // Ctrl + 좌클릭: 인벤토리의 소모품을 퀵슬롯에 등록

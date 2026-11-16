@@ -1,33 +1,16 @@
 # Memory.md
 
 프로젝트 작업 메모리. 현재 시스템 상태, 확정 규칙, 미해결 이슈, 작업 기록(최신순)을 담는다.
-마지막 정리: 2026-10-19 (10.18 커밋 e86b540 기준. 대체된 항목과 낡은 요약 삭제, 7~10월 작업 반영)
+마지막 정리: 2026-11-16 (multi 브랜치 기준. 미해결 이슈 재검토, 멀티 구현 현황과 세트 효과 개편 반영)
 
 ---
 
-## 미해결 이슈 (2026-10-18 검토, 해결되면 이 목록에서 삭제)
+## 미해결 이슈 (2026-11-16 재검토, 해결되면 이 목록에서 삭제)
 
 ### 건희
-- [높음] 빌드 실패
-  - ItemDataRegistryAutoCollect.cs 는 Editor 폴더가 아닌 Scripts/Items 에 있고, `using UnityEditor` 를 가드 없이 사용한다.
-  - 에디터에서는 문제없지만 플레이어 빌드에서 컴파일 에러가 난다.
-  - 조치: Assets/Editor 폴더로 옮기거나 `#if UNITY_EDITOR` 로 감싼다.
-- [높음] 유물 우클릭 장착 시 유물 증발
-  - InventorySystem.UseItem 의 유물 분기에는 PlayerEquipment 재확보 가드가 없다(장비 분기에만 있음).
-  - PlayerEquipment 가 null 이면 RemoveItem 이 먼저 실행된 뒤 장착이 생략되어 유물이 사라진다.
-- [높음] G 드롭 시 아이템 삭제
-  - SpawnDroppedItem 은 생성한 프리팹에 DroppedItem 이 없어도 true 를 반환한다.
-  - 그래서 프리팹이 없으면 모델 프리팹만 생성되고 인벤토리에서는 삭제된다.
-  - 조치: DroppedItem 컴포넌트가 없으면 Destroy 하고 false 를 반환한다.
-- [높음] 판매 마킹 칸 드롭
-  - DropHoveredItem 에 IsSaleMarked 검사가 없다.
-  - 김보민 쪽 InventoryUI 차단과 별개로 방어 코드를 둔다.
-- [중간] 버렸다 주운 아이템의 정보 초기화
-  - DroppedItem.TryPickup 의 비중첩 경로가 `AddItem(Data)` 라서, 버렸다 주우면 강화/각인/감정 정보가 초기화된다.
-  - LootTable 은 기본 ItemInstance 를 넘기므로, 전용 인스턴스일 때만 `AddItem(instance)` 를 쓴다.
-- [중간] 닫힌 인벤토리의 hover 기록 잔존
-  - 인벤토리를 닫을 때 `_hoveredSlot` 이 남는다. 비활성 오브젝트는 OnPointerExit 를 받지 않기 때문이다.
-  - 조치: InventorySlot.OnDisable 에서 기록을 해제한다.
+- [높음] 멀티: 빌드에서 접속할 수단이 없다 (예정 작업의 멀티 구현 현황 참고).
+- [중간] 멀티: 참가자가 세션을 나간 뒤 화면이 보이지 않는 경우가 있다. 재현 조건을 모른다 (호스트 나가기는 정상).
+- [중간] 멀티: 죽은 내 캐릭터가 내 화면에서 서 있는 채로 남는다 (사망 모션 없음).
 - [중간] 드롭 위치
   - 플레이어 앞 2m 에 생성되므로 벽 안이나 허공 위에 생길 수 있다(DroppedItem 은 중력 없음).
   - 발밑 생성이나 NavMesh.SamplePosition 보정을 검토한다.
@@ -45,6 +28,7 @@
   - UseConsumableByType / GetConsumableCount 는 퀵슬롯 수정 후 쓰이지 않는다.
   - DropHoveredItem 의 제거 분기는 `RemoveItemAtSlot(owner)` 한 줄로 충분하다.
   - UseItem 의 `playerEquipment?.` 는 가드 뒤라 `?.` 가 필요 없다.
+  - PlayerStats 의 비전투 15초 후 보호막 재충전과 PlayerCombat 의 세트 흡혈은 새 세트 에셋에 해당 수치가 없어 동작하지 않는다 (11.16).
 
 ### 김보민 (2026-10-19 수정 요청 전달)
 - 모든 씬 InventorySystem 의 `droppedItemPrefab` 미연결 (DroppedItem.prefab 연결 필요)
@@ -55,9 +39,13 @@
   - 씬 이동 시 등록 유지
   - Floor_3 에 퀵슬롯 없음
 - Title 씬 KeySettingUI keySlots 에 삭제된 `Move` 액션 슬롯 4개 잔존
+- [영혼] 스택 UI: SetEffectController 의 SoulStacks, SoulMaxStacks, OnSoulStacksChanged 를 쓴다 (11.15 전달 대상).
+- 멀티 안내(관전, 층 이동, 전원 사망)의 정식 UI. 지금은 임시 OnGUI 표시다.
+- main 브랜치에만 있는 작업(11.12~11.16, multi 미병합): 상점/학자 수정, 등급별 퀵슬롯 사용(UseConsumableByData), 다른 창과 같이 열렸을 때 G 드롭 차단. 병합하면 위 항목 일부가 해결된다.
 
 ### 씬 공통
-- Floor_3 NavMesh 미베이크: 플레이어 우클릭 이동과 적 AI 가 동작하지 않는다.
+- Floor_3 NavMesh: 11.04 에 재베이크했다(NavMesh 에셋 있음). 3층 맵 작업이 끝나면 다시 베이크한다.
+- main 과 multi 브랜치가 갈라져 있다. multi 에는 멀티/세트 효과/드롭 버그 수정이, main 에는 팀원의 11.12~11.16 작업이 있다. 병합이 필요하다.
 
 ---
 
@@ -70,10 +58,11 @@
 - 빌드 씬 순서: Title, Town, Floor_1, Floor_2, Floor_3
   - BossTest 는 보스 단독 테스트 씬 (Floor_4_Boss 에서 이름 변경)
 - 레포: github.com/NeedhogProject/5G_Yggdrasil (옛 이름 Programming)
-- 멀티(Photon Fusion 2) 패키지는 아직 미설치
+- 멀티: Photon Fusion 2.1.4 (multi 브랜치에만 설치됨)
+- 브랜치: multi(건희 작업, 멀티 포함), main(팀원 작업), art(아트 전용)
 
 ## 담당
-- 건희: 플레이어/전투, 인벤토리/아이템/장비, 유물, 세이브, 스테이지 전환, 적 AI, 보스(10.14부터 다시 담당), 멀티(예정)
+- 건희: 플레이어/전투, 인벤토리/아이템/장비, 유물, 세이브, 스테이지 전환, 적 AI, 보스(10.14부터 다시 담당), 멀티
 - 김보민: UI/Canvas, 상점, 집/창고, 3스테이지 씬(임포트, 콜라이더), 퀵슬롯, 대장장이/강화 UI, 툴팁, 키 설정 UI
 - 김보민 파일 수정은 직접 고치지 않고 전달한다. 대상: BlacksmithSystem, EnhancementSystem, UIItemTooltip, KeySettingUI 씬 오브젝트
 - 사운드는 별도 팀원 담당
@@ -196,7 +185,10 @@
   - 0~3강 실패는 변동이 없고, 4강에서 5강 실패 시에만 1강으로 하락한다.
 - 강화 결과가 나오면 자동 저장한다(BlacksmithSystem). 각인 결과 자동 저장은 호출이 없다(미해결 이슈 참고).
 - 방어구 강화는 없다. 강화는 무기 전용, 방어구는 각인 전용이다(각인 1슬롯).
-- 세트 효과는 SetEffectData.cs 헤더의 확정표가 정본이다(속성별 스탯 보너스, 원소 데미지 폐기).
+- 세트 효과 (2026-11-15 개편)
+  - 누적 방식이다. N세트면 1~N단계 효과를 모두 적용한다(ArmorSetManager). SetEffectData 에셋의 Tier 값은 그 단계에서 새로 붙는 수치다.
+  - 고정 수치는 SetEffectData 에셋 5개에서, 확률/지속/범위형 특수 효과는 SetEffectController(Player 에 부착) 인스펙터에서 조정한다. 효과 표는 두 스크립트 헤더가 정본이다.
+  - 적 상태 이상(점화, 둔화, 기절)은 EnemyStatusEffect 가 처리한다(실행 중 자동 부착).
   - 세트_효과.docx 와 게임_구조.txt 는 옛 서술이다.
 - 장비 교체 시 반환되는 기존 장비는 `AddItem(replaced)` 로 인스턴스째 반환한다(강화/각인 보존).
 - 최대 체력 = (100 + 장비 + 유물 HP) x (1 + 세트%). 유물 HP 는 장비 최대 체력에 합산된다.
@@ -261,15 +253,17 @@
 - 유물과 장비는 인벤토리에서 빼기 전에 장착 가능 여부를 먼저 확인한다(빼고 실패하면 아이템이 사라짐).
 - 기획 엑셀은 A열이 빈칸이고 데이터는 B열부터다.
 
-## 예정 작업 (기획 확정, 코드 미착수)
-- 멀티: Photon Fusion 2 Host 모드 (2026-11-05 기획 확정)
+## 예정 작업
+- 멀티: Photon Fusion 2 Host 모드 (2026-11-05 기획 확정, multi 브랜치에서 구현 중)
+  - 구현 현황 (2026-11-16)
+    - 완료: 플레이어 분신 동기화, 파티 층 이동, 몬스터 동기화(피격, 사망, 막타 보상), 일시정지 대응, 사망/관전/부활, 플레이어 겹침 방지, 아이템 줍기 우선, 세트 둔화/기절 호스트 전달
+    - 미구현: 빌드용 접속 화면(지금은 에디터 전용 테스트 런처), 참가 조건(호스트가 마을일 때만)과 거절 안내, 참가자 집 안 시작, 보스와 자원 노드 동기화, 열쇠 파티 공유, G키 드롭 공유, 달란 주머니, 나가기/종료 시 저장과 위치 저장, 호스트 종료 시 클라이언트 저장 후 타이틀 복귀, 인원별 몬스터 보정
+    - 대기: 갑옷 색 구분(모델 머티리얼 분리 필요), 안내 문구 정식 UI(김보민)
   - 기술
-    - NetworkCharacterController 를 사용하고, NavMesh 경로는 클라이언트에서 계산해 이동 방향만 입력으로 보낸다.
-    - 기존 싱글턴(PlayerStats, InventorySystem, PlayerController 등)의 Instance 는 로컬 플레이어(입력 권한)를 가리키게 둔다.
-    - 작업은 multi 브랜치에서 진행한다.
-    - 혼자 플레이도 Fusion 을 거친다(Single 모드). 싱글과 멀티 코드 경로를 하나로 유지한다.
-    - 몬스터 피격은 공격한 플레이어 쪽에서 판정하고, 호스트에 피해량을 전달한다(공격력은 각자 PC 의 장비/강화/유물로 계산).
-    - 씬에 배치된 Player 는 테스트를 위해 그대로 둔다.
+    - 분신 방식이다(2026-11-11 결정). 실제 캐릭터는 각자 PC 의 씬 Player 를 그대로 쓰고, 상대 화면용 분신(NetworkPlayerAvatar)만 네트워크로 생성한다. NetworkCharacterController 는 쓰지 않는다.
+    - 혼자 플레이도 Fusion 을 거친다(Single 모드). 세션 없이 플레이하면 기존 싱글 동작 그대로다.
+    - 몬스터는 호스트만 생성하고 움직인다. 피격은 공격한 플레이어 쪽에서 판정하고, 호스트에 피해량을 전달한다(공격력은 각자 PC 의 장비/강화/유물로 계산).
+    - 씬에 배치된 Player 는 그대로 둔다.
     - 접속 방식(방 코드 생성 방식, 방을 여는 시점, 코드 표시 위치)은 미정.
   - 접속
     - 최대 2인. 방 코드 입력으로 접속한다. 호스트 혼자 시작하면 혼자 플레이다.
@@ -306,11 +300,43 @@
 - 플레이어 아바타 마스크를 제거한다.
 - 쉐이딩을 적용한다.
 - VFX 연결: HitboxSystem.onHit 부터 시작한다(프리팹 전달 후).
+- 세트 효과 이펙트 프리팹 4개(점화, 폭발, 회오리, 보호막) 연결: Player 프리팹의 SetEffectController 칸이 비어 있다(프리팹 전달 후).
 - 플레이어 회피(구르기)는 구현하지 않기로 했다(10.14).
 
 ---
 
 ## 작업 기록 (최신순)
+
+### 2026-11-16 인벤토리 드롭/유물 버그 수정 (multi 브랜치)
+- 상태: 컴파일 확인만 했다. 플레이 테스트 전.
+- InventorySystem.UseItem: 유물 분기에도 PlayerEquipment 재확보 가드를 넣었다. 못 찾으면 유물을 빼지 않고 중단한다.
+- InventorySystem.SpawnDroppedItem: 프리팹에 DroppedItem 이 없으면 생성하지 않고 false 를 반환한다 (인벤토리에서만 사라지던 문제).
+- InventorySystem.DropHoveredItem: 판매창에 담긴 칸은 버리지 않는다.
+- DroppedItem.TryPickup: 전용 인스턴스(무기, 방어구, 유물)는 인스턴스째 넣어 강화/각인/감정 정보를 유지한다. LootTable 드롭(기본 인스턴스)은 기존대로 데이터로 새로 만든다.
+- InventorySlot.OnDisable: 인벤토리를 닫을 때 G키 드롭 대상 기록을 해제한다.
+- 미해결 이슈 목록을 재검토했다. 빌드 실패(ItemDataRegistryAutoCollect)는 파일이 이미 Assets/Editor 에 있어 목록에서 뺐다.
+
+### 2026-11-16 세트 효과 검토 수정 (multi 브랜치)
+- 상태: 컴파일 확인만 했다. 2인 멀티의 둔화/기절 전달은 테스트 전.
+- [영혼]: 스택 획득을 적 사망 알림 기준으로 바꿨다 (멀티는 막타 친 PC 만). 보스 적중은 공격 입력 1회당 1스택이다.
+- 불 4세트 폭발: 공격 1회당 1번, 단검은 첫 타격에서만 판정한다.
+- EnemyBase.IsDamageable 추가: 죽었거나 무적인 적(무적 상태의 보스 머리)은 피해와 적중 효과에서 제외한다.
+- 땅 보호막 주기는 세트를 해제하거나 다시 착용해도 유지한다 (장비 교체로 재충전 방지).
+- NetworkEnemy.RPC_Slow, RPC_Stun: 클라이언트가 건 둔화/기절을 호스트에서 적용한다.
+- 남은 점
+  - 이펙트 프리팹 4개(점화, 폭발, 회오리, 보호막)가 비어 있다. 폭발 이펙트는 재생 후 스스로 사라지는 프리팹이어야 한다.
+  - [영혼] 스택 UI 는 김보민 담당이다.
+
+### 2026-11-15 세트 효과 개편 (multi 브랜치)
+- 기획 변경에 맞춰 세트 효과를 다시 만들었다. 효과 표는 SetEffectController 와 SetEffectData 헤더에 있다.
+- 누적 방식: ArmorSetManager 가 1단계부터 현재 단계까지 효과를 모두 더한다. SetEffectData 에셋 5개의 Tier 값은 그 단계에서 새로 붙는 수치다.
+- 신규: SetEffectController (Player 에 부착, 확률/지속/범위형 효과와 수치/쿨타임/이펙트 칸), EnemyStatusEffect (적 점화/둔화/기절, 실행 중 자동 부착)
+- StatBonusType 에 DamageReduction 추가 (땅 2세트 받는 피해 감소)
+- PlayerCombat: 적중/공격 알림, 조건부 공격력 반영, AttackPower 추가
+- PlayerStats: 받는 피해 감소, 보호막 직접 설정, 마지막 전투 시각 조회 추가
+- PlayerDeath: 사망 직전에 어둠 4세트 부활을 먼저 시도한다.
+- 기획에 없어 정한 값(인스펙터 조정): 점화 쿨타임 3초, 물 3세트 회복 쿨타임 5초, 물 2세트 둔화 2초, 비전투 판정 5초
+- SetEffectData 스크립트 파일명 대소문자를 고쳤다 (SeteffectData 에서 SetEffectData 로).
 
 ### 2026-11-11 아이템 줍기 우선 (multi 브랜치)
 - 문제: 포털이나 줄기 근처에 떨어진 아이템 앞에서 상호작용 키를 누르면 이동 확인창이 떴다.

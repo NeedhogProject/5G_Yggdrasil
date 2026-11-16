@@ -156,7 +156,11 @@ public class DroppedItem : MonoBehaviour
             return;
         }
 
-        if (inventory.AddItem(_itemInstance.Data))
+        // 위험: 버렸다 줍는 아이템은 인스턴스째 넣어야 강화/각인/감정 정보가 유지됨 (LootTable 드롭은 기본 인스턴스라 데이터로 새로 생성)
+        bool bAdded = _itemInstance.GetType() == typeof(ItemInstance)
+            ? inventory.AddItem(_itemInstance.Data)
+            : inventory.AddItem(_itemInstance);
+        if (bAdded == true)
         {
             AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
             Debug.Log($"[DroppedItem] {_itemInstance.Data.ItemName} 획득 성공");

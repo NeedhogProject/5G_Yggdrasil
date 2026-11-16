@@ -943,6 +943,17 @@ public class InventorySystem : MonoBehaviour
                 return;
             }
 
+            // 위험: PlayerEquipment 를 못 찾으면 제거하지 않고 중단 (유물이 사라지는 것 방지)
+            if (playerEquipment == null)
+            {
+                playerEquipment = FindFirstObjectByType<PlayerEquipment>();
+            }
+            if (playerEquipment == null)
+            {
+                Debug.LogWarning("[InventorySystem] PlayerEquipment 를 찾지 못해 유물 장착 불가, 아이템 유지");
+                return;
+            }
+
             // 장착 전에 인벤토리에서 먼저 제거 (복사 방지)
             RemoveItem(relicInstance);
             playerEquipment?.EquipItem(relicInstance);
@@ -994,6 +1005,12 @@ public class InventorySystem : MonoBehaviour
             owner = owner.ownerSlot;
         }
 
+        // 판매창에 담긴 칸은 버리지 않음
+        if (owner.IsSaleMarked == true)
+        {
+            return;
+        }
+
         ItemData data = owner.currentItem;
         if (data == null)
         {
@@ -1026,9 +1043,10 @@ public class InventorySystem : MonoBehaviour
     private bool SpawnDroppedItem(ItemInstance _instance, ItemData _data)
     {
         GameObject prefab = droppedItemPrefab != null ? droppedItemPrefab : _data.itemPrefab;
-        if (prefab == null)
+        // 위험: DroppedItem 이 없는 프리팹은 주울 수 없으므로 생성하지 않음 (인벤토리에서만 사라지는 것 방지)
+        if (prefab == null || prefab.GetComponent<DroppedItem>() == null)
         {
-            Debug.LogWarning("[InventorySystem] 드롭 프리팹이 없어 바닥 생성 불가: " + _data.itemName);
+            Debug.LogWarning("[InventorySystem] 드롭 프리팹이 없거나 DroppedItem 이 없어 바닥 생성 불가: " + _data.itemName);
             return false;
         }
 
