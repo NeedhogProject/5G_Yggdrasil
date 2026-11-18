@@ -192,6 +192,8 @@ public class InventoryUI : MonoBehaviour
         // 닫힌 상태에서 주운 아이템은 좌표가 어긋나 있어, 열 때마다 제자리로 보정한다.
         if (InventorySystem.Instance != null)
         {
+            // 흩어진 같은 스택 아이템(물약 등)을 한 칸으로 합친 뒤 위치를 보정한다
+            InventorySystem.Instance.ConsolidateStacks();
             InventorySystem.Instance.RefreshIconPositions();
         }
 

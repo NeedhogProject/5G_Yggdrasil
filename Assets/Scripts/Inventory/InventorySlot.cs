@@ -59,6 +59,18 @@ public class InventorySlot : MonoBehaviour,
         {
             _canvas = GetComponentInParent<Canvas>();
         }
+
+        // 수량 텍스트가 인벤토리 패널 뒤로 가려지지 않도록, 자체 Canvas 정렬 순서를 코드에서 올린다
+        // (프리팹 값이 외부에서 되돌려져도 실행 시 보정됨)
+        if (stackCountText != null)
+        {
+            Canvas countCanvas = stackCountText.GetComponent<Canvas>();
+            if (countCanvas != null)
+            {
+                countCanvas.overrideSorting = true;
+                countCanvas.sortingOrder = 35;
+            }
+        }
     }
 
     // 인벤토리 <-> 창고 간 아이템 이동 (데이터 동기화 포함)
@@ -275,6 +287,12 @@ public class InventorySlot : MonoBehaviour,
         {
             itemIcon.gameObject.SetActive(true);
             itemIcon.sprite = instance.Data.itemIcon;
+        }
+
+        // 임시 디버그: 실제 스택 수량 확인 (문제 해결 후 제거)
+        if (instance.Data != null && instance.Data.IsStackable == true)
+        {
+            Debug.Log("[InventorySlot] 스택표시 확인: " + instance.Data.itemName + " StackCount=" + instance.StackCount + " 텍스트연결=" + (stackCountText != null));
         }
 
         // 수량이 2개 이상이면 숫자 표시
