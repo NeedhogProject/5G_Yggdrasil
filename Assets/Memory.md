@@ -1,7 +1,7 @@
 # Memory.md
 
 프로젝트 작업 메모리. 현재 시스템 상태, 확정 규칙, 미해결 이슈, 작업 기록(최신순)을 담는다.
-마지막 정리: 2026-11-16 (multi 브랜치 기준. 미해결 이슈 재검토, 멀티 구현 현황과 세트 효과 개편 반영)
+마지막 정리: 2026-11-25 (전 브랜치 main 병합, 폴더 파트별 재배치, 브랜치 재구성 반영)
 
 ---
 
@@ -47,7 +47,7 @@
 
 ### 씬 공통
 - Floor_3 NavMesh: 11.04 에 재베이크했다(NavMesh 에셋 있음). 3층 맵 작업이 끝나면 다시 베이크한다.
-- 11.16 에 main 을 multi 로 병합했다. multi 의 멀티/세트 효과/저장 작업은 아직 main 에 없다.
+- 11.25 에 모든 브랜치를 main 에 병합했다. multi 의 멀티/세트 효과/저장 작업도 main 에 있다.
 
 ---
 
@@ -55,13 +55,20 @@
 - 엔진: Unity 6000.3.10f1
 - 렌더 파이프라인: URP 17.3 (GraphicsSettings 에 URP 에셋 지정)
   - 보스 연출 코드도 `_BaseColor` (URP Lit) 기준이다.
-- 입력: New Input System (PlayerInputActions.inputactions, Assets/_Source/Town)
+- 입력: New Input System (PlayerInputActions.inputactions, Assets/Programming/Input)
 - 길찾기: AI Navigation (NavMeshSurface). 베이크된 씬: Town, Floor_1, Floor_2, BossTest
 - 빌드 씬 순서: Title, Town, Floor_1, Floor_2, Floor_3
   - BossTest 는 보스 단독 테스트 씬 (Floor_4_Boss 에서 이름 변경)
 - 레포: github.com/NeedhogProject/5G_Yggdrasil (옛 이름 Programming)
-- 멀티: Photon Fusion 2.1.4 (multi 브랜치에만 설치됨)
-- 브랜치: multi(건희 작업, 멀티 포함), main(팀원 작업), art(아트 전용)
+- 멀티: Photon Fusion 2.1.4
+- 브랜치 (2026-11-25 재구성): main(통합, 파트 브랜치에서 병합만), Planning, Programming/GamePlay(건희), Programming/UI(김보민), Art/Modeling, Art/VFX
+- 폴더 (2026-11-25 재배치)
+  - Programming: Scripts, Editor, Input, Data(ScriptableObject 에셋), UI(Images, Prefabs)
+  - Art/ModelingRigging: Models, Animation, Materials, Textures, Prefabs, Environment(루트에 흩어졌던 환경 에셋)
+  - Art/VFX: Fog Particles, Dissolve, Materials(보스 장판 표시)
+  - Planning: JSON 수치 테이블 (예정, 폴더 바로 아래에 둔다)
+  - 공용: Scenes, Prefabs. 그대로 둠: Resources, Settings, Photon, TextMesh Pro, TutorialInfo, _Recovery
+  - 레포 루트 Build: 빌드 출력용. 안의 결과물은 gitignore 대상
 
 ## 담당
 - 건희: 플레이어/전투, 인벤토리/아이템/장비, 유물, 세이브, 스테이지 전환, 적 AI, 보스(10.14부터 다시 담당), 멀티
@@ -315,6 +322,15 @@
 ---
 
 ## 작업 기록 (최신순)
+
+### 2026-11-25 브랜치 병합과 폴더 재배치
+- multi(main 11.18, 11.24 병합분 포함)와 feature/enemy-death-vfx 를 main 에 병합했다. EnemyBase 충돌은 main 쪽(destroyDelay 포함)을 유지했다. art 는 이미 병합된 상태였다.
+- 폴더를 파트별로 옮겼다(프로젝트 환경의 폴더 항목 참고). .meta 와 함께 git mv 로 옮겨 GUID 가 그대로라 씬/프리팹 연결은 유지된다.
+  - 새 폴더의 .meta 는 직접 만들어 커밋했다(PC 마다 다른 GUID 가 생기는 것 방지).
+  - 레거시 머티리얼 방식 FBX(Models/Item 의 Resource, Potion)는 옆 Materials 폴더와 같이 옮겼다.
+  - PlayerInputActions.cs 의 경로 주석을 새 위치로 고쳤다.
+  - 이동 전부터 있던 짝 없는 파일은 그대로 두었다: TMP 폰트 폴더의 macOS ._ 파일 8개, 빈 폴더용 .meta 11개(Models/Town 안 등).
+- 레포 루트에 Build 폴더를 만들었다(.gitkeep 만 추적).
 
 ### 2026-11-16 애니메이션 문제 확인, 에디터 변경 커밋 (multi 브랜치)
 - 달리기가 사선으로 보이고 상하체가 분리돼 보이는 문제를 측정했다. 원인은 Run, Attack 클립 자체이고 추후 클립을 교체하기로 했다 (미해결 이슈 참고).
