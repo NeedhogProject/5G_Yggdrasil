@@ -60,10 +60,49 @@ public class QuickSlotSystem : MonoBehaviour
             {
                 slots[i].consumable = null;
             }
+            EnsureIconImage(slots[i]);
             SetupSlotIcon(slots[i]);
         }
 
         RefreshAll();
+    }
+
+    // iconImage 가 인스펙터에 연결 안 됐으면 런타임에 자동 생성한다
+    // (수량 텍스트 뒤에 깔리는 아이콘 Image 를 슬롯 안에 만들어 연결)
+    private void EnsureIconImage(QuickSlot slot)
+    {
+        if (slot == null || slot.iconImage != null)
+        {
+            return;
+        }
+        if (slot.countText == null)
+        {
+            return;
+        }
+
+        Transform slotRoot = slot.countText.transform.parent;
+        if (slotRoot == null)
+        {
+            return;
+        }
+
+        GameObject iconObj = new GameObject("Icon(자동생성)", typeof(RectTransform));
+        iconObj.transform.SetParent(slotRoot, false);
+        // 수량 텍스트보다 뒤(아래)에 그려지도록 맨 앞 형제로
+        iconObj.transform.SetAsFirstSibling();
+
+        RectTransform rect = iconObj.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.offsetMin = new Vector2(4f, 4f);
+        rect.offsetMax = new Vector2(-4f, -4f);
+
+        Image image = iconObj.AddComponent<Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        image.enabled = false;
+
+        slot.iconImage = image;
     }
 
     private void Update()
@@ -191,7 +230,7 @@ public class QuickSlotSystem : MonoBehaviour
         }
     }
 
-    // 슬롯 하나의 보유 수량 표시 + 보유 0이면 아이콘 흐리게
+    // 슬롯 하나의 보유 수량 표시 + 보유 0이면 칸을 비운다
     private void RefreshSlot(QuickSlot slot)
     {
         if (slot == null || slot.consumable == null)
@@ -205,17 +244,43 @@ public class QuickSlotSystem : MonoBehaviour
             count = InventorySystem.Instance.GetConsumableCountByData(slot.consumable);
         }
 
+        // 보유를 다 써서 0이 되면 칸을 비운다 (다시 등록 가능)
+        if (count <= 0)
+        {
+            ClearSlot(slot);
+            return;
+        }
+
         // 수량 텍스트
         if (slot.countText != null)
         {
             slot.countText.text = count.ToString();
         }
 
-        // 보유 0이면 아이콘 흐리게, 있으면 선명하게
+        // 보유가 있으면 아이콘 선명하게
         if (slot.iconImage != null)
         {
-            float alpha = count > 0 ? 1f : emptyAlpha;
-            slot.iconImage.color = new Color(1f, 1f, 1f, alpha);
+            slot.iconImage.color = new Color(1f, 1f, 1f, 1f);
+        }
+    }
+
+    // 슬롯을 비운다 (보유 0이 되면 호출) — 등록 해제 + 아이콘/수량 비움
+    private void ClearSlot(QuickSlot slot)
+    {
+        if (slot == null)
+        {
+            return;
+        }
+
+        slot.consumable = null;
+
+        if (slot.iconImage != null)
+        {
+            slot.iconImage.enabled = false;
+        }
+        if (slot.countText != null)
+        {
+            slot.countText.text = "";
         }
     }
 }

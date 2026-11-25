@@ -228,6 +228,71 @@ public class InventorySystem : MonoBehaviour
         return nRemain;
     }
 
+    // 흩어진 같은 스택 아이템을 한 칸으로 합친다 (물약 등 스택 가능 아이템 대상)
+    // 이미 각각의 칸에 놓인 중복 아이템을 앞 칸으로 몰아넣고, 비워진 칸은 비운다.
+    public void ConsolidateStacks()
+    {
+        List<ItemData> processed = new List<ItemData>();
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            InventorySlot slot = slots[i];
+            if (slot == null || slot.IsOwner == false || slot.CurrentInstance == null)
+            {
+                continue;
+            }
+
+            ItemData data = slot.CurrentInstance.Data;
+            if (data == null || data.IsStackable == false)
+            {
+                continue;
+            }
+            if (processed.Contains(data) == true)
+            {
+                continue;
+            }
+            processed.Add(data);
+
+            // 이 종류가 놓인 칸들 (판매 담김 제외)
+            List<InventorySlot> group = GetItemSlots(data);
+            if (group.Count <= 1)
+            {
+                continue;
+            }
+
+            // 첫 칸을 기준으로 뒤 칸들을 합친다
+            InventorySlot baseSlot = group[0];
+            for (int g = 1; g < group.Count; g++)
+            {
+                InventorySlot other = group[g];
+                if (other == null || other.CurrentInstance == null)
+                {
+                    continue;
+                }
+
+                int moveCount = other.CurrentInstance.StackCount;
+                int added = baseSlot.CurrentInstance.AddStack(moveCount);
+                if (added <= 0)
+                {
+                    // 기준 칸이 가득 차면 합치지 않고 남겨둔다 (MaxStack 이 커서 거의 발생 안 함)
+                    continue;
+                }
+
+                other.CurrentInstance.RemoveStack(added);
+                baseSlot.SetItem(baseSlot.CurrentInstance);
+
+                if (other.CurrentInstance.IsEmpty == true)
+                {
+                    RemoveItemAtSlot(other);
+                }
+                else
+                {
+                    other.SetItem(other.CurrentInstance);
+                }
+            }
+        }
+    }
+
     // SetItem은 호출측에서 이미 한 경우, 영역 점유와 아이콘 크기만 처리
     private void OccupyAreaOnly(InventorySlot ownerSlot, ItemData item)
     {

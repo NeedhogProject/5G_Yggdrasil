@@ -32,6 +32,8 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void Start()
     {
+        EnsureEquipmentIcon();
+
         if (playerEquipment == null)
         {
             playerEquipment = FindFirstObjectByType<PlayerEquipment>();
@@ -41,6 +43,8 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     private void OnEnable()
     {
+        EnsureEquipmentIcon();
+
         if (playerEquipment == null)
         {
             playerEquipment = FindFirstObjectByType<PlayerEquipment>();
@@ -51,6 +55,33 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             playerEquipment.OnEquipmentChanged += RefreshFromEquipment;
             RefreshFromEquipment();
         }
+    }
+
+    // equipmentIcon 이 인스펙터에 연결 안 됐으면 런타임에 자동 생성한다
+    // (무기 슬롯처럼 이미 연결된 슬롯은 그대로 두고, 빈 방어구/유물 슬롯만 아이콘 Image 생성)
+    private void EnsureEquipmentIcon()
+    {
+        if (equipmentIcon != null)
+        {
+            return;
+        }
+
+        GameObject iconObj = new GameObject("EquipmentIcon(자동생성)", typeof(RectTransform));
+        iconObj.transform.SetParent(transform, false);
+        // 수량/하이라이트 등 다른 요소보다 뒤에 깔리도록 맨 앞 형제로
+        iconObj.transform.SetAsFirstSibling();
+
+        RectTransform rect = iconObj.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 0f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.offsetMin = new Vector2(6f, 6f);
+        rect.offsetMax = new Vector2(-6f, -6f);
+
+        Image image = iconObj.AddComponent<Image>();
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+
+        equipmentIcon = image;
     }
 
     private void OnDisable()
