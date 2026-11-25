@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 기획 테이블 변환 메뉴 (Tools > 테이블 변환)
+/// 기획 테이블 변환 메뉴 (Tools > 테이블 변환, Tools > 테이블 폴더 열기)
 ///
 /// 레포 루트 Tables/*.xlsx 를 읽어 Assets/Planning/*.json 으로 저장한다
 /// - 오류가 하나라도 있으면 어떤 JSON 도 바꾸지 않고 오류 목록을 보여준다
@@ -32,10 +32,17 @@ public static class TableConverterMenu
         new TableDef { Name = "Enhance", RowType = typeof(EnhanceRow), KeyField = "nLevel", JsonPath = GameTables.ENHANCE_JSON_PATH, AssetType = null },
     };
 
+    // 엑셀이 있는 Tables 폴더를 탐색기로 연다
+    [MenuItem("Tools/테이블 폴더 열기")]
+    public static void OpenTablesFolder()
+    {
+        EditorUtility.OpenWithDefaultApp(GetTablesDir());
+    }
+
     [MenuItem("Tools/테이블 변환")]
     public static void ConvertAll()
     {
-        string tablesDir = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tables"));
+        string tablesDir = GetTablesDir();
         List<string> errors = new List<string>();
         Dictionary<TableDef, string> results = new Dictionary<TableDef, string>();
 
@@ -88,6 +95,12 @@ public static class TableConverterMenu
 
         Debug.Log("[테이블 변환] 완료: " + string.Join(", ", Array.ConvertAll(TABLES, t => t.Name)));
         EditorUtility.DisplayDialog("테이블 변환", "변환 완료.\n\nTables 폴더의 엑셀과 Assets/Planning 의 JSON 을 같이 커밋하세요.", "확인");
+    }
+
+    // 레포 루트의 Tables 폴더 (Assets 밖)
+    private static string GetTablesDir()
+    {
+        return Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tables"));
     }
 
     // 테이블 ID 와 SO 에셋 이름이 서로 빠짐없이 대응하는지
