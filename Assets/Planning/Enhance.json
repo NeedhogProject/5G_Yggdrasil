@@ -1,0 +1,8 @@
+{"rows":[
+{"nLevel":0,"fSuccessRate":90,"fAttackMultiplier":1,"fSpeedMultiplier":1},
+{"nLevel":1,"fSuccessRate":75,"fAttackMultiplier":1.02,"fSpeedMultiplier":1},
+{"nLevel":2,"fSuccessRate":45,"fAttackMultiplier":1.04,"fSpeedMultiplier":1},
+{"nLevel":3,"fSuccessRate":25,"fAttackMultiplier":1.07,"fSpeedMultiplier":1.02},
+{"nLevel":4,"fSuccessRate":10,"fAttackMultiplier":1.09,"fSpeedMultiplier":1.03},
+{"nLevel":5,"fSuccessRate":0,"fAttackMultiplier":1.15,"fSpeedMultiplier":1.07}
+]}

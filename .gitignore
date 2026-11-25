@@ -103,3 +103,6 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 Assets/Scenes/Town.unity
 *.dll
+
+# 엑셀이 열려 있을 때 생기는 잠금 파일
+~$*.xlsx
