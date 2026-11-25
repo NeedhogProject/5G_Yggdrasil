@@ -27,32 +27,23 @@ public enum ArmorSlot
 public class ArmorData : ItemData
 {
     // ─────────────────────── 방어구 기본 스펙 ───────────────────────
+    // 부위, 방어력, 최대 체력, 기본 각인은 Tables/Armor.xlsx 에서 관리 (ID 는 에셋 이름)
 
-    [Header("방어구 부위")]
-    [SerializeField] private ArmorSlot armorSlot = ArmorSlot.Chest;
+    private ArmorRow Row => GameTables.GetArmor(name);
 
-    [Header("방어력")]
-    [Tooltip("착용 시 PlayerStats.AddEquipmentDefense() 에 전달되는 값")]
-    [SerializeField] [Range(0f, 200f)] private float defenseBonus = 10f;
-
-    [Header("최대 체력")]
-    [Tooltip("착용 시 PlayerStats.AddEquipmentMaxHealth() 에 전달되는 값")]
-    [SerializeField] [Range(0f, 200f)] private float maxHealthBonus = 0f;
-
-    // ─────────────────────── 각인 슬롯 ───────────────────────
-
-    [Header("기본 각인 (최대 1개) — 방어구 전용")]
-    [Tooltip("이 방어구의 기본 각인 원소. 보통 None 으로 두고 각인술사에서 부여")]
-    [SerializeField] private RuneElement runeSlot1 = RuneElement.None;
+    protected override ItemRow GetTableRow()
+    {
+        return Row;
+    }
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
-    public ArmorSlot   ArmorSlot      => armorSlot;
-    public float       DefenseBonus   => defenseBonus;
-    public float       MaxHealthBonus => maxHealthBonus;
-    public RuneElement RuneSlot1      => runeSlot1;
-    public bool HasRune    => runeSlot1 != RuneElement.None;
-    public bool IsRuneFull => runeSlot1 != RuneElement.None;
+    public ArmorSlot   ArmorSlot      => Row.ArmorSlot;
+    public float       DefenseBonus   => Row.fDefenseBonus;
+    public float       MaxHealthBonus => Row.fMaxHealthBonus;
+    public RuneElement RuneSlot1      => Row.RuneSlot1;
+    public bool HasRune    => RuneSlot1 != RuneElement.None;
+    public bool IsRuneFull => RuneSlot1 != RuneElement.None;
 
     /// <summary>
     /// 이 방어구가 기여하는 원소 목록 반환
@@ -61,17 +52,10 @@ public class ArmorData : ItemData
     public System.Collections.Generic.List<RuneElement> GetContributingElements()
     {
         System.Collections.Generic.List<RuneElement> result = new System.Collections.Generic.List<RuneElement>();
-        if (runeSlot1 != RuneElement.None)
-            result.Add(runeSlot1);
+        if (RuneSlot1 != RuneElement.None)
+            result.Add(RuneSlot1);
         return result;
     }
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        if (defenseBonus < 0f) defenseBonus = 0f;
-    }
-#endif
 }
 
 // ─────────────────────── 세트 효과 단계 ───────────────────────

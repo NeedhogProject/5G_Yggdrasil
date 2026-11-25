@@ -42,6 +42,7 @@
   - Floor_3 에 퀵슬롯 없음
 - Title 씬 KeySettingUI keySlots 에 삭제된 `Move` 액션 슬롯 4개 잔존
 - [영혼] 스택 UI: SetEffectController 의 SoulStacks, SoulMaxStacks, OnSoulStacksChanged 를 쓴다 (11.15 전달 대상).
+- BlacksmithSystem 미리보기에 강화 배율 배열(AttackMultipliers, SpeedMultipliers)이 따로 복사돼 있다. Enhance 테이블을 바꿔도 미리보기는 그대로이므로 GameTables.AttackMultipliers, SpeedMultipliers 를 쓰도록 전달 필요 (11.25).
 - 멀티 안내(관전, 층 이동, 전원 사망)의 정식 UI. 지금은 임시 OnGUI 표시다.
 - 11.16 에 main 을 병합해 다른 창과 같이 열렸을 때 G 드롭 차단, 등급별 퀵슬롯 사용(UseConsumableByData)이 들어왔다. 위 항목 중 해결된 것은 김보민 확인 후 지운다.
 
@@ -322,6 +323,20 @@
 ---
 
 ## 작업 기록 (최신순)
+
+### 2026-11-25 기획 테이블 1차: 무기, 방어구, 강화 (Programming/GamePlay, Planning 브랜치)
+- 흐름: 레포 루트 Tables/*.xlsx(기획자 수정)를 Unity 메뉴 Tools > 테이블 변환으로 Assets/Planning/*.json 으로 바꾸고, GameTables 가 불러온다.
+  - 엑셀 형식: A열 비움, 1행 키(행 클래스 필드 이름), 2행 한글 설명, 3행부터 데이터. 키가 빈 열과 키 열이 빈 행은 무시한다.
+  - 변환기는 오류(모르는 열, 빠진 열, 중복 ID, 숫자/정수/TRUE FALSE/허용 값 오류, SO 에셋과 ID 불일치)가 하나라도 있으면 JSON 을 바꾸지 않고 팝업으로 보여준다. 문자열 앞뒤 공백은 지운다.
+  - 분류별 파일: Weapon.xlsx, Armor.xlsx, Enhance.xlsx. ID 는 SO 에셋 파일 이름이다.
+- 신규: TableRows(행 클래스), GameTables(로더, 에디터에서는 Assets/Planning 직접 읽기), XlsxReader(외부 라이브러리 없이 xlsx 읽기), TableJsonBuilder, TableConverterMenu
+- ItemData: 공통 값(이름, 설명, 희귀도, 칸 크기, 가격, 버리기, 겹치기)을 테이블 행이 있으면 테이블에서, 없으면 인스펙터에서 읽는다(GetTableRow). 아직 옮기지 않은 분류는 그대로 인스펙터 값.
+  - 무기/방어구 에셋의 인스펙터 공통 값은 이제 쓰이지 않는다. 모든 분류를 옮긴 뒤 ItemData 필드를 지운다.
+- WeaponData, ArmorData: 수치 필드와 강화 배열(성공률, 공격력/공격속도 배율)을 지우고 테이블 조회로 바꿨다. 에셋 YAML 의 옛 값도 지웠다. 프로퍼티 이름은 그대로라 호출부 변경 없음.
+- ItemDataRegistry: 테이블 JSON 3개 참조, Awake 에서 GameTables.Load. DefaultExecutionOrder(-1000) 로 다른 Awake 보다 먼저 실행. GameCore 프리팹에 연결했다.
+- 검증: 엑셀 값과 기존 SO 값 656개 비교(차이는 문자열 끝 공백 4건), 프로퍼티 816개(강화 0~5단계 최종 공격력/공격속도/성공률 포함) 기존과 동일, 잘못된 엑셀 입력 오류 검출 확인. Unity 실행 확인은 전.
+- JSON 은 Planning 브랜치, 코드는 Programming/GamePlay 브랜치. Planning 을 먼저 main 에 병합해야 GameCore 의 JSON 참조가 이어진다.
+- 다음: 소모품, 자원, 유물, 재료, 열쇠, 세트 효과. 몬스터/보스 수치는 FSM 기반 AI 재설계 때 Monster 시트로 추가.
 
 ### 2026-11-25 브랜치 병합과 폴더 재배치
 - multi(main 11.18, 11.24 병합분 포함)와 feature/enemy-death-vfx 를 main 에 병합했다. EnemyBase 충돌은 main 쪽(destroyDelay 포함)을 유지했다. art 는 이미 병합된 상태였다.
