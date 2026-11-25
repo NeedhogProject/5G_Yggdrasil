@@ -44,6 +44,9 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
+*.lscache
+UpgradeLog*.htm
 *.suo
 *.tmp
 *.user

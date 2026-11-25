@@ -14,7 +14,7 @@ public static class MultiTestLauncherMenu
 {
     private const string MENU_PATH = "Tools/Multi/테스트 런처 자동 생성";
     private const string PREF_KEY = "Yggdrasil.MultiTestLauncher";
-    private const string AVATAR_PREFAB_PATH = "Assets/Prefabs/Multi/PlayerAvatar.prefab";
+    private const string AVATAR_PREFAB_PATH = "Assets/Programming/Prefabs/Multi/PlayerAvatar.prefab";
 
     static MultiTestLauncherMenu()
     {
