@@ -63,11 +63,11 @@
 - 멀티: Photon Fusion 2.1.4
 - 브랜치 (2026-11-25 재구성): main(통합, 파트 브랜치에서 병합만), Planning, Programming/GamePlay(건희), Programming/UI(김보민), Art/Modeling, Art/VFX
 - 폴더 (2026-11-25 재배치)
-  - Programming: Scripts, Editor, Input, Data(ScriptableObject 에셋), UI(Images, Prefabs)
-  - Art/ModelingRigging: Models, Animation, Materials, Textures, Prefabs, Environment(루트에 흩어졌던 환경 에셋)
+  - Programming: Scripts, Editor, Input, Data(ScriptableObject 에셋), Prefabs(게임 프리팹), TestScenes(BossTest, SampleScene), UI(Images, Prefabs)
+  - Art/ModelingRigging: Models, Animation, Materials, Textures, Prefabs(Tree, Rock, Items), Environment(루트에 흩어졌던 환경 에셋, SceneData)
   - Art/VFX: Fog Particles, Dissolve, Materials(보스 장판 표시)
   - Planning: JSON 수치 테이블 (예정, 폴더 바로 아래에 둔다)
-  - 공용: Scenes, Prefabs. 그대로 둠: Resources, Settings, Photon, TextMesh Pro, TutorialInfo, _Recovery
+  - 공용: Scenes(빌드 씬 5개와 씬별 베이크 데이터만). 그대로 둠: Resources, Settings, Photon, TextMesh Pro, TutorialInfo, _Recovery
   - 레포 루트 Build: 빌드 출력용. 안의 결과물은 gitignore 대상
 
 ## 담당
@@ -331,6 +331,7 @@
   - PlayerInputActions.cs 의 경로 주석을 새 위치로 고쳤다.
   - 이동 전부터 있던 짝 없는 파일은 그대로 두었다: TMP 폰트 폴더의 macOS ._ 파일 8개, 빈 폴더용 .meta 11개(Models/Town 안 등).
 - 레포 루트에 Build 폴더를 만들었다(.gitkeep 만 추적).
+- 2차 정리(Programming/GamePlay 브랜치): Prefabs 를 Programming/Prefabs 로, ItemModeling 을 Art/ModelingRigging/Prefabs/Items 로, BossTest 와 SampleScene 을 Programming/TestScenes 로, Scenes 의 터레인 레이어와 stage1, stage3, village_background 데이터를 Art/ModelingRigging/Environment/SceneData 로 옮겼다. MultiTestLauncherMenu 의 아바타 프리팹 경로를 갱신했다.
 
 ### 2026-11-16 애니메이션 문제 확인, 에디터 변경 커밋 (multi 브랜치)
 - 달리기가 사선으로 보이고 상하체가 분리돼 보이는 문제를 측정했다. 원인은 Run, Attack 클립 자체이고 추후 클립을 교체하기로 했다 (미해결 이슈 참고).
