@@ -44,18 +44,6 @@ public class ArmorData : ItemData
     public RuneElement RuneSlot1      => Row.RuneSlot1;
     public bool HasRune    => RuneSlot1 != RuneElement.None;
     public bool IsRuneFull => RuneSlot1 != RuneElement.None;
-
-    /// <summary>
-    /// 이 방어구가 기여하는 원소 목록 반환
-    /// ArmorSetManager 에서 원소별 세트 카운트 집계에 사용
-    /// </summary>
-    public System.Collections.Generic.List<RuneElement> GetContributingElements()
-    {
-        System.Collections.Generic.List<RuneElement> result = new System.Collections.Generic.List<RuneElement>();
-        if (RuneSlot1 != RuneElement.None)
-            result.Add(RuneSlot1);
-        return result;
-    }
 }
 
 // ─────────────────────── 세트 효과 단계 ───────────────────────

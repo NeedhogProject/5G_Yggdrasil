@@ -18,7 +18,8 @@ using System.Collections.Generic;
 /// - 어둠 1세트: 처치/보스 적중 시 [영혼] 스택 (스택당 공격력, 보스 적중은 공격 1회당 1스택), 비전투 시 소멸
 ///        3세트: 체력 기준 미만이면 공격력 증가
 ///        4세트: 전투 중 사망 시 [영혼] 소모해 부활 + 일정 시간 흡혈 (쿨타임)
-/// - 고정 수치 보너스(공격력/이동속도 등)는 SetEffectData 에셋에서 ArmorSetManager 가 처리
+/// - 고정 수치 보너스(공격력/이동속도 등)는 Tables/SetBonus.xlsx 를 ArmorSetManager 가 처리
+/// - 아래 수치는 Tables/SetEffect.xlsx 에서 관리 (엑셀은 % 단위, Awake 에서 비율로 변환)
 ///
 /// [사용법]
 /// - Player 오브젝트에 부착 (ArmorSetManager/PlayerCombat/PlayerDeath 가 자동 탐색)
@@ -30,78 +31,53 @@ public class SetEffectController : MonoBehaviour
     [Header("공통")]
     [Tooltip("범위 효과가 감지할 적 레이어")]
     [SerializeField] private LayerMask enemyLayer = ~0;
-    [Tooltip("마지막 공격/피격 후 이 시간(초)이 지나면 비전투")]
-    [SerializeField] private float combatTimeout = 5f;
 
-    [Header("불 3세트 [점화]")]
-    [SerializeField] [Range(0f, 1f)] private float igniteChance = 0.25f;
-    [SerializeField] private float igniteDuration = 3f;
-    [SerializeField] private float igniteDamagePerSecond = 10f;
-    [Tooltip("점화 적용 시점부터 다음 점화까지 쿨타임 (초)")]
-    [SerializeField] private float igniteCooldown = 3f;
-    [Tooltip("점화 중 적에게 붙는 타오르는 이펙트")]
+    [Header("이펙트")]
+    [Tooltip("불 3세트: 점화 중 적에게 붙는 타오르는 이펙트")]
     [SerializeField] private GameObject prefabIgniteVFX;
-
-    [Header("불 4세트 폭발")]
-    [SerializeField] private float explosionRadius = 3f;
-    [Tooltip("플레이어 공격력 대비 폭발 피해 비율 (0.13 = 13%)")]
-    [SerializeField] private float explosionDamageRatio = 0.13f;
+    [Tooltip("불 4세트: 폭발 이펙트")]
     [SerializeField] private GameObject prefabExplosionVFX;
-
-    [Header("물 2세트 둔화")]
-    [SerializeField] [Range(0f, 1f)] private float waterSlowPercent = 0.05f;
-    [SerializeField] private float waterSlowDuration = 2f;
-
-    [Header("물 3세트 회복")]
-    [SerializeField] private float regenDuration = 3f;
-    [Tooltip("초당 최대 체력 대비 회복 % (3 = 3%)")]
-    [SerializeField] private float regenPercentPerSecond = 3f;
-    [Tooltip("회복 적용 시점부터 다음 회복까지 쿨타임 (초)")]
-    [SerializeField] private float regenCooldown = 5f;
-
-    [Header("물 4세트")]
-    [SerializeField] [Range(0f, 1f)] private float waterHealthThreshold = 0.5f;
-    [SerializeField] private float waterHighHealthAttackBonus = 0.15f;
-    [SerializeField] private float waterLowHealthRegenMultiplier = 2f;
-
-    [Header("바람 4세트 회오리")]
-    [SerializeField] private int tornadoAttackCount = 3;
-    [SerializeField] private float tornadoDamage = 10f;
-    [Tooltip("좌우 범위 (중심에서 한쪽 폭)")]
-    [SerializeField] private float tornadoHalfWidth = 1f;
-    [Tooltip("앞 거리")]
-    [SerializeField] private float tornadoDistance = 8f;
-    [SerializeField] private float tornadoSpeed = 12f;
+    [Tooltip("바람 4세트: 회오리 이펙트")]
     [SerializeField] private GameObject prefabTornadoVFX;
-
-    [Header("땅 3세트 보호막")]
-    [Tooltip("최대 체력 대비 보호막 % (7 = 7%)")]
-    [SerializeField] private float shieldPercent = 7f;
-    [SerializeField] private float shieldInterval = 15f;
-    [Tooltip("보호막 유지 중 플레이어에 붙는 이펙트")]
+    [Tooltip("땅 3세트: 보호막 유지 중 플레이어에 붙는 이펙트")]
     [SerializeField] private GameObject prefabShieldVFX;
 
-    [Header("땅 4세트")]
-    [SerializeField] private float shieldAttackBonus = 0.05f;
-    [SerializeField] private float stunRadius = 4f;
-    [SerializeField] private float stunDuration = 1.5f;
+    // ─────────────────────── 기획 수치 (Tables/SetEffect.xlsx, LoadTableValues 에서 채움) ───────────────────────
 
-    [Header("어둠 1세트 [영혼]")]
-    [SerializeField] private float soulAttackPerStack = 0.03f;
-    [SerializeField] private int soulMaxStacks = 10;
-    [Tooltip("비전투 시 스택 1개 소멸 간격 (초)")]
-    [SerializeField] private float soulDecayInterval = 1f;
-
-    [Header("어둠 3세트")]
-    [SerializeField] [Range(0f, 1f)] private float darkHealthThreshold = 0.5f;
-    [SerializeField] private float darkLowHealthAttackBonus = 0.09f;
-
-    [Header("어둠 4세트 부활")]
-    [Tooltip("영혼 스택당 최대 체력 회복 % (5 = 5%)")]
-    [SerializeField] private float reviveHealPercentPerStack = 5f;
-    [SerializeField] private float reviveLifeSteal = 0.04f;
-    [SerializeField] private float reviveLifeStealDuration = 5f;
-    [SerializeField] private float reviveCooldown = 90f;
+    private float combatTimeout;                  // 비전투 판정 시간 (초)
+    private float igniteChance;                   // 비율
+    private float igniteDuration;
+    private float igniteDamagePerSecond;
+    private float igniteCooldown;
+    private float explosionRadius;
+    private float explosionDamageRatio;           // 비율
+    private float waterSlowPercent;               // 비율
+    private float waterSlowDuration;
+    private float regenDuration;
+    private float regenPercentPerSecond;          // %
+    private float regenCooldown;
+    private float waterHealthThreshold;           // 비율
+    private float waterHighHealthAttackBonus;     // 비율
+    private float waterLowHealthRegenMultiplier;  // 배율
+    private int tornadoAttackCount;
+    private float tornadoDamage;
+    private float tornadoHalfWidth;
+    private float tornadoDistance;
+    private float tornadoSpeed;
+    private float shieldPercent;                  // %
+    private float shieldInterval;
+    private float shieldAttackBonus;              // 비율
+    private float stunRadius;
+    private float stunDuration;
+    private float soulAttackPerStack;             // 비율
+    private int soulMaxStacks;
+    private float soulDecayInterval;
+    private float darkHealthThreshold;            // 비율
+    private float darkLowHealthAttackBonus;       // 비율
+    private float reviveHealPercentPerStack;      // %
+    private float reviveLifeSteal;                // 비율
+    private float reviveLifeStealDuration;
+    private float reviveCooldown;
 
     // ─────────────────────── 런타임 ───────────────────────
 
@@ -165,6 +141,46 @@ public class SetEffectController : MonoBehaviour
     {
         _stats = GetComponent<PlayerStats>();
         _combat = GetComponent<PlayerCombat>();
+        LoadTableValues();
+    }
+
+    // 엑셀의 % 값은 100 으로 나눠 비율로 쓴다
+    private void LoadTableValues()
+    {
+        combatTimeout = GameTables.GetSetEffectValue("Common_CombatTimeout");
+        igniteChance = GameTables.GetSetEffectValue("Fire_IgniteChance") / 100f;
+        igniteDuration = GameTables.GetSetEffectValue("Fire_IgniteDuration");
+        igniteDamagePerSecond = GameTables.GetSetEffectValue("Fire_IgniteDamagePerSecond");
+        igniteCooldown = GameTables.GetSetEffectValue("Fire_IgniteCooldown");
+        explosionRadius = GameTables.GetSetEffectValue("Fire_ExplosionRadius");
+        explosionDamageRatio = GameTables.GetSetEffectValue("Fire_ExplosionDamage") / 100f;
+        waterSlowPercent = GameTables.GetSetEffectValue("Water_SlowPercent") / 100f;
+        waterSlowDuration = GameTables.GetSetEffectValue("Water_SlowDuration");
+        regenDuration = GameTables.GetSetEffectValue("Water_RegenDuration");
+        regenPercentPerSecond = GameTables.GetSetEffectValue("Water_RegenPerSecond");
+        regenCooldown = GameTables.GetSetEffectValue("Water_RegenCooldown");
+        waterHealthThreshold = GameTables.GetSetEffectValue("Water_HealthThreshold") / 100f;
+        waterHighHealthAttackBonus = GameTables.GetSetEffectValue("Water_HighHealthAttack") / 100f;
+        waterLowHealthRegenMultiplier = GameTables.GetSetEffectValue("Water_LowHealthRegen") / 100f;
+        tornadoAttackCount = Mathf.RoundToInt(GameTables.GetSetEffectValue("Wind_TornadoAttackCount"));
+        tornadoDamage = GameTables.GetSetEffectValue("Wind_TornadoDamage");
+        tornadoHalfWidth = GameTables.GetSetEffectValue("Wind_TornadoHalfWidth");
+        tornadoDistance = GameTables.GetSetEffectValue("Wind_TornadoDistance");
+        tornadoSpeed = GameTables.GetSetEffectValue("Wind_TornadoSpeed");
+        shieldPercent = GameTables.GetSetEffectValue("Earth_ShieldPercent");
+        shieldInterval = GameTables.GetSetEffectValue("Earth_ShieldInterval");
+        shieldAttackBonus = GameTables.GetSetEffectValue("Earth_ShieldAttack") / 100f;
+        stunRadius = GameTables.GetSetEffectValue("Earth_StunRadius");
+        stunDuration = GameTables.GetSetEffectValue("Earth_StunDuration");
+        soulAttackPerStack = GameTables.GetSetEffectValue("Darkness_SoulAttackPerStack") / 100f;
+        soulMaxStacks = Mathf.RoundToInt(GameTables.GetSetEffectValue("Darkness_SoulMaxStacks"));
+        soulDecayInterval = GameTables.GetSetEffectValue("Darkness_SoulDecayInterval");
+        darkHealthThreshold = GameTables.GetSetEffectValue("Darkness_HealthThreshold") / 100f;
+        darkLowHealthAttackBonus = GameTables.GetSetEffectValue("Darkness_LowHealthAttack") / 100f;
+        reviveHealPercentPerStack = GameTables.GetSetEffectValue("Darkness_ReviveHealPerStack");
+        reviveLifeSteal = GameTables.GetSetEffectValue("Darkness_ReviveLifeSteal") / 100f;
+        reviveLifeStealDuration = GameTables.GetSetEffectValue("Darkness_ReviveLifeStealDuration");
+        reviveCooldown = GameTables.GetSetEffectValue("Darkness_ReviveCooldown");
     }
 
     private void OnEnable()
