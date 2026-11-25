@@ -13,6 +13,8 @@ using System.Collections.Generic;
 ///   GameCore 프리팹에 부착 (목록은 자동으로 채워짐, 수동은 컴포넌트 우클릭 '모든 ItemData 자동 수집')
 ///   ItemDataRegistry.Instance.FindById(id) / GetId(data)
 /// </summary>
+// 다른 스크립트의 Awake 보다 먼저 기획 테이블을 불러온다
+[DefaultExecutionOrder(-1000)]
 public class ItemDataRegistry : MonoBehaviour
 {
     // 등록 항목 (GUID 와 에셋)
@@ -38,8 +40,16 @@ public class ItemDataRegistry : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        GameTables.Load(weaponTableJson, armorTableJson, enhanceTableJson);
         BuildDictionary();
     }
+
+    // ─────────────────────── 기획 테이블 ───────────────────────
+
+    [Header("기획 테이블 JSON (Assets/Planning)")]
+    [SerializeField] private TextAsset weaponTableJson = null;
+    [SerializeField] private TextAsset armorTableJson = null;
+    [SerializeField] private TextAsset enhanceTableJson = null;
 
     // ─────────────────────── 등록 목록 ───────────────────────
 

@@ -339,6 +339,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d877a36bc4cb3a4c949204d0984ae36, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemDataRegistry
+  weaponTableJson: {fileID: 4900000, guid: eb6986cae9924df5bec0732441590c4b, type: 3}
+  armorTableJson: {fileID: 4900000, guid: a2d06e8fef7f418e963446a1a5ffbd9f, type: 3}
+  enhanceTableJson: {fileID: 4900000, guid: 4a987d1c1b614a1a8482175fb2cc5b25, type: 3}
   items:
   - id: 00b57ccc80c09d042b3cf287bf15a1b4
     data: {fileID: 11400000, guid: 00b57ccc80c09d042b3cf287bf15a1b4, type: 2}

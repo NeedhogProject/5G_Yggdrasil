@@ -30,26 +30,14 @@ public enum WeaponRarity
 public class WeaponData : ItemData
 {
     // ─────────────────────── 무기 기본 스펙 ───────────────────────
+    // 무기 종류, 등급, 전투 수치는 Tables/Weapon.xlsx 에서 관리 (ID 는 에셋 이름)
 
-    [Header("무기 종류")]
-    [SerializeField] private WeaponType   weaponType = WeaponType.Sword;
-    [SerializeField] private WeaponRarity _weaponRarity = WeaponRarity.Common;
+    private WeaponRow Row => GameTables.GetWeapon(name);
 
-    [Header("전투 스펙")]
-    [Tooltip("기본 공격력 (정신력·강화 보정 전)")]
-    [SerializeField] [Range(1f, 200f)] private float baseDamage = 10f;
-
-    [Tooltip("초당 공격 횟수 (공격 속도)")]
-    [SerializeField] [Range(0.1f, 5f)]  private float attackSpeed = 1f;
-
-    [Tooltip("공격이 닿는 거리 (Unity 단위). 단검<장검<창 권장값: 1.2 / 2.0 / 3.5")]
-    [SerializeField] [Range(0.5f, 6f)]  private float reach = 2f;
-
-    [Tooltip("공격 판정 너비(호/원 반경). 찌르기 계열(창/단검)은 좁게, 장검은 넓게")]
-    [SerializeField] [Range(0.1f, 2f)]  private float attackWidth = 0.5f;
-
-    [Tooltip("공격 후 이동할 수 없는 경직 시간 (초). 이후 이동 입력으로 공격 모션 캔슬 가능")]
-    [SerializeField] [Range(0f, 2f)]    private float attackLockTime = 0.25f;
+    protected override ItemRow GetTableRow()
+    {
+        return Row;
+    }
 
     [Header("무기 모델")]
     [Tooltip("손에 장착될 무기 3D 모델 프리팹")]
@@ -62,28 +50,24 @@ public class WeaponData : ItemData
     [Header("강화 단계 (0 ~ 5)")]
     [SerializeField] [Range(0, 5)] private int enhancementLevel = 0;
 
-    // 0강부터 4강 시도 시 성공 확률 (기획서 수치: 90/75/45/25/10%)
-    private static readonly float[] enhanceSuccessRates = { 90f, 75f, 45f, 25f, 10f };
-
-    // 강화 단계별 공격력 배율 (기획서 기준: 0/2/4/7/9/15%)
-    private static readonly float[] attackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
-
-    // 강화 단계별 공격속도 배율 (기획서 기준: 3강부터 2/3/7%)
-    private static readonly float[] speedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
+    // 강화 성공 확률, 공격력 배율, 공격속도 배율은 Tables/Enhance.xlsx 에서 관리
+    private static float[] enhanceSuccessRates => GameTables.EnhanceSuccessRates;
+    private static float[] attackMultipliers => GameTables.AttackMultipliers;
+    private static float[] speedMultipliers => GameTables.SpeedMultipliers;
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
-    public WeaponType   WeaponType   { get => weaponType; internal set => weaponType = value; }
-    public WeaponRarity WeaponRarity => _weaponRarity;
-    public float        BaseDamage       => baseDamage;
-    public float        AttackSpeed      => attackSpeed;
+    public WeaponType   WeaponType   => Row.WeaponType;
+    public WeaponRarity WeaponRarity => Row.WeaponRarity;
+    public float        BaseDamage       => Row.fBaseDamage;
+    public float        AttackSpeed      => Row.fAttackSpeed;
 
     /// <summary>공격 리치 (Unity 단위). 단검 ≈ 1.2, 장검 ≈ 2.0, 창 ≈ 3.5</summary>
-    public float Reach       => reach;
-    public float AttackWidth => attackWidth;
+    public float Reach       => Row.fReach;
+    public float AttackWidth => Row.fAttackWidth;
 
     /// <summary>공격 경직 시간 (초)</summary>
-    public float AttackLockTime => attackLockTime;
+    public float AttackLockTime => Row.fAttackLockTime;
 
     public int EnhancementLevel => enhancementLevel;
 
@@ -103,11 +87,11 @@ public class WeaponData : ItemData
 
     /// <summary>강화 단계가 반영된 실제 공격력 (기획서 배율 적용)</summary>
     public float FinalDamage =>
-        baseDamage * attackMultipliers[Mathf.Clamp(enhancementLevel, 0, attackMultipliers.Length - 1)];
+        BaseDamage * attackMultipliers[Mathf.Clamp(enhancementLevel, 0, attackMultipliers.Length - 1)];
 
     /// <summary>강화 단계가 반영된 실제 공격속도 (기획서 배율 적용)</summary>
     public float FinalAttackSpeed =>
-        attackSpeed * speedMultipliers[Mathf.Clamp(enhancementLevel, 0, speedMultipliers.Length - 1)];
+        AttackSpeed * speedMultipliers[Mathf.Clamp(enhancementLevel, 0, speedMultipliers.Length - 1)];
 
     /// <summary>강화 단계별 공격력 배율 표 (대장간 미리보기에서 참조)</summary>
     public float[] AttackMultipliers => attackMultipliers;
