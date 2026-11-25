@@ -69,11 +69,7 @@ public class BlacksmithSystem : MonoBehaviour
         "무리한 강화는 무기를 잃게 만들지. 욕심은 금물이야."
     };
 
-    // 무기 강화 배율 (WeaponData 의 값과 동일하게 유지한다)
-    // WeaponData 의 배열이 private 이라 미리보기 계산용으로 여기에 복사해 둔다.
-    // 정건희가 WeaponData 의 배율을 바꾸면 이 두 줄도 같이 맞춰야 한다.
-    private static readonly float[] AttackMultipliers = { 1.00f, 1.02f, 1.04f, 1.07f, 1.09f, 1.15f };
-    private static readonly float[] SpeedMultipliers = { 1.00f, 1.00f, 1.00f, 1.02f, 1.03f, 1.07f };
+    // 무기 강화 배율은 GameTables.AttackMultipliers / GameTables.SpeedMultipliers 를 사용한다
 
     private int _talkIndex = 0;
 
@@ -450,8 +446,8 @@ public class BlacksmithSystem : MonoBehaviour
         }
 
         // 현재 스탯 (공격력 / 공격속도) — 자체 배율 배열로 계산
-        float currentDamage = data.BaseDamage * GetMultiplier(AttackMultipliers, level);
-        float currentSpeed = data.AttackSpeed * GetMultiplier(SpeedMultipliers, level);
+        float currentDamage = data.BaseDamage * GetMultiplier(GameTables.AttackMultipliers, level);
+        float currentSpeed = data.AttackSpeed * GetMultiplier(GameTables.SpeedMultipliers, level);
         if (currentStatsText != null)
         {
             currentStatsText.text = "공격력 " + currentDamage.ToString("F0")
@@ -466,8 +462,8 @@ public class BlacksmithSystem : MonoBehaviour
             }
 
             // 다음 강 스탯 미리보기 — 자체 배율 배열로 계산 (WeaponData 원본 변경 없이)
-            float nextDamage = data.BaseDamage * GetMultiplier(AttackMultipliers, level + 1);
-            float nextSpeed = data.AttackSpeed * GetMultiplier(SpeedMultipliers, level + 1);
+            float nextDamage = data.BaseDamage * GetMultiplier(GameTables.AttackMultipliers, level + 1);
+            float nextSpeed = data.AttackSpeed * GetMultiplier(GameTables.SpeedMultipliers, level + 1);
 
             if (nextStatsText != null)
             {
