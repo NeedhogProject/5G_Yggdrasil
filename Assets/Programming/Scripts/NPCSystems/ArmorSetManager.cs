@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 /// <summary>
 /// 단일 원소 세트 효과 관리 시스템
@@ -17,7 +16,7 @@ using System.Linq;
 ///
 /// [사용법]
 /// - PlayerEquipment 에서 장착/해제 시 OnArmorEquipped / OnArmorUnequipped 호출
-/// - setEffectDatabase 에 원소별 SetEffectData 에셋 등록 (5개)
+/// - 단계별 수치는 Tables/SetBonus.xlsx 에서 관리 (GameTables.SetBonusRows)
 /// - Player 오브젝트에 부착 (PlayerStats/PlayerCombat/PlayerController 자동 탐색)
 /// </summary>
 public class ArmorSetManager : MonoBehaviour
@@ -29,9 +28,6 @@ public class ArmorSetManager : MonoBehaviour
     [SerializeField] private PlayerCombat playerCombat;
     [SerializeField] private PlayerController playerController;
     [SerializeField] private SetEffectController setEffectController;
-
-    [Header("세트 효과 데이터베이스 (원소별 SetEffectData 5개 등록)")]
-    [SerializeField] private List<SetEffectData> setEffectDatabase = new List<SetEffectData>();
 
     // ─────────────────────── 런타임 상태 ───────────────────────
 
@@ -147,27 +143,23 @@ public class ArmorSetManager : MonoBehaviour
         foreach (KeyValuePair<RuneElement, SetTier> kv in _activeTiers)
         {
             if (kv.Value == SetTier.None) continue;
-            SetEffectData data = GetData(kv.Key);
-            if (data == null) continue;
 
             // 누적 — 1단계부터 현재 단계까지 보너스 합산
-            for (int nTier = (int)SetTier.Tier1; nTier <= (int)kv.Value; nTier++)
+            foreach (SetBonusRow row in GameTables.SetBonusRows)
             {
-                foreach (StatBonus bonus in data.GetStatBonuses((SetTier)nTier))
+                if (row.Element != kv.Key || row.nTier < (int)SetTier.Tier1 || row.nTier > (int)kv.Value)
                 {
-                    switch (bonus.bonusType)
-                    {
-                        case StatBonusType.AttackDamage: attackPercent      += bonus.percent; break;
-                        case StatBonusType.Defense:      defensePercent     += bonus.percent; break;
-                        case StatBonusType.Health:       healthPercent      += bonus.percent; break;
-                        case StatBonusType.Mental:       mentalBonus        += bonus.percent; break;
-                        case StatBonusType.AttackSpeed:  attackSpeedPercent += bonus.percent; break;
-                        case StatBonusType.MoveSpeed:    moveSpeedPercent   += bonus.percent; break;
-                        case StatBonusType.LifeSteal:    lifeStealPercent   += bonus.percent; break;
-                        case StatBonusType.Shield:       shieldPercent      += bonus.percent; break;
-                        case StatBonusType.DamageReduction: damageReductionPercent += bonus.percent; break;
-                    }
+                    continue;
                 }
+                attackPercent += row.fAttackDamage;
+                defensePercent += row.fDefense;
+                healthPercent += row.fHealth;
+                mentalBonus += row.fMental;
+                attackSpeedPercent += row.fAttackSpeed;
+                moveSpeedPercent += row.fMoveSpeed;
+                lifeStealPercent += row.fLifeSteal;
+                shieldPercent += row.fShield;
+                damageReductionPercent += row.fDamageReduction;
             }
         }
 
@@ -194,17 +186,4 @@ public class ArmorSetManager : MonoBehaviour
         if (setEffectController != null)
             setEffectController.ApplyTiers(_activeTiers);
     }
-
-    // ─────────────────────── 유틸 ───────────────────────
-
-    private SetEffectData GetData(RuneElement elem) =>
-        setEffectDatabase.FirstOrDefault(d => d != null && d.Element == elem);
-
-    /// <summary>현재 원소의 활성 Tier 반환 (UI 표시용)</summary>
-    public SetTier GetActiveTier(RuneElement elem) =>
-        _activeTiers.TryGetValue(elem, out SetTier t) ? t : SetTier.None;
-
-    /// <summary>현재 원소의 착용 카운트 반환 (UI 표시용)</summary>
-    public int GetElementCount(RuneElement elem) =>
-        _elementCounts.TryGetValue(elem, out int c) ? c : 0;
 }

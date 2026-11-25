@@ -342,6 +342,8 @@ MonoBehaviour:
   weaponTableJson: {fileID: 4900000, guid: eb6986cae9924df5bec0732441590c4b, type: 3}
   armorTableJson: {fileID: 4900000, guid: a2d06e8fef7f418e963446a1a5ffbd9f, type: 3}
   enhanceTableJson: {fileID: 4900000, guid: 4a987d1c1b614a1a8482175fb2cc5b25, type: 3}
+  setBonusTableJson: {fileID: 4900000, guid: e7669aacd16b35541973e2cf942ee337, type: 3}
+  setEffectTableJson: {fileID: 4900000, guid: 0cfbf80d2639cd946a242c644c0903a7, type: 3}
   items:
   - id: 00b57ccc80c09d042b3cf287bf15a1b4
     data: {fileID: 11400000, guid: 00b57ccc80c09d042b3cf287bf15a1b4, type: 2}

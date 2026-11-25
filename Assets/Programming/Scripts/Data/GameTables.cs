@@ -13,21 +13,27 @@ public static class GameTables
     public const string WEAPON_JSON_PATH = "Assets/Planning/Weapon.json";
     public const string ARMOR_JSON_PATH = "Assets/Planning/Armor.json";
     public const string ENHANCE_JSON_PATH = "Assets/Planning/Enhance.json";
+    public const string SET_BONUS_JSON_PATH = "Assets/Planning/SetBonus.json";
+    public const string SET_EFFECT_JSON_PATH = "Assets/Planning/SetEffect.json";
 
     private static Dictionary<string, WeaponRow> weaponRows = null;
     private static Dictionary<string, ArmorRow> armorRows = null;
     private static float[] successRates = null;
     private static float[] attackMultipliers = null;
     private static float[] speedMultipliers = null;
+    private static SetBonusRow[] setBonusRows = null;
+    private static Dictionary<string, float> setEffectValues = null;
     private static bool bLoadAttempted = false;   // 실패 시 매 조회마다 재시도 방지
 
     // 없는 ID 경고는 ID 마다 1번만
     private static readonly HashSet<string> reportedMissing = new HashSet<string>();
 
-    public static void Load(TextAsset _weaponJson, TextAsset _armorJson, TextAsset _enhanceJson)
+    public static void Load(TextAsset _weaponJson, TextAsset _armorJson, TextAsset _enhanceJson,
+                            TextAsset _setBonusJson, TextAsset _setEffectJson)
     {
         bLoadAttempted = true;
-        if (_weaponJson == null || _armorJson == null || _enhanceJson == null)
+        if (_weaponJson == null || _armorJson == null || _enhanceJson == null
+            || _setBonusJson == null || _setEffectJson == null)
         {
             Debug.LogError("[GameTables] 테이블 JSON 이 연결되지 않았습니다. GameCore 의 ItemDataRegistry 를 확인하세요.");
             return;
@@ -58,6 +64,14 @@ public static class GameTables
             speedMultipliers[i] = enhanceRows[i].fSpeedMultiplier;
         }
 
+        setBonusRows = JsonUtility.FromJson<SetBonusTable>(_setBonusJson.text).rows;
+
+        setEffectValues = new Dictionary<string, float>();
+        foreach (SetEffectRow row in JsonUtility.FromJson<SetEffectTable>(_setEffectJson.text).rows)
+        {
+            setEffectValues[row.Id] = row.fValue;
+        }
+
         reportedMissing.Clear();
     }
 
@@ -69,6 +83,8 @@ public static class GameTables
         successRates = null;
         attackMultipliers = null;
         speedMultipliers = null;
+        setBonusRows = null;
+        setEffectValues = null;
         bLoadAttempted = false;
     }
 
@@ -123,6 +139,29 @@ public static class GameTables
         }
     }
 
+    // 세트 단계별 보너스 전체 (원소와 단계는 행에서 확인)
+    public static SetBonusRow[] SetBonusRows
+    {
+        get
+        {
+            EnsureLoaded();
+            return setBonusRows ?? new SetBonusRow[0];
+        }
+    }
+
+    // 세트 특수 효과 수치 (없으면 0)
+    public static float GetSetEffectValue(string _id)
+    {
+        EnsureLoaded();
+        float fValue = 0f;
+        if (setEffectValues != null && setEffectValues.TryGetValue(_id, out fValue) == true)
+        {
+            return fValue;
+        }
+        ReportMissing("SetEffect", _id);
+        return 0f;
+    }
+
     private static void EnsureLoaded()
     {
         if (weaponRows != null || bLoadAttempted == true)
@@ -133,7 +172,9 @@ public static class GameTables
 #if UNITY_EDITOR
         Load(UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(WEAPON_JSON_PATH),
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(ARMOR_JSON_PATH),
-             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(ENHANCE_JSON_PATH));
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(ENHANCE_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_BONUS_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_EFFECT_JSON_PATH));
 #endif
     }
 
