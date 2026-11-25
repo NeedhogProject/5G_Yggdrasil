@@ -80,6 +80,7 @@ public static class TableConverterMenu
 
         foreach (KeyValuePair<TableDef, string> pair in results)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(pair.Key.JsonPath)));
             File.WriteAllText(Path.GetFullPath(pair.Key.JsonPath), pair.Value, new System.Text.UTF8Encoding(false));
             AssetDatabase.ImportAsset(pair.Key.JsonPath);
         }
