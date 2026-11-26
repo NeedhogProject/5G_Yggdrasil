@@ -73,6 +73,17 @@ public class InventorySlot : MonoBehaviour,
         }
     }
 
+    // 캔버스 참조가 비었거나 씬 전환으로 파괴됐으면 다시 찾아온다 (드래그 중 파괴된 캔버스 접근 방지)
+    // _canvas 는 static 이라, 파괴된 캔버스를 가리키면 Unity 에서 == null 로 감지돼 다시 잡힌다.
+    private Canvas ResolveCanvas()
+    {
+        if (_canvas == null)
+        {
+            _canvas = GetComponentInParent<Canvas>();
+        }
+        return _canvas;
+    }
+
     // 인벤토리 <-> 창고 간 아이템 이동 (데이터 동기화 포함)
     // fromSlot: 드래그를 시작한 출발 슬롯 (OnDrop 에서 확보해 넘겨줌)
     // 빈 자리면 그 자리에, 아이템 1개면 위치 교환, 교환 불가면 빈 공간으로, 빈 공간도 없으면 변경 없음
@@ -554,9 +565,17 @@ public class InventorySlot : MonoBehaviour,
 
         UIItemTooltip.Instance?.HideTooltip();
 
+        // 캔버스 참조 확보 (씬 전환으로 파괴됐으면 다시 찾음). 못 찾으면 드래그 취소.
+        Canvas canvas = ResolveCanvas();
+        if (canvas == null)
+        {
+            _draggingSlot = null;
+            return;
+        }
+
         // 드래그 중 아이콘 생성
         _dragIcon = new GameObject("DragIcon");
-        _dragIcon.transform.SetParent(_canvas.transform, false);
+        _dragIcon.transform.SetParent(canvas.transform, false);
         _dragIcon.transform.SetAsLastSibling();
 
         Image img = _dragIcon.AddComponent<Image>();
@@ -586,9 +605,15 @@ public class InventorySlot : MonoBehaviour,
             return;
         }
 
+        Canvas canvas = ResolveCanvas();
+        if (canvas == null)
+        {
+            return;
+        }
+
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
-            _canvas.GetComponent<RectTransform>(),
-            e.position, _canvas.worldCamera,
+            canvas.GetComponent<RectTransform>(),
+            e.position, canvas.worldCamera,
             out Vector2 localPoint);
 
         _dragIcon.GetComponent<RectTransform>().anchoredPosition = localPoint;

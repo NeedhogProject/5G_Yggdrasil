@@ -18,7 +18,7 @@ MonoBehaviour:
     \uB367\uB300\uC5B4\uC9C4\uBC14\uC9C0\uC774\uB2E4"
   _itemType: 0
   _rarity: 0
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 88533368c372dd3419eecdbf8e89ccb7, type: 3}
   _prefab3D: {fileID: 6105843101214439073, guid: fd8935ad36d6c5e44b8feee268f59180, type: 3}
   _inventoryWidth: 3
   _inventoryHeight: 2

@@ -42114,10 +42114,14 @@ MonoBehaviour:
     useKey: 18
     iconImage: {fileID: 0}
     countText: {fileID: 660017905}
+    invIconImage: {fileID: 0}
+    invCountText: {fileID: 0}
   - consumable: {fileID: 11400000, guid: 63d1a80e2fb9c8742bfa2901438b8b19, type: 2}
     useKey: 20
     iconImage: {fileID: 0}
     countText: {fileID: 267600133}
+    invIconImage: {fileID: 0}
+    invCountText: {fileID: 0}
   emptyAlpha: 0.35
 --- !u!1 &1773720423
 GameObject:
