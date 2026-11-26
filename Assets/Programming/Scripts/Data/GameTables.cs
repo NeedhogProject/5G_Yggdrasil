@@ -15,6 +15,8 @@ public static class GameTables
     public const string ENHANCE_JSON_PATH = "Assets/Planning/Enhance.json";
     public const string SET_BONUS_JSON_PATH = "Assets/Planning/SetBonus.json";
     public const string SET_EFFECT_JSON_PATH = "Assets/Planning/SetEffect.json";
+    public const string CONSUMABLE_JSON_PATH = "Assets/Planning/Consumable.json";
+    public const string RELIC_JSON_PATH = "Assets/Planning/Relic.json";
 
     private static Dictionary<string, WeaponRow> weaponRows = null;
     private static Dictionary<string, ArmorRow> armorRows = null;
@@ -23,17 +25,21 @@ public static class GameTables
     private static float[] speedMultipliers = null;
     private static SetBonusRow[] setBonusRows = null;
     private static Dictionary<string, float> setEffectValues = null;
+    private static Dictionary<string, ConsumableRow> consumableRows = null;
+    private static Dictionary<string, RelicRow> relicRows = null;
     private static bool bLoadAttempted = false;   // 실패 시 매 조회마다 재시도 방지
 
     // 없는 ID 경고는 ID 마다 1번만
     private static readonly HashSet<string> reportedMissing = new HashSet<string>();
 
     public static void Load(TextAsset _weaponJson, TextAsset _armorJson, TextAsset _enhanceJson,
-                            TextAsset _setBonusJson, TextAsset _setEffectJson)
+                            TextAsset _setBonusJson, TextAsset _setEffectJson,
+                            TextAsset _consumableJson, TextAsset _relicJson)
     {
         bLoadAttempted = true;
         if (_weaponJson == null || _armorJson == null || _enhanceJson == null
-            || _setBonusJson == null || _setEffectJson == null)
+            || _setBonusJson == null || _setEffectJson == null
+            || _consumableJson == null || _relicJson == null)
         {
             Debug.LogError("[GameTables] 테이블 JSON 이 연결되지 않았습니다. GameCore 의 ItemDataRegistry 를 확인하세요.");
             return;
@@ -72,6 +78,18 @@ public static class GameTables
             setEffectValues[row.Id] = row.fValue;
         }
 
+        consumableRows = new Dictionary<string, ConsumableRow>();
+        foreach (ConsumableRow row in JsonUtility.FromJson<ConsumableTable>(_consumableJson.text).rows)
+        {
+            consumableRows[row.Id] = row;
+        }
+
+        relicRows = new Dictionary<string, RelicRow>();
+        foreach (RelicRow row in JsonUtility.FromJson<RelicTable>(_relicJson.text).rows)
+        {
+            relicRows[row.Id] = row;
+        }
+
         reportedMissing.Clear();
     }
 
@@ -85,6 +103,8 @@ public static class GameTables
         speedMultipliers = null;
         setBonusRows = null;
         setEffectValues = null;
+        consumableRows = null;
+        relicRows = null;
         bLoadAttempted = false;
     }
 
@@ -110,6 +130,30 @@ public static class GameTables
         }
         ReportMissing("Armor", _id);
         return new ArmorRow();
+    }
+
+    public static ConsumableRow GetConsumable(string _id)
+    {
+        EnsureLoaded();
+        ConsumableRow row = null;
+        if (consumableRows != null && consumableRows.TryGetValue(_id, out row) == true)
+        {
+            return row;
+        }
+        ReportMissing("Consumable", _id);
+        return new ConsumableRow();
+    }
+
+    public static RelicRow GetRelic(string _id)
+    {
+        EnsureLoaded();
+        RelicRow row = null;
+        if (relicRows != null && relicRows.TryGetValue(_id, out row) == true)
+        {
+            return row;
+        }
+        ReportMissing("Relic", _id);
+        return new RelicRow();
     }
 
     public static float[] EnhanceSuccessRates
@@ -174,7 +218,9 @@ public static class GameTables
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(ARMOR_JSON_PATH),
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(ENHANCE_JSON_PATH),
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_BONUS_JSON_PATH),
-             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_EFFECT_JSON_PATH));
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_EFFECT_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(CONSUMABLE_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(RELIC_JSON_PATH));
 #endif
     }
 

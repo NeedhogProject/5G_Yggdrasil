@@ -1,0 +1,9 @@
+{"rows":[
+{"Id":"ITM_RST_001","Name":"각인 초기화권","Description":"장비에 새겨진 각인을 지우고 새로운 각인을 준비할 때 사용하는 증표","Rarity":3,"nWidth":1,"nHeight":1,"nPrice":12000,"bDroppable":true,"bStackable":false,"nMaxStack":1,"ConsumableType":2,"fEffectAmount":0},
+{"Id":"I_H_001","Name":"일반 체력 포션","Description":"상처 입은 몸의 회복을 돕는 붉은 약초 물약","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":1000,"bDroppable":true,"bStackable":true,"nMaxStack":99,"ConsumableType":0,"fEffectAmount":15},
+{"Id":"I_H_002","Name":"고급 체력 포션","Description":"약초의 유효 성분을 농축해 회복력을 높인 붉은 물약","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":2500,"bDroppable":true,"bStackable":true,"nMaxStack":99,"ConsumableType":0,"fEffectAmount":30},
+{"Id":"I_H_003","Name":"영웅 체력 포션","Description":"위태로운 생명을 붙잡기 위해 귀한 재료로 빚어낸 진홍빛 물약","Rarity":2,"nWidth":1,"nHeight":1,"nPrice":5000,"bDroppable":true,"bStackable":true,"nMaxStack":99,"ConsumableType":0,"fEffectAmount":55},
+{"Id":"I_M_001","Name":"일반 정신력 포션","Description":"지친 정신을 가다듬어 주는 맑고 쌉싸름한 물약","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":1200,"bDroppable":true,"bStackable":true,"nMaxStack":99,"ConsumableType":1,"fEffectAmount":10},
+{"Id":"I_M_002","Name":"희귀 정신력 포션","Description":"흐려진 의식을 깨우고 정신력 회복을 돕는 농축 물약","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":2800,"bDroppable":true,"bStackable":true,"nMaxStack":99,"ConsumableType":1,"fEffectAmount":20},
+{"Id":"I_M_003","Name":"영웅 정신력 포션","Description":"깊은 피로 속에서도 다시 의지를 일으켜 세우는 고농축 물약","Rarity":2,"nWidth":1,"nHeight":1,"nPrice":5500,"bDroppable":true,"bStackable":true,"nMaxStack":99,"ConsumableType":1,"fEffectAmount":30}
+]}

@@ -975,20 +975,35 @@ public class InventorySystem : MonoBehaviour
                 return;
             }
 
-            // 사용 실패(이미 최대치 등) 시 물약을 소모하지 않음
-            if (consumable.TryUse(PlayerStats.Instance) == false)
+            // 클릭한 칸의 묶음에서 1개만 사용 (같은 물약이 여러 칸이면 다른 칸이 비워지지 않게)
+            ConsumableInstance instance = _clickedInstance as ConsumableInstance;
+            if (instance == null)
+            {
+                instance = _itemInstances.Find(i => i.Data == item) as ConsumableInstance;
+            }
+            if (instance == null)
             {
                 return;
             }
 
-            // 클릭한 칸의 물약을 소모 (같은 물약이 여러 칸이면 다른 칸이 비워지지 않게)
-            if (_clickedInstance != null)
+            // 효과 적용 + 1개 차감. 사용 실패(이미 최대치 등) 시 물약을 소모하지 않음
+            if (instance.TryUse(PlayerStats.Instance) == false)
             {
-                RemoveItem(_clickedInstance);
+                return;
+            }
+
+            if (instance.IsEmpty == true)
+            {
+                RemoveItem(instance);
             }
             else
             {
-                RemoveItem(item);
+                // 남았으면 해당 칸 수량 표시만 갱신
+                InventorySlot owner = slots.Find(s => s.CurrentInstance == instance);
+                if (owner != null)
+                {
+                    owner.SetItem(instance);
+                }
             }
         }
         else if (item.itemType == ItemType.Relic)
@@ -1206,12 +1221,6 @@ public class InventorySystem : MonoBehaviour
         return true;
     }
 
-    /// <summary>특정 타입 아이템 개수 반환</summary>
-    public int GetItemCount(ItemType type)
-    {
-        return items.FindAll(item => item.itemType == type).Count;
-    }
-
     /// <summary>이름으로 아이템 보유 여부 확인</summary>
     public bool HasItem(string itemName)
     {
@@ -1225,73 +1234,6 @@ public class InventorySystem : MonoBehaviour
     }
 
     // ─────────────────────── 소모품 단축키 연동 ───────────────────────
-
-    // 지정한 소모품 종류의 보유 총 수량 (단축키 슬롯 수량 표시용)
-    public int GetConsumableCount(ConsumableType type)
-    {
-        int total = 0;
-
-        for (int i = 0; i < _itemInstances.Count; i++)
-        {
-            ConsumableInstance consumable = _itemInstances[i] as ConsumableInstance;
-            if (consumable == null || consumable.ConsumableData == null)
-            {
-                continue;
-            }
-            if (consumable.ConsumableData.ConsumableType == type)
-            {
-                total = total + consumable.StackCount;
-            }
-        }
-
-        return total;
-    }
-
-    // 지정한 소모품 종류를 1개 사용한다 (단축키 슬롯에서 호출)
-    // 효과 적용 + 1개 차감. 수량 0이 되면 인벤토리에서 제거, 아니면 슬롯 수량 표시 갱신.
-    // 사용 성공 시 true, 보유 없음/최대치 등 사용 불가면 false.
-    public bool UseConsumableByType(ConsumableType type)
-    {
-        for (int i = 0; i < _itemInstances.Count; i++)
-        {
-            ConsumableInstance consumable = _itemInstances[i] as ConsumableInstance;
-            if (consumable == null || consumable.ConsumableData == null)
-            {
-                continue;
-            }
-            if (consumable.ConsumableData.ConsumableType != type)
-            {
-                continue;
-            }
-
-            // 효과 적용 + 1개 차감 (이미 최대치 등이면 false)
-            bool success = consumable.TryUse(PlayerStats.Instance);
-            if (success == false)
-            {
-                return false;
-            }
-
-            if (consumable.IsEmpty == true)
-            {
-                // 다 썼으면 인벤토리에서 제거 (슬롯 영역도 해제됨)
-                RemoveItem(consumable);
-            }
-            else
-            {
-                // 남았으면 해당 슬롯 수량 표시만 갱신
-                InventorySlot owner = slots.Find(s => s.CurrentInstance == consumable);
-                if (owner != null)
-                {
-                    owner.SetItem(consumable);
-                }
-            }
-
-            return true;
-        }
-
-        // 해당 소모품이 인벤토리에 없음
-        return false;
-    }
 
     // 지정한 소모품(등급 단위, ConsumableData)의 보유 총 수량 (등급별 단축키 표시용)
     // 같은 종류라도 등급(에셋)이 다르면 따로 센다.

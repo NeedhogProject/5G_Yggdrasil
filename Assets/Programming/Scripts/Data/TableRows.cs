@@ -81,6 +81,22 @@ public class SetEffectRow
     public float  fValue = 0f;
 }
 
+// Consumable.xlsx
+[System.Serializable]
+public class ConsumableRow : ItemRow
+{
+    public ConsumableType ConsumableType = ConsumableType.HealthPotion;
+    public float          fEffectAmount = 0f;   // 체력 물약 %, 정신력 물약 포인트
+}
+
+// Relic.xlsx
+[System.Serializable]
+public class RelicRow : ItemRow
+{
+    public RelicOptionType OptionType = RelicOptionType.None;
+    public float           fOptionValue = 0f;   // 달란 획득량만 %
+}
+
 // JsonUtility 용 감싸기 (최상위 배열을 직접 읽지 못함)
 [System.Serializable]
 public class WeaponTable
@@ -110,4 +126,16 @@ public class SetBonusTable
 public class SetEffectTable
 {
     public SetEffectRow[] rows = new SetEffectRow[0];
+}
+
+[System.Serializable]
+public class ConsumableTable
+{
+    public ConsumableRow[] rows = new ConsumableRow[0];
+}
+
+[System.Serializable]
+public class RelicTable
+{
+    public RelicRow[] rows = new RelicRow[0];
 }

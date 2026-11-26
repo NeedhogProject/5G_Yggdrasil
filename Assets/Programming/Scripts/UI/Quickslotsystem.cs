@@ -1,7 +1,7 @@
 // QuickSlotSystem.cs
 // 체력바 옆 단축키 슬롯 (소모품 전용). 인벤토리에서 Ctrl+좌클릭으로 소모품을 등록한다.
 // 등록된 슬롯의 단축키(1, 2)를 누르면 그 소모품을 1개 사용하고, 슬롯에 보유 수량을 표시한다.
-// 소모품 실제 사용/차감은 InventorySystem.UseConsumableByType 가 담당한다.
+// 소모품 실제 사용/차감은 InventorySystem.UseConsumableByData 가 담당한다.
 // 담당: 김보민
 
 using System.Collections.Generic;

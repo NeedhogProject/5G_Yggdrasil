@@ -254,17 +254,25 @@ public class PlayerEquipment : MonoBehaviour
             return null;
         }
 
+        // 위험: 미감정, 판매용 유물은 장착 거부 (호출부에서 인벤토리에서 빼기 전에 걸러야 사라지지 않음)
+        RelicInstance relicInstance = relic as RelicInstance;
+        if (relicInstance == null || relicInstance.CanEquip == false)
+        {
+            Debug.LogWarning("[PlayerEquipment] 장착할 수 없는 유물 (판매용 또는 미감정): " + relic.Data?.ItemName);
+            return null;
+        }
+
         ItemInstance previous = _relicSlots[index];
 
         // 기존 유물 효과 해제
         if (previous != null)
         {
-            RemoveRelicEffect(previous);
+            ApplyRelicEffect(previous, -1f);
         }
 
         // 새 유물 장착
         _relicSlots[index] = relic;
-        ApplyRelicEffect(relic);
+        ApplyRelicEffect(relic, 1f);
 
         Debug.Log("[PlayerEquipment] 유물 장착 (슬롯 " + index.ToString() + "): " + relic.Data?.ItemName);
         OnEquipmentChanged?.Invoke();
@@ -286,7 +294,7 @@ public class PlayerEquipment : MonoBehaviour
             return null;
         }
 
-        RemoveRelicEffect(relic);
+        ApplyRelicEffect(relic, -1f);
         _relicSlots[index] = null;
         OnEquipmentChanged?.Invoke();
 
@@ -303,26 +311,15 @@ public class PlayerEquipment : MonoBehaviour
         return _relicSlots[index];
     }
 
-    // 유물 효과 적용 (장착 칸에 있는 동안만 적용, 같은 유물 2개면 중첩)
-    private void ApplyRelicEffect(ItemInstance relic)
+    // 유물 효과 적용 (장착 1, 해제 -1). 장착 칸에 있는 동안만 적용, 같은 유물 2개면 중첩
+    private void ApplyRelicEffect(ItemInstance relic, float _fSign)
     {
         RelicData relicData = relic.Data as RelicData;
         if (relicData == null || playerStats == null)
         {
             return;
         }
-        playerStats.AddRelicBonus(relicData.OptionType, relicData.OptionValue);
-    }
-
-    // 유물 효과 해제 (ApplyRelicEffect 와 짝)
-    private void RemoveRelicEffect(ItemInstance relic)
-    {
-        RelicData relicData = relic.Data as RelicData;
-        if (relicData == null || playerStats == null)
-        {
-            return;
-        }
-        playerStats.AddRelicBonus(relicData.OptionType, -relicData.OptionValue);
+        playerStats.AddRelicBonus(relicData.OptionType, relicData.OptionValue * _fSign);
     }
 
     // ─────────────────────── 해제 ───────────────────────
@@ -407,7 +404,7 @@ public class PlayerEquipment : MonoBehaviour
                 continue;
             }
             dropped.Add(relic);
-            RemoveRelicEffect(relic);
+            ApplyRelicEffect(relic, -1f);
             _relicSlots[i] = null;
         }
 

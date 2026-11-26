@@ -53,10 +53,6 @@ public class PlayerStats : MonoBehaviour
     // 달란 최대 보유량 (기획: 초과분은 버림)
     public const int MAX_GOLD = 999999;
 
-    [Header("물약 회복량")]
-    [SerializeField] private float healthPotionAmount = 30f;   // 최대 체력 대비 %
-    [SerializeField] private float mentalPotionAmount = 25f;   // 절대값
-
     // ── 상수 ──────────────────────────────────────
     private const float MIN_STAT = 0f;
     public const float MAX_STAT = 100f;
@@ -226,7 +222,8 @@ public class PlayerStats : MonoBehaviour
         }
         else if (_type == RelicOptionType.DropGold)
         {
-            relicGoldBonus += _fValue;
+            // 테이블은 % 단위
+            relicGoldBonus += _fValue / 100f;
         }
         else if (_type == RelicOptionType.Attack)
         {
@@ -420,28 +417,6 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    // ── 물약 ──────────────────────────────────────
-
-    public bool UseHealthPotion()
-    {
-        if (health >= MaxHealth)
-        {
-            return false;
-        }
-        ModifyHealth(healthPotionAmount);
-        return true;
-    }
-
-    public bool UseMentalPotion()
-    {
-        if (mental >= MaxMental)
-        {
-            return false;
-        }
-        ModifyMental(mentalPotionAmount);
-        return true;
-    }
-
     // ── 데미지 계산 ───────────────────────────────
 
     public float TakeDamage(float rawDamage)
@@ -492,18 +467,4 @@ public class PlayerStats : MonoBehaviour
         }
         mental = Mathf.Clamp(mental, MIN_STAT, MaxMental);
     }
-
-#if UNITY_EDITOR
-    [ContextMenu("테스트: 체력 물약")]
-    private void TestHealthPotion()
-    {
-        UseHealthPotion();
-    }
-
-    [ContextMenu("테스트: 정신력 물약")]
-    private void TestMentalPotion()
-    {
-        UseMentalPotion();
-    }
-#endif
 }

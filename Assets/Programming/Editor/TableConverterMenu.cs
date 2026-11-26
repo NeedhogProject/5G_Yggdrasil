@@ -32,6 +32,8 @@ public static class TableConverterMenu
         new TableDef { Name = "Enhance", RowType = typeof(EnhanceRow), KeyField = "nLevel", JsonPath = GameTables.ENHANCE_JSON_PATH, AssetType = null },
         new TableDef { Name = "SetBonus", RowType = typeof(SetBonusRow), KeyField = "Id", JsonPath = GameTables.SET_BONUS_JSON_PATH, AssetType = null },
         new TableDef { Name = "SetEffect", RowType = typeof(SetEffectRow), KeyField = "Id", JsonPath = GameTables.SET_EFFECT_JSON_PATH, AssetType = null },
+        new TableDef { Name = "Consumable", RowType = typeof(ConsumableRow), KeyField = "Id", JsonPath = GameTables.CONSUMABLE_JSON_PATH, AssetType = typeof(ConsumableData) },
+        new TableDef { Name = "Relic", RowType = typeof(RelicRow), KeyField = "Id", JsonPath = GameTables.RELIC_JSON_PATH, AssetType = typeof(RelicData) },
     };
 
     // 엑셀이 있는 Tables 폴더를 탐색기로 연다

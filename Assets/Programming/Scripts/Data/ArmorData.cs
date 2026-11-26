@@ -36,6 +36,11 @@ public class ArmorData : ItemData
         return Row;
     }
 
+    protected override ItemType GetFixedItemType()
+    {
+        return ItemType.Equipment;
+    }
+
     // ─────────────────────── 프로퍼티 ───────────────────────
 
     public ArmorSlot   ArmorSlot      => Row.ArmorSlot;

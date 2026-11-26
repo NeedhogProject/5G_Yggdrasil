@@ -43,10 +43,16 @@ public class ItemData : ScriptableObject
 
     // ───────────────────────────── 기획 테이블 ─────────────────────────────
 
-    // 테이블로 옮긴 분류(무기, 방어구)는 행을 반환, 아직 옮기지 않은 분류는 null
+    // 테이블로 옮긴 분류(무기, 방어구, 소모품, 유물)는 행을 반환, 아직 옮기지 않은 분류는 null
     protected virtual ItemRow GetTableRow()
     {
         return null;
+    }
+
+    // 테이블로 옮긴 분류는 클래스가 종류를 정한다 (에셋의 _itemType 무시)
+    protected virtual ItemType GetFixedItemType()
+    {
+        return _itemType;
     }
 
     // 테이블 행이 있으면 테이블 값, 없으면 인스펙터 값
@@ -69,7 +75,7 @@ public class ItemData : ScriptableObject
     public string     Description    => DescriptionValue;
 
     /// <summary>아이템 종류</summary>
-    public ItemType   ItemType       => _itemType;
+    public ItemType   ItemType       => GetFixedItemType();
 
     /// <summary>아이템 희귀도</summary>
     public ItemRarity Rarity         => RarityValue;
@@ -116,7 +122,7 @@ public class ItemData : ScriptableObject
     public string     itemDescription => DescriptionValue;
 
     /// <summary>itemType — InventorySystem, ScholarSystem 호환용</summary>
-    public ItemType   itemType        => _itemType;
+    public ItemType   itemType        => GetFixedItemType();
 
     /// <summary>rarity — UIItemTooltip 호환용</summary>
     public ItemRarity rarity          => RarityValue;
@@ -132,17 +138,6 @@ public class ItemData : ScriptableObject
 
     /// <summary>basePrice — ShopSystem, BlacksmithSystem 호환용 (기준 가격)</summary>
     public int        basePrice       => PriceValue;
-
-    // ───────────────────────────── 가상 메서드 ─────────────────────────────
-
-    /// <summary>
-    /// 소모품 사용 처리 — InventorySystem.UseItem() 에서 호출
-    /// ConsumableData 등 하위 클래스에서 override
-    /// </summary>
-    public virtual void UseItem()
-    {
-        UnityEngine.Debug.LogWarning($"[{ItemName}] UseItem() 미구현 — 하위 클래스에서 override 필요");
-    }
 
     // ───────────────────────────── 유효성 검사 ─────────────────────────────
 #if UNITY_EDITOR
