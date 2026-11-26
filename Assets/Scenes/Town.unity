@@ -26647,7 +26647,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8504884823566818889, guid: ae6160f6070a2f6489aacd7c5770eb0a, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -42114,15 +42114,10 @@ MonoBehaviour:
     useKey: 18
     iconImage: {fileID: 0}
     countText: {fileID: 660017905}
-    invIconImage: {fileID: 0}
-    invCountText: {fileID: 0}
   - consumable: {fileID: 11400000, guid: 63d1a80e2fb9c8742bfa2901438b8b19, type: 2}
     useKey: 20
     iconImage: {fileID: 0}
     countText: {fileID: 267600133}
-    invIconImage: {fileID: 0}
-    invCountText: {fileID: 0}
-  emptyAlpha: 0.35
 --- !u!1 &1773720423
 GameObject:
   m_ObjectHideFlags: 0

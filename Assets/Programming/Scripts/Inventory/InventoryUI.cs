@@ -98,6 +98,12 @@ public class InventoryUI : MonoBehaviour
         {
             InventorySystem.Instance?.DropHoveredItem();
         }
+
+        // R: 마우스로 가리키는 칸의 아이템을 90도 회전 (인벤 열려 있으면 창고와 같이 열렸어도 허용)
+        if (isOpen == true && Keyboard.current.rKey.wasPressedThisFrame == true)
+        {
+            InventorySystem.Instance?.RotateHoveredItem();
+        }
     }
 
     // 상점이 같이 열려있는지 확인

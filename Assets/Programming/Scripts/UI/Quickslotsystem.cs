@@ -22,25 +22,15 @@ public class QuickSlotSystem : MonoBehaviour
         [Tooltip("이 슬롯을 사용할 단축키 (왼쪽부터 Digit1, Digit2)")]
         public Key useKey = Key.Digit1;
 
-        [Tooltip("소모품 아이콘을 표시할 Image (HUD 쪽)")]
+        [Tooltip("소모품 아이콘을 표시할 Image")]
         public Image iconImage;
 
-        [Tooltip("보유 수량을 표시할 텍스트 (HUD 쪽)")]
+        [Tooltip("보유 수량을 표시할 텍스트")]
         public TMP_Text countText;
-
-        [Tooltip("인벤토리 쪽 아이콘 Image (선택 — 인벤 패널에 둔 같은 칸)")]
-        public Image invIconImage;
-
-        [Tooltip("인벤토리 쪽 수량 텍스트 (선택)")]
-        public TMP_Text invCountText;
     }
 
     [Header("단축키 슬롯 (보통 2개)")]
     [SerializeField] private List<QuickSlot> slots = new List<QuickSlot>();
-
-    [Header("보유 0개일 때 아이콘 흐림 정도 (0=투명, 1=불투명)")]
-    [Range(0f, 1f)]
-    [SerializeField] private float emptyAlpha = 0.35f;
 
     // 씬이 바뀌면 QuickSlotSystem 이 새로 생성되므로, 등록된 소모품을 static 으로 보관해 복원한다 (슬롯 순서대로)
     private static readonly List<ConsumableData> _savedConsumables = new List<ConsumableData>();
@@ -148,6 +138,13 @@ public class QuickSlotSystem : MonoBehaviour
             return false;
         }
 
+        // 초기화 주문서는 퀵슬롯에 등록하지 않는다 (우클릭 사용도 막혀 있는 아이템)
+        if (_data.ConsumableType == ConsumableType.ResetScroll)
+        {
+            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            return false;
+        }
+
         // 이미 등록된 소모품이면 중복 등록하지 않음
         for (int i = 0; i < slots.Count; i++)
         {
@@ -210,7 +207,6 @@ public class QuickSlotSystem : MonoBehaviour
 
         bool hasIcon = slot.consumable != null && slot.consumable.itemIcon != null;
 
-        // HUD 아이콘
         if (slot.iconImage != null)
         {
             if (hasIcon == true)
@@ -220,27 +216,10 @@ public class QuickSlotSystem : MonoBehaviour
             slot.iconImage.enabled = hasIcon;
         }
 
-        // 인벤토리 아이콘 (같은 소모품을 양쪽에 표시)
-        if (slot.invIconImage != null)
+        // 빈 슬롯이면 수량 텍스트도 비운다
+        if (slot.consumable == null && slot.countText != null)
         {
-            if (hasIcon == true)
-            {
-                slot.invIconImage.sprite = slot.consumable.itemIcon;
-            }
-            slot.invIconImage.enabled = hasIcon;
-        }
-
-        // 빈 슬롯이면 수량 텍스트도 비운다 (양쪽)
-        if (slot.consumable == null)
-        {
-            if (slot.countText != null)
-            {
-                slot.countText.text = "";
-            }
-            if (slot.invCountText != null)
-            {
-                slot.invCountText.text = "";
-            }
+            slot.countText.text = "";
         }
     }
 
@@ -277,28 +256,16 @@ public class QuickSlotSystem : MonoBehaviour
             return;
         }
 
-        // 수량 텍스트 (HUD)
+        // 수량 텍스트
         if (slot.countText != null)
         {
             slot.countText.text = count.ToString();
         }
 
-        // 보유가 있으면 아이콘 선명하게 (HUD)
+        // 보유가 있으면 아이콘 선명하게
         if (slot.iconImage != null)
         {
             slot.iconImage.color = new Color(1f, 1f, 1f, 1f);
-        }
-
-        // 수량 텍스트 (인벤토리)
-        if (slot.invCountText != null)
-        {
-            slot.invCountText.text = count.ToString();
-        }
-
-        // 인벤토리 아이콘도 선명하게
-        if (slot.invIconImage != null)
-        {
-            slot.invIconImage.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -312,7 +279,6 @@ public class QuickSlotSystem : MonoBehaviour
 
         slot.consumable = null;
 
-        // HUD 쪽 비움
         if (slot.iconImage != null)
         {
             slot.iconImage.enabled = false;
@@ -322,33 +288,7 @@ public class QuickSlotSystem : MonoBehaviour
             slot.countText.text = "";
         }
 
-        // 인벤토리 쪽 비움
-        if (slot.invIconImage != null)
-        {
-            slot.invIconImage.enabled = false;
-        }
-        if (slot.invCountText != null)
-        {
-            slot.invCountText.text = "";
-        }
-
         SaveAssignments();
-    }
-
-    // 지정한 번호의 슬롯을 수동으로 등록 해제한다 (인벤/HUD 칸 우클릭용)
-    public void RemoveSlotAt(int index)
-    {
-        if (index < 0 || index >= slots.Count)
-        {
-            return;
-        }
-        if (slots[index] == null || slots[index].consumable == null)
-        {
-            return;
-        }
-
-        ClearSlot(slots[index]);
-        AudioManager.Instance?.PlaySFX(SFXClip.UIClose);
     }
 
     // 현재 슬롯 등록 상태를 static 보관함에 저장한다 (씬 전환 후 Start 에서 복원용)
