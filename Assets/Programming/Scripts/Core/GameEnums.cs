@@ -52,6 +52,6 @@ public enum RelicOptionType
     None,      // 판매용 유물 (장착 불가)
     MaxHealth, // 최대 HP 증가 (고정값)
     MaxMental, // 최대 정신력 증가 (고정값)
-    DropGold,  // 몬스터 달란 획득량 증가 (0.05 = 5%)
+    DropGold,  // 몬스터 달란 획득량 증가 (테이블 값 5 = 5%)
     Attack     // 공격력 증가 (고정값)
 }

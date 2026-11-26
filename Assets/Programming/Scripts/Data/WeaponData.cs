@@ -39,6 +39,11 @@ public class WeaponData : ItemData
         return Row;
     }
 
+    protected override ItemType GetFixedItemType()
+    {
+        return ItemType.Equipment;
+    }
+
     [Header("무기 모델")]
     [Tooltip("손에 장착될 무기 3D 모델 프리팹")]
     [SerializeField] private GameObject weaponModelPrefab = null;

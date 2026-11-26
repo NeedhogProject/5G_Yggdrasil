@@ -33,21 +33,6 @@ public class ConsumableInstance : ItemInstance
         return success;
     }
 
-    /// <summary>
-    /// 초기화 주문서: 방어구 각인 초기화 전용 사용
-    /// ArmorInstance 를 직접 받아 ClearRunes() 호출
-    /// </summary>
-    public bool TryUseResetScroll(ArmorInstance armor)
-    {
-        if (IsEmpty) return false;
-        if (ConsumableData.ConsumableType != ConsumableType.ResetScroll) return false;
-        if (armor == null || !armor.HasRune) return false;
-
-        armor.ClearRunes();
-        RemoveStack(1);
-        return true;
-    }
-
     public override string ToString() =>
         $"[{ConsumableData?.ItemName ?? "null"}] x{StackCount}";
 }

@@ -10,10 +10,6 @@ public enum ConsumableType
     HealthPotion,   // 체력 물약  — 체력 즉시 회복
     MentalPotion,   // 정신력 물약 — 정신력 즉시 회복
     ResetScroll,    // 초기화 주문서 — 각인 초기화 (RuneInscriptionSystem 연동)
-
-    // ── 추후 추가 예시 ──────────────────────────────
-    // EnhanceStone,   // 강화석 — 강화 성공 확률 보조
-    // AntiCurse,      // 저주 해제 등
 }
 
 /// <summary>
@@ -21,32 +17,30 @@ public enum ConsumableType
 ///
 /// [기획 반영]
 /// - 즉시형만 지원 (버프형 없음)
-/// - 체력 물약: PlayerStats.ModifyHealth(+amount)
-/// - 정신력 물약: PlayerStats.ModifyMental(+amount)
-/// - 초기화 주문서: WeaponData.ClearRunes() (RuneInscriptionSystem 에서 처리)
-/// - 나중에 소모품 추가 시 ConsumableType 열거형 + switch 케이스만 추가
+/// - 체력 물약: 최대 체력의 % 회복
+/// - 정신력 물약: 고정 포인트 회복
+/// - 초기화 주문서: 각인술사(RuneInscriptionSystem)에서 처리
+/// - 종류와 효과량은 Tables/Consumable.xlsx 에서 관리 (ID 는 에셋 이름)
 /// </summary>
 [CreateAssetMenu(fileName = "NewConsumable", menuName = "Yggdrasil/Items/ConsumableData")]
 public class ConsumableData : ItemData
 {
-    // ─────────────────────── 소모품 기본 스펙 ───────────────────────
+    private ConsumableRow Row => GameTables.GetConsumable(name);
 
-    [Header("소모품 종류")]
-    [SerializeField] private ConsumableType consumableType = ConsumableType.HealthPotion;
+    protected override ItemRow GetTableRow()
+    {
+        return Row;
+    }
 
-    [Header("즉시 효과량")]
-    [Tooltip("체력 물약: 최대 체력 대비 회복 %. 정신력 물약: 회복량(절대값). 초기화 주문서: 사용 안 함 (0으로 두면 됨)")]
-    [SerializeField] [Range(0f, 100f)] private float effectAmount = 30f;
-
-    [Header("사용 조건 메시지 (UI 표시용)")]
-    [Tooltip("이미 최대치일 때 등 사용 불가 상황에서 보여줄 메시지")]
-    [SerializeField] private string cannotUseMessage = "이미 최대치입니다.";
+    protected override ItemType GetFixedItemType()
+    {
+        return ItemType.Consumable;
+    }
 
     // ─────────────────────── 프로퍼티 ───────────────────────
 
-    public ConsumableType ConsumableType => consumableType;
-    public float          EffectAmount   => effectAmount;
-    public string         CannotUseMessage => cannotUseMessage;
+    public ConsumableType ConsumableType => Row.ConsumableType;
+    public float          EffectAmount   => Row.fEffectAmount;
 
     // ─────────────────────── 핵심 메서드 ───────────────────────
 
@@ -63,7 +57,7 @@ public class ConsumableData : ItemData
             return false;
         }
 
-        switch (consumableType)
+        switch (ConsumableType)
         {
             case ConsumableType.HealthPotion:
                 return TryUseHealthPotion(stats);
@@ -77,12 +71,8 @@ public class ConsumableData : ItemData
                 // 여기서는 '사용 가능 여부'만 true 반환 (실제 초기화는 별도 처리)
                 return true;
 
-            // ── 추후 추가 시 케이스 추가 ──────────────────────
-            // case ConsumableType.EnhanceStone:
-            //     return TryUseEnhanceStone(stats);
-
             default:
-                Debug.LogWarning($"[ConsumableData] 처리되지 않은 ConsumableType: {consumableType}");
+                Debug.LogWarning($"[ConsumableData] 처리되지 않은 ConsumableType: {ConsumableType}");
                 return false;
         }
     }
@@ -93,37 +83,14 @@ public class ConsumableData : ItemData
     {
         if (stats.Health >= stats.MaxHealth) return false;
         // 최대 체력 대비 % 회복 (장비로 최대치가 늘어도 비율 유지)
-        stats.ModifyHealth(stats.MaxHealth * (effectAmount / 100f));
+        stats.ModifyHealth(stats.MaxHealth * (EffectAmount / 100f));
         return true;
     }
 
     private bool TryUseMentalPotion(PlayerStats stats)
     {
         if (stats.Mental >= stats.MaxMental) return false;
-        stats.ModifyMental(effectAmount);
+        stats.ModifyMental(EffectAmount);
         return true;
     }
-
-    // ─────────────────────── 에디터 기본값 자동 설정 ───────────────────────
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        // 소모품 종류별 권장 기본값 안내
-        switch (consumableType)
-        {
-            case ConsumableType.HealthPotion:
-                if (effectAmount == 0f) effectAmount = 30f;
-                cannotUseMessage = "체력이 이미 최대치입니다.";
-                break;
-            case ConsumableType.MentalPotion:
-                if (effectAmount == 0f) effectAmount = 25f;
-                cannotUseMessage = "정신력이 이미 최대치입니다.";
-                break;
-            case ConsumableType.ResetScroll:
-                effectAmount     = 0f; // 주문서는 수치 효과 없음
-                cannotUseMessage = "각인이 없어 사용할 수 없습니다.";
-                break;
-        }
-    }
-#endif
 }
