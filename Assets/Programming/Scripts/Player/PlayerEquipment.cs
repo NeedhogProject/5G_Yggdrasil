@@ -14,7 +14,7 @@ using System.Collections.Generic;
 /// - PlayerStats  : 방어구 방어력 AddEquipmentDefense / RemoveEquipmentDefense
 /// - PlayerCombat : 무기 EquipWeapon / UnequipWeapon
 /// - ArmorSetManager : OnArmorEquipped / OnArmorUnequipped
-/// - InventorySystem : 교체된 장비 반환 (InventorySystem 완성 후 연동)
+/// - InventorySystem : 교체된 장비 반환
 /// </summary>
 public class PlayerEquipment : MonoBehaviour
 {
