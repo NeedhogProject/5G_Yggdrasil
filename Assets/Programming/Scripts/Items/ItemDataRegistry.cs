@@ -41,7 +41,8 @@ public class ItemDataRegistry : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         GameTables.Load(weaponTableJson, armorTableJson, enhanceTableJson, setBonusTableJson, setEffectTableJson,
-                        consumableTableJson, relicTableJson);
+                        consumableTableJson, relicTableJson,
+                        resourceTableJson, floorKeyTableJson, enhanceMaterialTableJson, sellableTableJson);
         BuildDictionary();
     }
 
@@ -55,6 +56,10 @@ public class ItemDataRegistry : MonoBehaviour
     [SerializeField] private TextAsset setEffectTableJson = null;
     [SerializeField] private TextAsset consumableTableJson = null;
     [SerializeField] private TextAsset relicTableJson = null;
+    [SerializeField] private TextAsset resourceTableJson = null;
+    [SerializeField] private TextAsset floorKeyTableJson = null;
+    [SerializeField] private TextAsset enhanceMaterialTableJson = null;
+    [SerializeField] private TextAsset sellableTableJson = null;
 
     // ─────────────────────── 등록 목록 ───────────────────────
 

@@ -1,0 +1,10 @@
+{"rows":[
+{"Id":"FloorKey_East_Floor_1","Name":"1층 동쪽 줄기 열쇠","Description":"동쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":2},
+{"Id":"FloorKey_East_Floor_2","Name":"2층 동쪽 줄기 열쇠","Description":"동쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":2},
+{"Id":"FloorKey_North_Floor_1","Name":"1층 북쪽 줄기 열쇠","Description":"북쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":0},
+{"Id":"FloorKey_North_Floor_2","Name":"2층 북쪽 줄기 열쇠","Description":"북쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":0},
+{"Id":"FloorKey_South_Floor_1","Name":"1층 남쪽 줄기 열쇠","Description":"남쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":1},
+{"Id":"FloorKey_South_Floor_2","Name":"2층 남쪽 줄기 열쇠","Description":"남쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":1},
+{"Id":"FloorKey_West_Floor_1","Name":"1층 서쪽 줄기 열쇠","Description":"서쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":3},
+{"Id":"FloorKey_West_Floor_2","Name":"2층 서쪽 줄기 열쇠","Description":"서쪽 줄기를 열 수 있는 열쇠이다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":false,"nMaxStack":1,"KeyDirection":3}
+]}

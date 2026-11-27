@@ -43,7 +43,7 @@ public class ItemData : ScriptableObject
 
     // ───────────────────────────── 기획 테이블 ─────────────────────────────
 
-    // 테이블로 옮긴 분류(무기, 방어구, 소모품, 유물)는 행을 반환, 아직 옮기지 않은 분류는 null
+    // 테이블로 옮긴 분류는 행을 반환, 테이블이 없는 ItemData 에셋은 null
     protected virtual ItemRow GetTableRow()
     {
         return null;

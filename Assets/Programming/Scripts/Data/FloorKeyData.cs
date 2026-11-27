@@ -19,13 +19,23 @@ public enum KeyDirection
 /// - 해당 방향 줄기 앞에서 E키로 삽입
 /// - 삽입 시 구멍 연출 후 다음 층 입장
 /// - 3→4층은 줄기 1개 고정이지만 동일하게 열쇠 삽입 연출 있음
+/// - 방향과 아이템 값은 Tables/FloorKey.xlsx 에서 관리 (ID 는 에셋 이름)
 /// </summary>
 [CreateAssetMenu(fileName = "NewFloorKey", menuName = "Yggdrasil/Items/FloorKeyData")]
 public class FloorKeyData : ItemData
 {
-    [Header("열쇠 방향")]
-    [Tooltip("이 열쇠가 열 수 있는 줄기 방향")]
-    [SerializeField] private KeyDirection keyDirection = KeyDirection.North;
+    private FloorKeyRow Row => GameTables.GetFloorKey(name);
 
-    public KeyDirection KeyDirection => keyDirection;
+    protected override ItemRow GetTableRow()
+    {
+        return Row;
+    }
+
+    protected override ItemType GetFixedItemType()
+    {
+        return ItemType.QuestItem;
+    }
+
+    // 이 열쇠가 열 수 있는 줄기 방향
+    public KeyDirection KeyDirection => Row.KeyDirection;
 }
