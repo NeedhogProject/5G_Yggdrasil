@@ -24,7 +24,3 @@ MonoBehaviour:
   _isDroppable: 1
   _isStackable: 1
   _maxStack: 1
-  resourceType: 2
-  dropSource: 0
-  floorSpawnCounts: 0a000000080000000600000004000000
-  dropWeight: 20

@@ -120,6 +120,15 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
         }
     }
 
+    /// <summary>세션에서 나감 (세션 밖이면 아무 일도 하지 않음)</summary>
+    public void Leave()
+    {
+        if (_runner != null && _runner.IsShutdown == false)
+        {
+            _runner.Shutdown();
+        }
+    }
+
     // 세션 시작 (결과 이유 반환, 성공은 Ok)
     private async System.Threading.Tasks.Task<ShutdownReason> StartSession(GameMode _eMode, string _sCode)
     {
