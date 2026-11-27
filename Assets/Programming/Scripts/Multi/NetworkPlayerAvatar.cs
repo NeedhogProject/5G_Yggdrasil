@@ -542,9 +542,10 @@ public class NetworkPlayerAvatar : NetworkBehaviour
     /// <summary>멀티 세션에서 나감 (GameManager.GoToTitle 에서 호출). 세션 밖이면 아무 일도 하지 않음</summary>
     public static void LeaveSession()
     {
-        if (_local != null && _local.Runner != null && _local.Runner.IsShutdown == false)
+        // 분신이 없어도 세션이 닫히도록 러너를 가진 NetworkLauncher 에서 종료
+        if (NetworkLauncher.Instance != null)
         {
-            _local.Runner.Shutdown();
+            NetworkLauncher.Instance.Leave();
         }
     }
 

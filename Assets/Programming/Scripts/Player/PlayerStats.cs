@@ -124,6 +124,13 @@ public class PlayerStats : MonoBehaviour
 
     private void Awake()
     {
+        // 위험: 분신에 RequireComponent 로 다시 붙은 경우 분신을 파괴하지 않고 이 컴포넌트만 끔
+        if (GetComponent<NetworkPlayerAvatar>() != null)
+        {
+            Debug.LogWarning("[PlayerStats] 분신(PlayerAvatar)에 붙어 있어 비활성화합니다. 분신 프리팹에서 PlayerStats 를 요구하는 컴포넌트를 제거하세요.");
+            enabled = false;
+            return;
+        }
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -141,7 +148,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    /// <summary>전투 행동 알림 — 공격 시 PlayerCombat 에서 호출 (보호막 재충전 타이머 리셋)</summary>
+    /// <summary>전투 행동 알림 — 공격 시 PlayerCombat 에서 호출 (비전투 판정 시간 갱신)</summary>
     public void NotifyCombatAction()
     {
         _lastCombatTime = Time.time;
@@ -405,7 +412,7 @@ public class PlayerStats : MonoBehaviour
         // 세트 받는 피해 감소 (땅 2세트)
         actualDamage *= Mathf.Max(0f, 1f - setDamageReductionPercent / 100f);
 
-        // 피격 — 보호막 재충전 타이머 리셋
+        // 피격 — 비전투 판정 시간 갱신
         _lastCombatTime = Time.time;
 
         // 보호막 선흡수 (남은 피해만 체력으로)
