@@ -24,7 +24,6 @@ public class PlayerStats : MonoBehaviour
     [SerializeField] private float setMaxHealthPercent = 0f;
     [SerializeField] private float setDefensePercent = 0f;
     [SerializeField] private float setMentalBonus = 0f;       // 최대 정신력 포인트 가산
-    [SerializeField] private float setShieldPercent = 0f;     // 최대 체력 비례 보호막 %
     [SerializeField] private float setDamageReductionPercent = 0f; // 받는 피해 감소 %
 
     [Header("유물 보너스 (PlayerEquipment 가 설정)")]
@@ -40,11 +39,7 @@ public class PlayerStats : MonoBehaviour
     // 정신력 0 일 때 이동속도 감소율
     [SerializeField] [Range(0f, 1f)] private float mentalMoveSpeedPenalty = 0.3f;
 
-    [Header("보호막")]
-    [Tooltip("공격/피격 없이 이 시간(초)이 지나면 보호막 재충전")]
-    [SerializeField] private float shieldRechargeIdleTime = 15f;
-
-    // 보호막 런타임 상태
+    // 보호막 런타임 상태 (땅 3세트 보호막, SetEffectController 가 설정)
     private float _shield = 0f;
     private float _lastCombatTime = -999f;
 
@@ -90,7 +85,6 @@ public class PlayerStats : MonoBehaviour
     public float MaxHealth => (MAX_STAT + equipmentMaxHealth) * (1f + setMaxHealthPercent / 100f);
 
     /// <summary>보호막 최대치 = 최대 체력 x 세트 보호막 %</summary>
-    public float ShieldMax => MaxHealth * (setShieldPercent / 100f);
 
     /// <summary>현재 보호막 수치 (피해 선흡수)</summary>
     public float Shield => _shield;
@@ -144,22 +138,6 @@ public class PlayerStats : MonoBehaviour
         if (Instance == this)
         {
             Instance = null;
-        }
-    }
-
-    private void Update()
-    {
-        // 비전투(공격/피격 없음) 일정 시간 경과 시 보호막 재충전
-        if (setShieldPercent > 0f && _shield < ShieldMax)
-        {
-            if (Time.time - _lastCombatTime >= shieldRechargeIdleTime)
-            {
-                _shield = ShieldMax;
-                if (OnStatsChanged != null)
-                {
-                    OnStatsChanged.Invoke();
-                }
-            }
         }
     }
 
@@ -364,24 +342,17 @@ public class PlayerStats : MonoBehaviour
 
     /// <summary>
     /// 세트 효과 보너스 일괄 설정 (ArmorSetManager 가 재계산 시 호출)
-    /// 체력/방어는 % 배율, 정신력은 최대치 포인트, 보호막은 최대 체력 비례 %
+    /// 체력/방어는 % 배율, 정신력은 최대치 포인트
     /// </summary>
-    public void SetSetBonusPercents(float healthPercent, float defensePercent, float mentalBonus, float shieldPercent)
+    public void SetSetBonusPercents(float healthPercent, float defensePercent, float mentalBonus)
     {
         setMaxHealthPercent = healthPercent;
         setDefensePercent = defensePercent;
         setMentalBonus = mentalBonus;
-        setShieldPercent = shieldPercent;
 
         // 최대치 변동으로 현재 수치가 상한을 넘으면 보정
         health = Mathf.Clamp(health, MIN_STAT, MaxHealth);
         mental = Mathf.Clamp(mental, MIN_STAT, MaxMental);
-
-        // 세트 구성 변경 시 보호막 즉시 충전 (보호막 % 보너스가 있을 때만, 땅 3세트 보호막 유지)
-        if (setShieldPercent > 0f)
-        {
-            _shield = ShieldMax;
-        }
 
         if (OnHealthChanged != null)
         {
