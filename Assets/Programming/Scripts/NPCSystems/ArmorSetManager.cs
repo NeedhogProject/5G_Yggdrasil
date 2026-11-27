@@ -12,7 +12,7 @@ using System.Collections.Generic;
 /// - 같은 원소의 Tier 는 누적 — N세트 착용 시 1~N 단계 효과 모두 적용
 /// - 확률/지속형 특수 효과는 SetEffectController 가 처리
 /// - 수치 보너스 단위: 정신력은 포인트(최대치 가산), 나머지는 %
-/// - 흡혈(LifeSteal) → PlayerCombat / 보호막(Shield) → PlayerStats (비전투 15초 후 재충전)
+/// - 흡혈(LifeSteal) → PlayerCombat (보호막은 땅 3세트 특수효과로 SetEffectController 가 처리)
 ///
 /// [사용법]
 /// - PlayerEquipment 에서 장착/해제 시 OnArmorEquipped / OnArmorUnequipped 호출
@@ -137,7 +137,6 @@ public class ArmorSetManager : MonoBehaviour
         float attackSpeedPercent = 0f;
         float moveSpeedPercent   = 0f;
         float lifeStealPercent   = 0f;
-        float shieldPercent      = 0f;
         float damageReductionPercent = 0f;
 
         foreach (KeyValuePair<RuneElement, SetTier> kv in _activeTiers)
@@ -158,7 +157,6 @@ public class ArmorSetManager : MonoBehaviour
                 attackSpeedPercent += row.fAttackSpeed;
                 moveSpeedPercent += row.fMoveSpeed;
                 lifeStealPercent += row.fLifeSteal;
-                shieldPercent += row.fShield;
                 damageReductionPercent += row.fDamageReduction;
             }
         }
@@ -166,7 +164,7 @@ public class ArmorSetManager : MonoBehaviour
         // PlayerStats: 체력 % / 방어 % / 정신력 포인트 / 보호막 %
         if (playerStats != null)
         {
-            playerStats.SetSetBonusPercents(healthPercent, defensePercent, mentalBonus, shieldPercent);
+            playerStats.SetSetBonusPercents(healthPercent, defensePercent, mentalBonus);
             playerStats.SetDamageReductionPercent(damageReductionPercent);
         }
 
@@ -182,7 +180,7 @@ public class ArmorSetManager : MonoBehaviour
         if (playerController != null)
             playerController.SetMoveSpeedBonus(moveSpeedPercent / 100f);
 
-        // 특수 효과 단계 전달 (보호막 등 SetSetBonusPercents 이후 적용)
+        // 특수 효과 단계 전달 (땅 3세트 보호막 등)
         if (setEffectController != null)
             setEffectController.ApplyTiers(_activeTiers);
     }

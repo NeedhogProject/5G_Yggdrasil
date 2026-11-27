@@ -68,7 +68,6 @@ public class SetBonusRow
     public float       fAttackSpeed = 0f;       // %
     public float       fMoveSpeed = 0f;         // %
     public float       fLifeSteal = 0f;         // %
-    public float       fShield = 0f;            // %
     public float       fDamageReduction = 0f;   // %
 }
 
