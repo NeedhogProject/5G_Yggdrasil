@@ -2,134 +2,210 @@ using System;
 using System.Collections.Generic;
 using Fusion;
 using Fusion.Sockets;
+using Fusion.Photon.Realtime;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 /// <summary>
-/// 멀티 접속 테스트용 런처 (MultiTest 씬 전용)
+/// 멀티 세션 관리 (GameCore 에 부착, 씬 전환에도 유지)
 ///
-/// - 방 코드로 Host(방 만들기) 또는 Client(참가) 접속, 혼자 시작은 Single 모드
-/// - 호스트가 접속한 플레이어마다 테스트 플레이어를 생성하고, 나가면 제거
-/// - WASD 입력을 NetworkInputData 로 전송 (실제 게임은 NavMesh 경로 방향 입력으로 교체 예정)
+/// - 싱글: 방 코드를 자동으로 만들어 Host 로 접속 (다른 플레이어 참가 가능). 실패하면 오프라인으로 진행
+/// - 멀티: 입력한 방 코드로 Client 접속. 호스트가 마을에 없으면 호스트가 거절
+/// - 씬은 각 PC 의 GameManager 가 불러오고, 러너는 씬을 불러오지 않는다
+/// - 호스트가 접속한 플레이어마다 분신을 생성하고, 나가면 제거
+/// - Photon 서버 지역은 kr 고정
 ///
 /// [설정]
-/// 1. 씬의 빈 오브젝트에 부착하고 playerPrefab 에 NetworkObject 프리팹 연결
-/// 2. 씬이 빌드 목록에 있어야 함 (SceneRef 를 빌드 인덱스로 지정)
+/// 1. GameCore 에 부착하고 playerPrefab 에 PlayerAvatar 프리팹 연결
 /// </summary>
 public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
 {
-    [Tooltip("접속한 플레이어마다 생성할 프리팹 (NetworkObject 포함)")]
+    public static NetworkLauncher Instance { get; private set; }
+
+    [Tooltip("접속한 플레이어마다 생성할 분신 프리팹 (NetworkObject 포함)")]
     [SerializeField] private NetworkObject playerPrefab;
 
     [Tooltip("최대 인원")]
     [SerializeField] private int maxPlayers = 2;
 
+    private const string REGION = "kr";
+    private const int ROOM_CODE_LENGTH = 6;
+    // 헷갈리는 글자(0, O, 1, I) 제외
+    private const string ROOM_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    // 이전 세션이 닫히기를 기다리는 최대 시간 (게임 나가기 직후 다시 접속할 때)
+    private const float SHUTDOWN_WAIT_SECONDS = 5f;
+
     private NetworkRunner _runner;
     private readonly Dictionary<PlayerRef, NetworkObject> _spawnedPlayers = new Dictionary<PlayerRef, NetworkObject>();
 
-    private string _sRoomCode = "";
-    private string _sStatus = "";
     private bool _bStarting = false;
     private bool _bJoinedAsClient = false;   // 참가자로 접속했는지 (호스트가 나가면 타이틀로 복귀)
 
-    // ─────────────────────── 접속 UI (테스트용) ───────────────────────
+    /// <summary>현재 방 코드 (세션 밖이면 빈 문자열)</summary>
+    public static string RoomCode { get; private set; } = "";
 
-    private void OnGUI()
+    /// <summary>Host 생성에 실패해 오프라인으로 진행 중인지</summary>
+    public static bool IsOffline { get; private set; } = false;
+
+    /// <summary>ESC 화면 표시용 문구</summary>
+    public static string StatusText
     {
-        GUILayout.BeginArea(new Rect(20f, 20f, 320f, 220f), GUI.skin.box);
-
-        if (_runner == null)
+        get
         {
-            GUILayout.Label("방 코드");
-            _sRoomCode = GUILayout.TextField(_sRoomCode, 20);
-
-            GUI.enabled = _bStarting == false;
-            if (GUILayout.Button("방 만들기 (Host)"))
+            if (IsOffline == true)
             {
-                TryStart(GameMode.Host);
+                return "오프라인(참가 불가)";
             }
-            if (GUILayout.Button("참가 (Client)"))
-            {
-                TryStart(GameMode.Client);
-            }
-            if (GUILayout.Button("혼자 시작"))
-            {
-                StartGame(GameMode.Single);
-            }
-            GUI.enabled = true;
+            return RoomCode.Length > 0 ? "방 코드: " + RoomCode : "";
         }
-        else
-        {
-            GUILayout.Label("모드: " + _runner.GameMode + " / 방 코드: " + _sRoomCode);
-            GUILayout.Label("인원: " + _spawnedPlayers.Count + " (호스트 기준)");
-            if (GUILayout.Button("나가기"))
-            {
-                _runner.Shutdown();
-            }
-        }
-
-        GUILayout.Label(_sStatus);
-        GUILayout.EndArea();
     }
 
-    // 방 코드가 있어야 접속 (호스트와 참가자가 같은 코드를 입력)
-    private void TryStart(GameMode _eMode)
+    /// <summary>접속을 시도하는 중인지 (타이틀 버튼 잠금용)</summary>
+    public bool IsStarting => _bStarting;
+
+    private void Awake()
     {
-        if (string.IsNullOrWhiteSpace(_sRoomCode) == true)
+        if (Instance != null && Instance != this)
         {
-            _sStatus = "방 코드를 입력하세요";
+            Destroy(this);
             return;
         }
-        StartGame(_eMode);
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     // ─────────────────────── 접속 ───────────────────────
 
-    private async void StartGame(GameMode _eMode)
+    /// <summary>방 코드를 만들어 Host 로 접속. 실패하면 오프라인으로 전환. 결과는 _onDone 으로 (true 온라인)</summary>
+    public async void StartHost(Action<bool> _onDone)
+    {
+        string sCode = CreateRoomCode();
+        ShutdownReason eResult = await StartSession(GameMode.Host, sCode);
+
+        IsOffline = eResult != ShutdownReason.Ok;
+        if (IsOffline == true)
+        {
+            Debug.LogWarning("[NetworkLauncher] Host 생성 실패, 오프라인으로 진행: " + eResult);
+        }
+        if (_onDone != null)
+        {
+            _onDone.Invoke(IsOffline == false);
+        }
+    }
+
+    /// <summary>방 코드로 Client 접속. 결과는 _onDone 으로 (실패 시 안내 문구, 성공 시 null)</summary>
+    public async void JoinRoom(string _sCode, Action<string> _onDone)
+    {
+        string sCode = _sCode == null ? "" : _sCode.Trim().ToUpperInvariant();
+        string sError = null;
+        if (sCode.Length == 0)
+        {
+            sError = "방 코드를 입력하세요";
+        }
+        else
+        {
+            ShutdownReason eResult = await StartSession(GameMode.Client, sCode);
+            sError = ToJoinErrorText(eResult);
+            _bJoinedAsClient = eResult == ShutdownReason.Ok;
+        }
+        if (_onDone != null)
+        {
+            _onDone.Invoke(sError);
+        }
+    }
+
+    // 세션 시작 (결과 이유 반환, 성공은 Ok)
+    private async System.Threading.Tasks.Task<ShutdownReason> StartSession(GameMode _eMode, string _sCode)
     {
         if (_bStarting == true)
         {
-            return;
+            return ShutdownReason.AlreadyRunning;
         }
         _bStarting = true;
-        _sStatus = "접속 중...";
+        IsOffline = false;
+
+        // 이전 세션이 닫히는 중이면 OnShutdown 까지 대기
+        float fWaitUntil = Time.realtimeSinceStartup + SHUTDOWN_WAIT_SECONDS;
+        while (_runner != null && Time.realtimeSinceStartup < fWaitUntil)
+        {
+            await System.Threading.Tasks.Task.Yield();
+        }
+        if (_runner != null)
+        {
+            _bStarting = false;
+            return ShutdownReason.AlreadyRunning;
+        }
 
         // 위험: 러너와 콜백을 같은 오브젝트에 두면 콜백이 중복 등록되므로 별도 오브젝트에 생성
         GameObject objRunner = new GameObject("NetworkRunner");
+        DontDestroyOnLoad(objRunner);
         _runner = objRunner.AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
         _runner.AddCallbacks(this);
 
-        NetworkSceneInfo sceneInfo = new NetworkSceneInfo();
-        sceneInfo.AddSceneRef(SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex));
+        FusionAppSettings appSettings = PhotonAppSettings.Global.AppSettings.GetCopy();
+        appSettings.FixedRegion = REGION;
 
         StartGameArgs args = new StartGameArgs();
         args.GameMode = _eMode;
-        args.SessionName = _sRoomCode.Trim();
+        args.SessionName = _sCode;
         args.PlayerCount = maxPlayers;
-        args.Scene = sceneInfo;
+        args.CustomPhotonAppSettings = appSettings;
+        // 씬은 GameManager 가 불러오므로 Scene 은 지정하지 않음
         args.SceneManager = objRunner.AddComponent<NetworkSceneManagerDefault>();
 
         StartGameResult result = await _runner.StartGame(args);
+        _bStarting = false;
 
         if (result.Ok == false)
         {
-            _sStatus = "접속 실패: " + result.ShutdownReason;
-            Debug.LogWarning("[NetworkLauncher] 접속 실패: " + result.ShutdownReason);
+            Debug.LogWarning("[NetworkLauncher] 접속 실패: " + _eMode + " / " + result.ShutdownReason);
             if (objRunner != null)
             {
                 Destroy(objRunner);
             }
             _runner = null;
-        }
-        else
-        {
-            _bJoinedAsClient = _eMode == GameMode.Client;
-            _sStatus = "접속 성공";
-            Debug.Log("[NetworkLauncher] 접속 성공: " + _eMode + " / " + args.SessionName);
+            return result.ShutdownReason == ShutdownReason.Ok ? ShutdownReason.Error : result.ShutdownReason;
         }
 
-        _bStarting = false;
+        RoomCode = _sCode;
+        Debug.Log("[NetworkLauncher] 접속 성공: " + _eMode + " / " + _sCode);
+        return ShutdownReason.Ok;
+    }
+
+    // 참가 실패 안내 문구
+    private static string ToJoinErrorText(ShutdownReason _eReason)
+    {
+        switch (_eReason)
+        {
+            case ShutdownReason.Ok:
+                return null;
+            case ShutdownReason.ConnectionRefused:
+                return "호스트가 마을에 있지 않습니다";
+            case ShutdownReason.GameNotFound:
+            case ShutdownReason.GameClosed:
+                return "방을 찾을 수 없습니다";
+            case ShutdownReason.GameIsFull:
+                return "방이 가득 찼습니다";
+            default:
+                return "접속에 실패했습니다 (" + _eReason + ")";
+        }
+    }
+
+    private static string CreateRoomCode()
+    {
+        System.Text.StringBuilder builder = new System.Text.StringBuilder(ROOM_CODE_LENGTH);
+        for (int i = 0; i < ROOM_CODE_LENGTH; i++)
+        {
+            builder.Append(ROOM_CODE_CHARS[UnityEngine.Random.Range(0, ROOM_CODE_CHARS.Length)]);
+        }
+        return builder.ToString();
     }
 
     // ─────────────────────── 러너 콜백 ───────────────────────
@@ -170,7 +246,7 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
     {
         _spawnedPlayers.Clear();
         _runner = null;
-        _sStatus = "연결 종료: " + _reason;
+        RoomCode = "";
         Debug.Log("[NetworkLauncher] 연결 종료: " + _reason);
 
         // 호스트가 나가서 끊긴 참가자는 저장 후 타이틀로 복귀 (내가 직접 나간 경우는 Ok)
@@ -184,12 +260,26 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnDisconnectedFromServer(NetworkRunner _netRunner, NetDisconnectReason _reason)
     {
-        _sStatus = "서버 연결 끊김: " + _reason;
+        Debug.Log("[NetworkLauncher] 서버 연결 끊김: " + _reason);
     }
 
     public void OnConnectFailed(NetworkRunner _netRunner, NetAddress _remoteAddress, NetConnectFailedReason _reason)
     {
-        _sStatus = "접속 실패: " + _reason;
+        Debug.Log("[NetworkLauncher] 접속 실패: " + _reason);
+    }
+
+    // 호스트: 마을에 있을 때만 참가 허용
+    public void OnConnectRequest(NetworkRunner _netRunner, NetworkRunnerCallbackArgs.ConnectRequest _request, byte[] _token)
+    {
+        bool bInTown = GameManager.Instance != null && GameManager.Instance.CurrentFloor == 0;
+        if (bInTown == true)
+        {
+            _request.Accept();
+        }
+        else
+        {
+            _request.Refuse();
+        }
     }
 
     // 사용하지 않는 콜백
@@ -198,10 +288,6 @@ public class NetworkLauncher : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     public void OnObjectEnterAOI(NetworkRunner _netRunner, NetworkObject _obj, PlayerRef _player)
-    {
-    }
-
-    public void OnConnectRequest(NetworkRunner _netRunner, NetworkRunnerCallbackArgs.ConnectRequest _request, byte[] _token)
     {
     }
 
