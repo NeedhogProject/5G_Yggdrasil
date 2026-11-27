@@ -1,0 +1,7 @@
+{"rows":[
+{"Id":"Resource_Darkness","Name":"어둠 원소 광석","Description":"","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":true,"nMaxStack":1,"Element":4},
+{"Id":"Resource_Earth","Name":"땅 원소 광석","Description":"땅 원소 광석입니다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":true,"nMaxStack":1,"Element":3},
+{"Id":"Resource_Fire","Name":"불 원소 광석","Description":"불 원소 광석입니다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":true,"nMaxStack":1,"Element":0},
+{"Id":"Resource_Water","Name":"물 원소 광석","Description":"물 원소 광석입니다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":true,"nMaxStack":1,"Element":1},
+{"Id":"Resource_Wind","Name":"바람 원소 광석","Description":"바람 원소 광석입니다.","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":0,"bDroppable":true,"bStackable":true,"nMaxStack":1,"Element":2}
+]}

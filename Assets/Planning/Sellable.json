@@ -1,0 +1,7 @@
+{"rows":[
+{"Id":"Se_Dar_Fang-01","Name":"심연의 송곳니","Description":"크로울의 송곳니. 울부짖는 소리가 들리는 듯 하다","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":400,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"Se_Ear_Rook-01","Name":"암석 파편","Description":"단단하고 무거운 암석 파편이다","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":400,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"Se_Fir_Fluff-01","Name":"화염 털뭉치","Description":"만지면 은은한 열기가 전해지는 냐옹이 털뭉치","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":300,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"Se_Wat_Scale-01","Name":"촉촉한 비늘","Description":"촉촉한 물기가 느껴지는 비늘, 어딘가 끈적한 것 같기도 하다","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":300,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"Se_Win_Feather-01","Name":"돌풍의 날개깃","Description":"가오붕이 비행연습하다 떨어져 나온 날개깃","Rarity":0,"nWidth":1,"nHeight":1,"nPrice":400,"bDroppable":true,"bStackable":true,"nMaxStack":99}
+]}

@@ -9,7 +9,7 @@ using UnityEngine;
 ///
 /// 레포 루트 Tables/*.xlsx 를 읽어 Assets/Planning/*.json 으로 저장한다
 /// - 오류가 하나라도 있으면 어떤 JSON 도 바꾸지 않고 오류 목록을 보여준다
-/// - 무기/방어구는 테이블 ID 와 SO 에셋 이름이 1:1 인지 대조한다
+/// - 아이템 테이블은 테이블 ID 와 SO 에셋 이름이 1:1 인지 대조한다
 /// - 변환 후 엑셀과 JSON 을 같이 커밋해야 한다
 /// </summary>
 public static class TableConverterMenu
@@ -34,6 +34,10 @@ public static class TableConverterMenu
         new TableDef { Name = "SetEffect", RowType = typeof(SetEffectRow), KeyField = "Id", JsonPath = GameTables.SET_EFFECT_JSON_PATH, AssetType = null },
         new TableDef { Name = "Consumable", RowType = typeof(ConsumableRow), KeyField = "Id", JsonPath = GameTables.CONSUMABLE_JSON_PATH, AssetType = typeof(ConsumableData) },
         new TableDef { Name = "Relic", RowType = typeof(RelicRow), KeyField = "Id", JsonPath = GameTables.RELIC_JSON_PATH, AssetType = typeof(RelicData) },
+        new TableDef { Name = "Resource", RowType = typeof(ResourceRow), KeyField = "Id", JsonPath = GameTables.RESOURCE_JSON_PATH, AssetType = typeof(ResourceData) },
+        new TableDef { Name = "FloorKey", RowType = typeof(FloorKeyRow), KeyField = "Id", JsonPath = GameTables.FLOOR_KEY_JSON_PATH, AssetType = typeof(FloorKeyData) },
+        new TableDef { Name = "EnhanceMaterial", RowType = typeof(EnhanceMaterialRow), KeyField = "Id", JsonPath = GameTables.ENHANCE_MATERIAL_JSON_PATH, AssetType = typeof(EnhanceMaterialData) },
+        new TableDef { Name = "Sellable", RowType = typeof(SellableRow), KeyField = "Id", JsonPath = GameTables.SELLABLE_JSON_PATH, AssetType = typeof(SellableData) },
     };
 
     // 엑셀이 있는 Tables 폴더를 탐색기로 연다

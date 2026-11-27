@@ -59,23 +59,9 @@ public class ResourceInstance : ItemInstance
 
     // ─────────────────────── 유틸 ───────────────────────
 
-    /// <summary>각인 시스템에 넘길 RuneElement 반환</summary>
-    public RuneElement ToRuneElement() =>
-        ResourceData != null ? ResourceData.ToRuneElement() : RuneElement.None;
-
     /// <summary>원소 종류</summary>
     public ResourceType ResourceType =>
         ResourceData?.ResourceType ?? ResourceType.Fire;
-
-    /// <summary>
-    /// 자원 소비 (각인술사에게 맡길 때)
-    /// 반환값: 실제 소비된 수량
-    /// </summary>
-    public int Consume(int amount)
-    {
-        if (amount <= 0) return 0;
-        return RemoveStack(amount);
-    }
 
     public override string ToString() =>
         $"[{ResourceData?.ItemName ?? "null"}({ResourceType})] x{StackCount}";

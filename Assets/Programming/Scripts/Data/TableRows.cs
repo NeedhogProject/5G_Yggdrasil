@@ -96,6 +96,29 @@ public class RelicRow : ItemRow
     public float           fOptionValue = 0f;   // 달란 획득량만 %
 }
 
+[System.Serializable]
+public class ResourceRow : ItemRow
+{
+    public ResourceType Element = ResourceType.Fire;
+}
+
+[System.Serializable]
+public class FloorKeyRow : ItemRow
+{
+    public KeyDirection KeyDirection = KeyDirection.North;
+}
+
+// 강화 재료, 판매 아이템은 공통 열만 사용
+[System.Serializable]
+public class EnhanceMaterialRow : ItemRow
+{
+}
+
+[System.Serializable]
+public class SellableRow : ItemRow
+{
+}
+
 // JsonUtility 용 감싸기 (최상위 배열을 직접 읽지 못함)
 [System.Serializable]
 public class WeaponTable
@@ -137,4 +160,28 @@ public class ConsumableTable
 public class RelicTable
 {
     public RelicRow[] rows = new RelicRow[0];
+}
+
+[System.Serializable]
+public class ResourceTable
+{
+    public ResourceRow[] rows = new ResourceRow[0];
+}
+
+[System.Serializable]
+public class FloorKeyTable
+{
+    public FloorKeyRow[] rows = new FloorKeyRow[0];
+}
+
+[System.Serializable]
+public class EnhanceMaterialTable
+{
+    public EnhanceMaterialRow[] rows = new EnhanceMaterialRow[0];
+}
+
+[System.Serializable]
+public class SellableTable
+{
+    public SellableRow[] rows = new SellableRow[0];
 }

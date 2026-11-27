@@ -1,0 +1,7 @@
+{"rows":[
+{"Id":"EH_Norm_Fang-01","Name":"날카로운 독니","Description":"스치기만 해도 치명적인 독이 흘러나오는 타란튤라의 독니","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":250,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"EH_Norm_Hrom-01","Name":"날카로운 뿔","Description":"붉은 뿔뇽이의 위협적인 뿔 조각","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":200,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"EH_Norm_Jelly-01","Name":"슬라임 젤리","Description":"푸푸한테서 떨어져 나온 탱글탱글하고 말랑한 부산물","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":100,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"EH_Norm_Scarf-01","Name":"머슈룸의 목도리","Description":"마슈룸이 목에 두르고 있던 목도리","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":100,"bDroppable":true,"bStackable":true,"nMaxStack":99},
+{"Id":"EH_Norm_Shell-01","Name":"단단한 등껍질","Description":"웬만한 칼날에는 금조차 가지 않는 가부기의 등껍질","Rarity":1,"nWidth":1,"nHeight":1,"nPrice":200,"bDroppable":true,"bStackable":true,"nMaxStack":99}
+]}

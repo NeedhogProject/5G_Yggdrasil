@@ -17,6 +17,10 @@ public static class GameTables
     public const string SET_EFFECT_JSON_PATH = "Assets/Planning/SetEffect.json";
     public const string CONSUMABLE_JSON_PATH = "Assets/Planning/Consumable.json";
     public const string RELIC_JSON_PATH = "Assets/Planning/Relic.json";
+    public const string RESOURCE_JSON_PATH = "Assets/Planning/Resource.json";
+    public const string FLOOR_KEY_JSON_PATH = "Assets/Planning/FloorKey.json";
+    public const string ENHANCE_MATERIAL_JSON_PATH = "Assets/Planning/EnhanceMaterial.json";
+    public const string SELLABLE_JSON_PATH = "Assets/Planning/Sellable.json";
 
     private static Dictionary<string, WeaponRow> weaponRows = null;
     private static Dictionary<string, ArmorRow> armorRows = null;
@@ -27,6 +31,10 @@ public static class GameTables
     private static Dictionary<string, float> setEffectValues = null;
     private static Dictionary<string, ConsumableRow> consumableRows = null;
     private static Dictionary<string, RelicRow> relicRows = null;
+    private static Dictionary<string, ResourceRow> resourceRows = null;
+    private static Dictionary<string, FloorKeyRow> floorKeyRows = null;
+    private static Dictionary<string, EnhanceMaterialRow> enhanceMaterialRows = null;
+    private static Dictionary<string, SellableRow> sellableRows = null;
     private static bool bLoadAttempted = false;   // 실패 시 매 조회마다 재시도 방지
 
     // 없는 ID 경고는 ID 마다 1번만
@@ -34,12 +42,20 @@ public static class GameTables
 
     public static void Load(TextAsset _weaponJson, TextAsset _armorJson, TextAsset _enhanceJson,
                             TextAsset _setBonusJson, TextAsset _setEffectJson,
-                            TextAsset _consumableJson, TextAsset _relicJson)
+                            TextAsset _consumableJson, TextAsset _relicJson,
+                            TextAsset _resourceJson,
+                            TextAsset _floorKeyJson,
+                            TextAsset _enhanceMaterialJson,
+                            TextAsset _sellableJson)
     {
         bLoadAttempted = true;
         if (_weaponJson == null || _armorJson == null || _enhanceJson == null
             || _setBonusJson == null || _setEffectJson == null
-            || _consumableJson == null || _relicJson == null)
+            || _consumableJson == null || _relicJson == null
+            || _resourceJson == null
+            || _floorKeyJson == null
+            || _enhanceMaterialJson == null
+            || _sellableJson == null)
         {
             Debug.LogError("[GameTables] 테이블 JSON 이 연결되지 않았습니다. GameCore 의 ItemDataRegistry 를 확인하세요.");
             return;
@@ -90,6 +106,30 @@ public static class GameTables
             relicRows[row.Id] = row;
         }
 
+        resourceRows = new Dictionary<string, ResourceRow>();
+        foreach (ResourceRow row in JsonUtility.FromJson<ResourceTable>(_resourceJson.text).rows)
+        {
+            resourceRows[row.Id] = row;
+        }
+
+        floorKeyRows = new Dictionary<string, FloorKeyRow>();
+        foreach (FloorKeyRow row in JsonUtility.FromJson<FloorKeyTable>(_floorKeyJson.text).rows)
+        {
+            floorKeyRows[row.Id] = row;
+        }
+
+        enhanceMaterialRows = new Dictionary<string, EnhanceMaterialRow>();
+        foreach (EnhanceMaterialRow row in JsonUtility.FromJson<EnhanceMaterialTable>(_enhanceMaterialJson.text).rows)
+        {
+            enhanceMaterialRows[row.Id] = row;
+        }
+
+        sellableRows = new Dictionary<string, SellableRow>();
+        foreach (SellableRow row in JsonUtility.FromJson<SellableTable>(_sellableJson.text).rows)
+        {
+            sellableRows[row.Id] = row;
+        }
+
         reportedMissing.Clear();
     }
 
@@ -105,6 +145,10 @@ public static class GameTables
         setEffectValues = null;
         consumableRows = null;
         relicRows = null;
+        resourceRows = null;
+        floorKeyRows = null;
+        enhanceMaterialRows = null;
+        sellableRows = null;
         bLoadAttempted = false;
     }
 
@@ -154,6 +198,54 @@ public static class GameTables
         }
         ReportMissing("Relic", _id);
         return new RelicRow();
+    }
+
+    public static ResourceRow GetResource(string _id)
+    {
+        EnsureLoaded();
+        ResourceRow row = null;
+        if (resourceRows != null && resourceRows.TryGetValue(_id, out row) == true)
+        {
+            return row;
+        }
+        ReportMissing("Resource", _id);
+        return new ResourceRow();
+    }
+
+    public static FloorKeyRow GetFloorKey(string _id)
+    {
+        EnsureLoaded();
+        FloorKeyRow row = null;
+        if (floorKeyRows != null && floorKeyRows.TryGetValue(_id, out row) == true)
+        {
+            return row;
+        }
+        ReportMissing("FloorKey", _id);
+        return new FloorKeyRow();
+    }
+
+    public static EnhanceMaterialRow GetEnhanceMaterial(string _id)
+    {
+        EnsureLoaded();
+        EnhanceMaterialRow row = null;
+        if (enhanceMaterialRows != null && enhanceMaterialRows.TryGetValue(_id, out row) == true)
+        {
+            return row;
+        }
+        ReportMissing("EnhanceMaterial", _id);
+        return new EnhanceMaterialRow();
+    }
+
+    public static SellableRow GetSellable(string _id)
+    {
+        EnsureLoaded();
+        SellableRow row = null;
+        if (sellableRows != null && sellableRows.TryGetValue(_id, out row) == true)
+        {
+            return row;
+        }
+        ReportMissing("Sellable", _id);
+        return new SellableRow();
     }
 
     public static float[] EnhanceSuccessRates
@@ -220,7 +312,11 @@ public static class GameTables
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_BONUS_JSON_PATH),
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SET_EFFECT_JSON_PATH),
              UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(CONSUMABLE_JSON_PATH),
-             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(RELIC_JSON_PATH));
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(RELIC_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(RESOURCE_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(FLOOR_KEY_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(ENHANCE_MATERIAL_JSON_PATH),
+             UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(SELLABLE_JSON_PATH));
 #endif
     }
 
