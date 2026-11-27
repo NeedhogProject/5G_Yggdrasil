@@ -13,6 +13,13 @@ public class StorageInteractable : MonoBehaviour
     [Header("UI 힌트")]
     [SerializeField] private GameObject hintObject;
 
+    [Header("강조 표시")]
+    [Tooltip("범위에 들어오면 색이 깜빡일 오브젝트들(여러 개 가능, 자식 포함). 비우면 이 오브젝트 자신. 지정하면 거리도 이 오브젝트들 기준으로 잰다")]
+    [SerializeField] private GameObject[] highlightObjects;
+
+    // 거리 계산용으로 모아둔 렌더러 (처음 한 번만 모음)
+    private Renderer[] _centerRenderers = null;
+
     private Transform _player = null;
     private bool _playerInRange = false;
 
@@ -26,6 +33,57 @@ public class StorageInteractable : MonoBehaviour
     // 이 창고가 전역 카운트에 범위 진입으로 반영돼 있는지
     private bool _countedInRange = false;
 
+    // 거리 계산 기준점. 모델 기준점(pivot)이 집 원점 등 엉뚱한 곳에 있어도 상자 모양의 실제 중심을 쓴다
+    private Vector3 GetInteractCenter()
+    {
+        // 강조할 모델을 지정했으면 그 모델 기준, 아니면 이 오브젝트와 자식 기준
+        if (_centerRenderers == null || Application.isPlaying == false)
+        {
+            _centerRenderers = InteractOutlineEffect.CollectRenderers(highlightObjects);
+            if (_centerRenderers.Length == 0)
+            {
+                _centerRenderers = GetComponentsInChildren<Renderer>();
+            }
+        }
+        Renderer[] renderers = _centerRenderers;
+        bool hasBounds = false;
+        Bounds bounds = new Bounds(transform.position, Vector3.zero);
+
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            Renderer renderer = renderers[i];
+            if (renderer == null)
+            {
+                continue;
+            }
+            // 3D 메시만 사용 (힌트 글자, 파티클 등은 제외)
+            if ((renderer is MeshRenderer || renderer is SkinnedMeshRenderer) == false)
+            {
+                continue;
+            }
+            if (renderer.GetComponent<TMPro.TMP_Text>() != null)
+            {
+                continue;
+            }
+
+            if (hasBounds == false)
+            {
+                bounds = renderer.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
+        }
+
+        if (hasBounds == false)
+        {
+            return transform.position;
+        }
+        return bounds.center;
+    }
+
     private void Start()
     {
         SetHintVisible(false);
@@ -33,6 +91,9 @@ public class StorageInteractable : MonoBehaviour
 
     private void OnDisable()
     {
+        // 창고가 꺼질 때 테두리가 남지 않도록 정리
+        InteractOutlineEffect.Hide(transform);
+
         // 씬 전환/비활성화 시 전역 카운트가 어긋나지 않도록 정리
         if (_countedInRange == true)
         {
@@ -57,7 +118,11 @@ public class StorageInteractable : MonoBehaviour
         _playerInRange = false;
         if (_player != null)
         {
-            float distance = Vector3.Distance(transform.position, _player.position);
+            // 상자 모양의 실제 중심 기준, 높이 차이는 빼고 바닥 평면 거리로 잰다
+            Vector3 center = GetInteractCenter();
+            Vector3 flatOffset = _player.position - center;
+            flatOffset.y = 0f;
+            float distance = flatOffset.magnitude;
             if (distance <= interactRange)
             {
                 _playerInRange = true;
@@ -130,6 +195,16 @@ public class StorageInteractable : MonoBehaviour
     // 힌트 표시/숨김 (중복 호출 방지)
     private void SetHintVisible(bool visible)
     {
+        // 힌트와 함께 상자 색도 깜빡이게 (힌트 오브젝트가 없어도 동작)
+        if (visible == true)
+        {
+            InteractOutlineEffect.Show(transform, highlightObjects);
+        }
+        else
+        {
+            InteractOutlineEffect.Hide(transform);
+        }
+
         if (hintObject == null)
         {
             return;
@@ -147,7 +222,7 @@ public class StorageInteractable : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = new Color(1f, 0.8f, 0f, 0.4f);
-        Gizmos.DrawWireSphere(transform.position, interactRange);
+        Gizmos.DrawWireSphere(GetInteractCenter(), interactRange);
     }
 #endif
 }

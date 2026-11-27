@@ -19,6 +19,10 @@ public class HouseDoorInteractable : MonoBehaviour
     [Tooltip("범위에 들어오면 켜질 안내 오브젝트. 없으면 비워둠")]
     [SerializeField] private GameObject hintObject;
 
+    [Header("강조 표시")]
+    [Tooltip("범위에 들어오면 색이 깜빡일 오브젝트들(여러 개 가능, 자식 포함). 비우면 이 오브젝트 자신")]
+    [SerializeField] private GameObject[] highlightObjects;
+
     private bool _playerInRange = false;
     private GameObject _playerObj = null;
 
@@ -145,6 +149,16 @@ public class HouseDoorInteractable : MonoBehaviour
     // 힌트 표시 또는 숨김 (중복 호출 방지)
     private void SetHintVisible(bool visible)
     {
+        // 힌트와 함께 문 색도 깜빡이게 (힌트 오브젝트가 없어도 동작)
+        if (visible == true)
+        {
+            InteractOutlineEffect.Show(transform, highlightObjects);
+        }
+        else
+        {
+            InteractOutlineEffect.Hide(transform);
+        }
+
         if (hintObject == null)
         {
             return;
@@ -154,6 +168,12 @@ public class HouseDoorInteractable : MonoBehaviour
             return;
         }
         hintObject.SetActive(visible);
+    }
+
+    private void OnDisable()
+    {
+        // 문이 꺼질 때 테두리가 남지 않도록 정리
+        InteractOutlineEffect.Hide(transform);
     }
 
 #if UNITY_EDITOR

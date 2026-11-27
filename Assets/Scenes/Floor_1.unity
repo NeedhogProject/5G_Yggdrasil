@@ -1420,6 +1420,7 @@ GameObject:
   - component: {fileID: 124879024}
   - component: {fileID: 124879026}
   - component: {fileID: 124879025}
+  - component: {fileID: 124879027}
   m_Layer: 0
   m_Name: Stem_East
   m_TagString: Untagged
@@ -1482,6 +1483,22 @@ MonoBehaviour:
   holeVFX: {fileID: 0}
   transitionDelay: 1.5
   directionChoicePanel: {fileID: 0}
+--- !u!114 &124879027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124879023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45c08cb9391a5d64898df934b080969f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
+  showPrompt: 1
+  promptHeightOffset: 2
+  interactHintText: "E - \uC544\uB798\uCE35\uC73C\uB85C"
+  outlineMaterial: {fileID: 0}
 --- !u!1 &127824729
 GameObject:
   m_ObjectHideFlags: 0
@@ -12127,6 +12144,7 @@ GameObject:
   - component: {fileID: 1054254481}
   - component: {fileID: 1054254483}
   - component: {fileID: 1054254482}
+  - component: {fileID: 1054254484}
   m_Layer: 0
   m_Name: Stem_North
   m_TagString: Untagged
@@ -12189,6 +12207,22 @@ MonoBehaviour:
   holeVFX: {fileID: 0}
   transitionDelay: 1.5
   directionChoicePanel: {fileID: 0}
+--- !u!114 &1054254484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1054254480}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45c08cb9391a5d64898df934b080969f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
+  showPrompt: 1
+  promptHeightOffset: 2
+  interactHintText: "E - \uC544\uB798\uCE35\uC73C\uB85C"
+  outlineMaterial: {fileID: 0}
 --- !u!1 &1070620959
 GameObject:
   m_ObjectHideFlags: 0
@@ -12533,6 +12567,7 @@ GameObject:
   - component: {fileID: 1232845984}
   - component: {fileID: 1232845986}
   - component: {fileID: 1232845985}
+  - component: {fileID: 1232845987}
   m_Layer: 0
   m_Name: Stem_West
   m_TagString: Untagged
@@ -12595,6 +12630,22 @@ MonoBehaviour:
   holeVFX: {fileID: 0}
   transitionDelay: 1.5
   directionChoicePanel: {fileID: 0}
+--- !u!114 &1232845987
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1232845983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45c08cb9391a5d64898df934b080969f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
+  showPrompt: 1
+  promptHeightOffset: 2
+  interactHintText: "E - \uC544\uB798\uCE35\uC73C\uB85C"
+  outlineMaterial: {fileID: 0}
 --- !u!1 &1248222175
 GameObject:
   m_ObjectHideFlags: 0
@@ -13514,6 +13565,7 @@ GameObject:
   - component: {fileID: 1338606701}
   - component: {fileID: 1338606703}
   - component: {fileID: 1338606702}
+  - component: {fileID: 1338606704}
   m_Layer: 0
   m_Name: Stem_South
   m_TagString: Untagged
@@ -13576,6 +13628,22 @@ MonoBehaviour:
   holeVFX: {fileID: 0}
   transitionDelay: 1.5
   directionChoicePanel: {fileID: 0}
+--- !u!114 &1338606704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338606700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45c08cb9391a5d64898df934b080969f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
+  showPrompt: 1
+  promptHeightOffset: 2
+  interactHintText: "E - \uC544\uB798\uCE35\uC73C\uB85C"
+  outlineMaterial: {fileID: 0}
 --- !u!1001 &1339588976
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16457,6 +16525,12 @@ MonoBehaviour:
   vignetteHoldTime: 0.12
   vignetteFadeOutTime: 0.45
   sanityPulseSpeed: 1.8
+  sanityZeroAlpha: 0.78
+  sanityFullScreenTint: {fileID: 0}
+  sanityScreenTintAlpha: 0.35
+  sanityScreenTintMinAlpha: 0.05
+  sanityScreenTintBlinkSpeed: 0.6
+  sanityScreenTintSpeed: 2.5
   setEffectSlots: []
 --- !u!1 &1775214703
 GameObject:
@@ -19264,10 +19338,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45c08cb9391a5d64898df934b080969f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
+  showPrompt: 1
   promptHeightOffset: 2
   interactHintText: "E - \uC0C1\uD638\uC791\uC6A9"
   outlineMaterial: {fileID: 0}
-  targetRenderers: []
 --- !u!114 &2025845026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19559,13 +19633,37 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c7ef5bfc7b2ec8c468e5340290f44801, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2079371953}
   m_SourcePrefab: {fileID: 100100000, guid: c7ef5bfc7b2ec8c468e5340290f44801, type: 3}
 --- !u!4 &2079371951 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: c7ef5bfc7b2ec8c468e5340290f44801, type: 3}
   m_PrefabInstance: {fileID: 2079371950}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2079371952 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c7ef5bfc7b2ec8c468e5340290f44801, type: 3}
+  m_PrefabInstance: {fileID: 2079371950}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2079371953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2079371952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 45c08cb9391a5d64898df934b080969f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InteractableHighlight
+  showPrompt: 1
+  promptHeightOffset: 2
+  interactHintText: "E - \uB9C8\uC744\uB85C \uB3CC\uC544\uAC00\uAE30"
+  outlineMaterial: {fileID: 0}
 --- !u!1 &2084632515 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -466329591000292508, guid: e69288704008d2144abfd701234ba3ee, type: 3}

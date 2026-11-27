@@ -100,6 +100,9 @@ public class InteractionHint : MonoBehaviour
         _offsets[target] = heightOffset;
         _messages[target] = message;
 
+        // 프롬프트를 띄우는 대상은 테두리도 빛나게 한다
+        InteractOutlineEffect.Show(target);
+
         UpdateCurrentTarget();
     }
 
@@ -112,6 +115,10 @@ public class InteractionHint : MonoBehaviour
         }
 
         _order.Remove(target);
+
+        // 범위를 벗어나면 테두리도 끈다
+        InteractOutlineEffect.Hide(target);
+
         if (_offsets.ContainsKey(target) == true)
         {
             _offsets.Remove(target);

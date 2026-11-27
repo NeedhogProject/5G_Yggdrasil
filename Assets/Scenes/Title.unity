@@ -4191,9 +4191,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df5e1a117e19b6b4584eb114bf9f638f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleSceneUI
-  newGameButton: {fileID: 1832724577}
-  continueButton: {fileID: 121677899}
+  singlePlayButton: {fileID: 1832724577}
+  multiPlayButton: {fileID: 0}
   quitButton: {fileID: 2019453878}
+  joinPanel: {fileID: 0}
+  roomCodeInput: {fileID: 0}
+  joinConfirmButton: {fileID: 0}
+  joinCancelButton: {fileID: 0}
+  joinMessageText: {fileID: 0}
 --- !u!4 &760380765
 Transform:
   m_ObjectHideFlags: 0
@@ -7540,7 +7545,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC0C8 \uAC8C\uC784"
+  m_text: "\uD63C\uC790 \uD558\uAE30\n"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1797133b213f0124aa9172cf5f8f031e, type: 2}
   m_sharedMaterial: {fileID: -3018202140366091548, guid: 1797133b213f0124aa9172cf5f8f031e, type: 2}
@@ -10223,7 +10228,7 @@ GameObject:
   - component: {fileID: 1832724578}
   - component: {fileID: 1832724577}
   m_Layer: 5
-  m_Name: NewGame
+  m_Name: Single Play Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
