@@ -18,7 +18,7 @@ using UnityEngine.InputSystem;
 /// - PlayerStats.OnHealthChanged 구독 → 체력 0 감지
 /// - GameManager.OnPlayerDeath() 호출
 /// - PlayerEquipment.UnequipAll() 로 장비 해제
-/// - InventorySystem 완성 후 인벤 삭제 연동
+/// - InventorySystem 인벤토리 아이템 삭제 (ApplyDeathPenalty)
 ///
 /// [GameOverPanel 자동 탐색]
 /// - 인스펙터 연결이 비어 있으면 런타임에 이름으로 패널을 찾는다.
