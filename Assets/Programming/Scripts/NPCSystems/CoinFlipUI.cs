@@ -37,6 +37,9 @@ public class CoinFlipUI : MonoBehaviour
 
     private bool _isFlipping = false;
 
+    // CoinImage 에 원래 넣어둔 그림 (앞면/뒷면 칸이 비었을 때 대신 쓰는 기본 코인 그림)
+    private Sprite _defaultCoinSprite = null;
+
     // 애니메이션 완료 후 결과를 전달받을 콜백
     // true = 성공(앞면), false = 실패(뒷면)
     private System.Action<bool> _onComplete = null;
@@ -56,8 +59,34 @@ public class CoinFlipUI : MonoBehaviour
 
     private void Start()
     {
+        // CoinImage 에 인스펙터로 넣어둔 코인 그림을 미리 저장해 둔다 (기본 그림)
+        if (coinImage != null)
+        {
+            _defaultCoinSprite = coinImage.sprite;
+        }
+
         coinObject.SetActive(false);
         resultPanel.SetActive(false);
+    }
+
+    // 앞면 그림 (앞면 칸이 비어 있으면 CoinImage 에 넣어둔 기본 그림을 쓴다)
+    private Sprite GetHeadsSprite()
+    {
+        if (headsSprite != null)
+        {
+            return headsSprite;
+        }
+        return _defaultCoinSprite;
+    }
+
+    // 뒷면 그림 (뒷면 칸이 비어 있으면 CoinImage 에 넣어둔 기본 그림을 쓴다)
+    private Sprite GetTailsSprite()
+    {
+        if (tailsSprite != null)
+        {
+            return tailsSprite;
+        }
+        return _defaultCoinSprite;
     }
 
     // ─────────────────────── 공개 API ───────────────────────
@@ -107,7 +136,7 @@ public class CoinFlipUI : MonoBehaviour
         float spriteTimer = 0f;
         // 앞면부터 시작
         bool showingHeads = true;
-        coinImage.sprite = headsSprite;
+        coinImage.sprite = GetHeadsSprite();
 
         Vector3 originalScale = coinObject.transform.localScale;
 
@@ -127,7 +156,7 @@ public class CoinFlipUI : MonoBehaviour
             {
                 spriteTimer = 0f;
                 showingHeads = showingHeads == false;
-                coinImage.sprite = showingHeads == true ? headsSprite : tailsSprite;
+                coinImage.sprite = showingHeads == true ? GetHeadsSprite() : GetTailsSprite();
             }
 
             // 코인 크기 진동 (돌아가는 느낌)
@@ -146,13 +175,13 @@ public class CoinFlipUI : MonoBehaviour
         // 최종 결과 스프라이트 고정
         if (result == true)
         {
-            coinImage.sprite = headsSprite;
+            coinImage.sprite = GetHeadsSprite();
             ShowResult("성공!", successColor);
             AudioManager.Instance?.PlaySFX(SFXClip.EnhanceSuccess);
         }
         else
         {
-            coinImage.sprite = tailsSprite;
+            coinImage.sprite = GetTailsSprite();
             ShowResult("실패...", failColor);
             AudioManager.Instance?.PlaySFX(SFXClip.EnhanceFail);
         }

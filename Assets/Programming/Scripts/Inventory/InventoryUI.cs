@@ -100,11 +100,31 @@ public class InventoryUI : MonoBehaviour
             InventorySystem.Instance?.DropHoveredItem();
         }
 
-        // R: 마우스로 가리키는 칸의 아이템을 90도 회전 (인벤 열려 있으면 창고와 같이 열렸어도 허용)
-        if (isOpen == true && Keyboard.current.rKey.wasPressedThisFrame == true)
+        // RotateItem 키: 마우스로 가리키는 칸의 아이템을 90도 회전 (인벤 열려 있으면 창고와 같이 열렸어도 허용)
+        if (isOpen == true && WasRotateKeyPressed() == true)
         {
             InventorySystem.Instance?.RotateHoveredItem();
         }
+    }
+
+    // 아이템 회전 키 입력 확인 (RotateItem 액션, 없으면 기본 R 폴백)
+    private bool WasRotateKeyPressed()
+    {
+        if (Keyboard.current == null)
+        {
+            return false;
+        }
+
+        if (KeyBindingManager.Instance != null)
+        {
+            InputAction rotateAction = KeyBindingManager.Instance.FindAction("RotateItem");
+            if (rotateAction != null)
+            {
+                return rotateAction.WasPressedThisFrame();
+            }
+        }
+
+        return Keyboard.current.rKey.wasPressedThisFrame;
     }
 
     // 아이템 버리기 키 입력 확인 (DropItem 액션, 없으면 기본 G 폴백)

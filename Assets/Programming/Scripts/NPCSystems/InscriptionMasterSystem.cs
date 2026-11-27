@@ -559,11 +559,11 @@ public class InscriptionMasterSystem : MonoBehaviour
 
         if (goldCostText != null)
         {
-            goldCostText.text = goldCost.ToString() + " 달란";
+            goldCostText.text = goldCost.ToString();
         }
         if (goldBalanceText != null)
         {
-            goldBalanceText.text = (gold - goldCost).ToString() + " 달란";
+            goldBalanceText.text = (gold - goldCost).ToString();
         }
 
         // 버튼 활성화: 각인 안 됨 + 자원 충분 + 골드 충분
@@ -590,7 +590,8 @@ public class InscriptionMasterSystem : MonoBehaviour
         }
         if (inscribeArmorSlotText != null)
         {
-            inscribeArmorSlotText.text = "";
+            // 장비를 아직 안 올렸으면 0/1
+            inscribeArmorSlotText.text = GetSlotStateText(null);
         }
         if (selectedElementNameText != null)
         {
@@ -694,7 +695,8 @@ public class InscriptionMasterSystem : MonoBehaviour
         }
         if (resetArmorSlotText != null)
         {
-            resetArmorSlotText.text = "";
+            // 장비를 아직 안 올렸으면 0/1
+            resetArmorSlotText.text = GetSlotStateText(null);
         }
 
         int scrolls = 0;
@@ -888,18 +890,14 @@ public class InscriptionMasterSystem : MonoBehaviour
         }
     }
 
-    // 슬롯 상태 문자열 (각인 있으면 1/1, 없으면 0/1)
+    // 장비 칸 수량 문자열 (올린 장비 수 / 필요 수). 장비를 고르면 1/1, 비어 있으면 0/1
     private string GetSlotStateText(ArmorInstance armor)
     {
         if (armor == null)
         {
             return "0/1";
         }
-        if (armor.HasRune == true)
-        {
-            return "1/1";
-        }
-        return "0/1";
+        return "1/1";
     }
 
     private void SetDialogue(string text)

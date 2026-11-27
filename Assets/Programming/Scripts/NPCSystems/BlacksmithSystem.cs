@@ -502,11 +502,11 @@ public class BlacksmithSystem : MonoBehaviour
 
         if (costText != null)
         {
-            costText.text = cost.ToString() + " 달란";
+            costText.text = cost.ToString();
         }
         if (balanceAfterText != null)
         {
-            balanceAfterText.text = balanceAfter.ToString() + " 달란";
+            balanceAfterText.text = balanceAfter.ToString();
         }
 
         // 재료 칸 갱신 (재료 미정 — 현재는 0/0 표시)

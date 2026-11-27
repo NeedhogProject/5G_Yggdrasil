@@ -21,6 +21,9 @@ public class ScholarSystem : MonoBehaviour
     public TMP_Text identifyCostText;
     public TMP_Text relicInfoText;
 
+    [Tooltip("선택한 유물의 이미지 (감정창에 둔 Image 를 연결)")]
+    public Image relicIconImage;
+
     [Header("감정 설정")]
     public int identifyCost = 50;
 
@@ -101,6 +104,7 @@ public class ScholarSystem : MonoBehaviour
         relicInfoText.text = "";
         identifyCostText.text = $"감정 비용: {identifyCost} 달란";
         identifyButton.interactable = false;
+        SetRelicIcon(null);
 
         // 감정할 유물을 고를 수 있게 인벤토리를 옆에 같이 연다
         FindFirstObjectByType<InventoryUI>()?.OpenInventoryForShop();
@@ -115,6 +119,7 @@ public class ScholarSystem : MonoBehaviour
 
         selectedRelic = null;
         onBackToMenu = null;
+        SetRelicIcon(null);
 
         FindFirstObjectByType<InventoryUI>()?.CloseInventory();
 
@@ -128,11 +133,35 @@ public class ScholarSystem : MonoBehaviour
         if (relic == null)
         {
             dialogueText.text = "유물만 감정할 수 있습니다.";
+            SetRelicIcon(null);
             return;
         }
 
         selectedRelic = relic;
+
+        // 선택한 유물의 이미지 표시
+        SetRelicIcon(relic.RelicData != null ? relic.RelicData.itemIcon : null);
+
         UpdateIdentificationUI();
+    }
+
+    // 감정창에 선택한 유물의 이미지를 표시 (없으면 숨김)
+    private void SetRelicIcon(Sprite icon)
+    {
+        if (relicIconImage == null)
+        {
+            return;
+        }
+
+        if (icon == null)
+        {
+            relicIconImage.enabled = false;
+            return;
+        }
+
+        relicIconImage.sprite = icon;
+        relicIconImage.preserveAspect = true;
+        relicIconImage.enabled = true;
     }
 
     private void UpdateIdentificationUI()

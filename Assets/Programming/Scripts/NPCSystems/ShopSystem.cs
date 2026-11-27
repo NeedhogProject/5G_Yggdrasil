@@ -34,6 +34,8 @@ public class ShopSystem : MonoBehaviour
 
     [Header("구매 확인 팝업")]
     public GameObject buyConfirmPopup;
+    [Tooltip("구매 확인 팝업에 선택한 아이템 이미지를 표시할 Image")]
+    public Image buyConfirmItemIcon;
     public TMP_Text confirmItemNameText;
     public TMP_Text quantityText;
     public TMP_Text totalPriceText;
@@ -58,6 +60,8 @@ public class ShopSystem : MonoBehaviour
 
     [Header("판매 확인 팝업 (구매 팝업과 동일 구조 — 수량 선택)")]
     public GameObject sellConfirmPopup;
+    [Tooltip("판매 확인 팝업에 선택한 아이템 이미지를 표시할 Image")]
+    public Image sellConfirmItemIcon;
     public TMP_Text sellConfirmItemNameText;
     public TMP_Text sellConfirmQuantityText;
     public TMP_Text sellConfirmPriceText;
@@ -149,6 +153,7 @@ public class ShopSystem : MonoBehaviour
         public ItemData data;
         public ItemInstance instance; // null 이면 데이터 전용
         public InventorySlot slot;    // 인벤에서 어둡게 마킹한 원본 슬롯
+        public int quantity = 1;      // 판매창에 담은 수량 (묶음 아이템은 N개까지)
     }
 
     private void Awake()
@@ -420,7 +425,7 @@ public class ShopSystem : MonoBehaviour
         SwitchTab(ShopTab.Sell);
         OpenInventoryBeside();
 
-        SetDialogue("유물을 판매창에 담아주게. 유물만 받는다네.");
+        SetDialogue("유물을 판매창에 담아주세요! 유물만 받고 있어요.");
     }
 
     private void ShowMenu()
@@ -692,7 +697,7 @@ public class ShopSystem : MonoBehaviour
         {
             return;
         }
-        goldText.text = "달란: " + PlayerStats.Instance.gold;
+        goldText.text = PlayerStats.Instance.gold.ToString();
     }
 
     private void ClearList()
@@ -805,17 +810,33 @@ public class ShopSystem : MonoBehaviour
         int total = _pendingShopItem.buyPrice * _pendingQuantity;
         int balanceAfter = PlayerStats.Instance.gold - total;
 
+        // 선택한 아이템 이미지 표시
+        if (buyConfirmItemIcon != null)
+        {
+            Sprite icon = _pendingShopItem.itemData != null ? _pendingShopItem.itemData.itemIcon : null;
+            if (icon != null)
+            {
+                buyConfirmItemIcon.sprite = icon;
+                buyConfirmItemIcon.preserveAspect = true;
+                buyConfirmItemIcon.enabled = true;
+            }
+            else
+            {
+                buyConfirmItemIcon.enabled = false;
+            }
+        }
+
         if (quantityText != null)
         {
             quantityText.text = _pendingQuantity.ToString();
         }
         if (totalPriceText != null)
         {
-            totalPriceText.text = total + " 달란";
+            totalPriceText.text = total.ToString();
         }
         if (balanceAfterText != null)
         {
-            balanceAfterText.text = balanceAfter + " 달란";
+            balanceAfterText.text = balanceAfter.ToString();
         }
     }
 
@@ -840,6 +861,11 @@ public class ShopSystem : MonoBehaviour
     {
         _pendingShopItem = null;
         _pendingQuantity = 1;
+
+        if (buyConfirmItemIcon != null)
+        {
+            buyConfirmItemIcon.enabled = false;
+        }
 
         if (buyConfirmPopup != null)
         {
@@ -924,22 +950,41 @@ public class ShopSystem : MonoBehaviour
         // 유물 전용 모드(학자)면 유물이 아닌 아이템은 담지 못한다 (판매 불가 칸 처리)
         if (_relicOnlyMode == true && slot.currentItem.itemType != ItemType.Relic)
         {
-            SetDialogue("유물만 판매할 수 있다네.");
+            SetDialogue("유물만 판매할 수 있어요!");
+            return;
+        }
+
+        // 일반 상점에서는 유물을 판매할 수 없다 (유물은 유물 전용 판매창에서만 거래)
+        if (_relicOnlyMode == false && slot.currentItem.itemType == ItemType.Relic)
+        {
+            SetDialogue("유물은 여기서 받지 않아요. 유물 판매에서 팔아주세요!");
             return;
         }
 
         // 미감정 유물은 판매 불가 (감정 후 판매)
         if (slot.CurrentInstance is RelicInstance relic && relic.IsIdentified == false)
         {
-            SetDialogue("감정하지 않은 유물은 받을 수 없다네.");
+            SetDialogue("감정하지 않은 유물은 받을 수 없어요. 먼저 감정을 받아주세요!");
             return;
         }
 
-        // 이미 담긴 슬롯이면 무시 (중복 방지)
+        int maxQuantity = GetMaxSellQuantity(slot);
+
+        // 이미 담긴 슬롯이면 수량을 1 늘린다 (보유 수량 한도까지)
         for (int i = 0; i < _stagedItems.Count; i++)
         {
             if (_stagedItems[i].slot == slot)
             {
+                if (_stagedItems[i].quantity < maxQuantity)
+                {
+                    _stagedItems[i].quantity = _stagedItems[i].quantity + 1;
+                    RefreshSellStaging();
+                }
+                else
+                {
+                    // 보유한 만큼 다 담아서 더 담을 수 없음
+                    AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+                }
                 return;
             }
         }
@@ -948,6 +993,7 @@ public class ShopSystem : MonoBehaviour
         entry.data = slot.currentItem;
         entry.instance = slot.CurrentInstance;
         entry.slot = slot;
+        entry.quantity = 1;
 
         // 인벤에선 그대로 두고 어둡게 표시만
         slot.SetSaleMarked(true);
@@ -1039,25 +1085,70 @@ public class ShopSystem : MonoBehaviour
         }
 
         int total = 0;
-        for (int i = 0; i < _stagedItems.Count; i++)
-        {
-            total = total + GetSellPrice(_stagedItems[i].data);
-        }
 
-        // 마킹된 슬롯들을 인벤에서 실제 제거
-        for (int i = 0; i < _stagedItems.Count; i++)
+        // 담긴 목록을 복사해 처리한다 (유물 판매가 원본 목록을 수정할 수 있으므로)
+        List<StagedSellItem> pending = new List<StagedSellItem>(_stagedItems);
+
+        for (int i = 0; i < pending.Count; i++)
         {
-            InventorySlot slot = _stagedItems[i].slot;
-            if (slot != null)
+            StagedSellItem entry = pending[i];
+            InventorySlot slot = entry.slot;
+            if (slot == null)
             {
-                // 제거 전에 마킹 해제 (색 원복 후 비워짐)
-                slot.SetSaleMarked(false);
-                InventorySystem.Instance.RemoveItemAtSlot(slot);
+                continue;
+            }
+
+            int unitPrice = GetSellPrice(entry.data);
+            int quantity = entry.quantity;
+            if (quantity < 1)
+            {
+                quantity = 1;
+            }
+
+            // 제거 전에 마킹 해제 (색 원복)
+            slot.SetSaleMarked(false);
+
+            // 유물은 한 칸에 쌓이지 않으므로 같은 종류 유물 칸을 수량만큼 찾아 판매한다
+            // (골드 지급과 담긴 목록 정리는 SellRelicsByCount 내부에서 처리)
+            if (slot.CurrentInstance is RelicInstance)
+            {
+                _pendingSellSlot = slot;
+                SellRelicsByCount(entry.data, quantity, unitPrice);
+                _pendingSellSlot = null;
+                continue;
+            }
+
+            // 일반 아이템: 묶음에서 판매 수량만큼 차감, 0이 되면 슬롯 비우기
+            ItemInstance instance = slot.CurrentInstance;
+            if (instance != null)
+            {
+                instance.RemoveStack(quantity);
+
+                if (instance.IsEmpty == true)
+                {
+                    InventorySystem.Instance.RemoveItemAtSlot(slot);
+                }
+                else
+                {
+                    slot.SetItem(instance);
+                }
+
+                total = total + unitPrice * quantity;
             }
         }
 
-        PlayerStats.Instance.gold += total;
+        // 남은 담긴 목록 정리 (유물 처리로 일부는 이미 빠졌을 수 있음)
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            if (_stagedItems[i].slot != null)
+            {
+                _stagedItems[i].slot.SetSaleMarked(false);
+            }
+        }
         _stagedItems.Clear();
+
+        // 유물 판매 골드는 SellRelicsByCount 가 이미 더했고, 여기서는 일반 아이템 골드만 지급
+        PlayerStats.Instance.gold += total;
 
         SetDialogue(GetRandomLine(sellLines));
 
@@ -1074,14 +1165,21 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        // 판매창에 담긴(마킹된) 아이템만 확인 팝업 대상
-        if (slot.IsSaleMarked == false)
+        // 아직 담기지 않은 아이템이면 먼저 1개 담는다 (수량 선택창을 바로 열 수 있도록)
+        StagedSellItem existing = FindStaged(slot);
+        if (existing == null)
         {
+            StageForSale(slot);
+            existing = FindStaged(slot);
+        }
+        if (existing == null)
+        {
+            // 담기지 못한 아이템 (판매 불가 등) 이면 팝업을 열지 않는다
             return;
         }
 
         _pendingSellSlot = slot;
-        _pendingSellQuantity = 1;
+        _pendingSellQuantity = existing.quantity;
 
         if (sellConfirmPopup != null)
         {
@@ -1089,6 +1187,19 @@ public class ShopSystem : MonoBehaviour
         }
 
         RefreshSellConfirm();
+    }
+
+    // 해당 슬롯이 판매창에 담겨 있으면 그 항목을 돌려준다 (없으면 null)
+    private StagedSellItem FindStaged(InventorySlot slot)
+    {
+        for (int i = 0; i < _stagedItems.Count; i++)
+        {
+            if (_stagedItems[i].slot == slot)
+            {
+                return _stagedItems[i];
+            }
+        }
+        return null;
     }
 
     // 판매 가능한 최대 수량 (슬롯의 현재 묶음 수)
@@ -1178,6 +1289,22 @@ public class ShopSystem : MonoBehaviour
         int total = GetSellPrice(_pendingSellSlot.currentItem) * _pendingSellQuantity;
         int balanceAfter = PlayerStats.Instance.gold + total;
 
+        // 선택한 아이템 이미지 표시
+        if (sellConfirmItemIcon != null)
+        {
+            Sprite icon = _pendingSellSlot.currentItem.itemIcon;
+            if (icon != null)
+            {
+                sellConfirmItemIcon.sprite = icon;
+                sellConfirmItemIcon.preserveAspect = true;
+                sellConfirmItemIcon.enabled = true;
+            }
+            else
+            {
+                sellConfirmItemIcon.enabled = false;
+            }
+        }
+
         if (sellConfirmItemNameText != null)
         {
             sellConfirmItemNameText.text = _pendingSellSlot.currentItem.itemName;
@@ -1188,15 +1315,15 @@ public class ShopSystem : MonoBehaviour
         }
         if (sellConfirmPriceText != null)
         {
-            sellConfirmPriceText.text = total + " 달란";
+            sellConfirmPriceText.text = total.ToString();
         }
         if (sellConfirmBalanceText != null)
         {
-            sellConfirmBalanceText.text = balanceAfter + " 달란";
+            sellConfirmBalanceText.text = balanceAfter.ToString();
         }
     }
 
-    // 확인 버튼: 선택한 수량만큼 판매 (골드 지급, 인벤에서 수량 차감)
+    // 확인 버튼: 선택한 수량만큼 판매창에 담는다 (실제 판매는 판매 버튼에서 한꺼번에)
     public void ConfirmSellSingle()
     {
         if (_pendingSellSlot == null || _pendingSellSlot.currentItem == null)
@@ -1205,58 +1332,25 @@ public class ShopSystem : MonoBehaviour
             return;
         }
 
-        int maxQ = GetMaxSellQuantity(_pendingSellSlot);
-        int sellQuantity = Mathf.Clamp(_pendingSellQuantity, 1, maxQ);
-        int unitPrice = GetSellPrice(_pendingSellSlot.currentItem);
+        int maxQuantity = GetMaxSellQuantity(_pendingSellSlot);
+        int quantity = Mathf.Clamp(_pendingSellQuantity, 1, maxQuantity);
 
-        // 유물은 한 칸에 쌓이지 않으므로, 같은 종류 유물 칸을 수량만큼 찾아 한 번에 판매한다
-        if (_pendingSellSlot.CurrentInstance is RelicInstance)
+        // 이미 담긴 항목이면 수량만 바꾸고, 없으면 새로 담는다
+        StagedSellItem entry = FindStaged(_pendingSellSlot);
+        if (entry == null)
         {
-            SellRelicsByCount(_pendingSellSlot.CurrentInstance.Data, sellQuantity, unitPrice);
+            entry = new StagedSellItem();
+            entry.data = _pendingSellSlot.currentItem;
+            entry.instance = _pendingSellSlot.CurrentInstance;
+            entry.slot = _pendingSellSlot;
 
-            SetDialogue(GetRandomLine(sellLines));
-            UpdateGoldDisplay();
-            RefreshSellStaging();
-            AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
-
-            CloseSellConfirm();
-            return;
+            _pendingSellSlot.SetSaleMarked(true);
+            _stagedItems.Add(entry);
         }
+        entry.quantity = quantity;
 
-        int total = unitPrice * sellQuantity;
-
-        // 담긴 목록에서 이 슬롯 제거
-        for (int i = _stagedItems.Count - 1; i >= 0; i--)
-        {
-            if (_stagedItems[i].slot == _pendingSellSlot)
-            {
-                _stagedItems.RemoveAt(i);
-            }
-        }
-
-        // 담김 표시 해제 후, 묶음에서 판매 수량만큼 감소 (0이 되면 슬롯 비우기)
-        ItemInstance instance = _pendingSellSlot.CurrentInstance;
-        _pendingSellSlot.SetSaleMarked(false);
-        if (instance != null)
-        {
-            instance.RemoveStack(sellQuantity);
-
-            if (instance.IsEmpty == true)
-            {
-                InventorySystem.Instance.RemoveItemAtSlot(_pendingSellSlot);
-            }
-            else
-            {
-                _pendingSellSlot.SetItem(instance);
-            }
-        }
-
-        PlayerStats.Instance.gold += total;
-
-        SetDialogue(GetRandomLine(sellLines));
-        UpdateGoldDisplay();
         RefreshSellStaging();
-        AudioManager.Instance?.PlaySFX(SFXClip.ItemPickup);
+        AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
 
         CloseSellConfirm();
     }
@@ -1331,6 +1425,11 @@ public class ShopSystem : MonoBehaviour
         _pendingSellSlot = null;
         _pendingSellQuantity = 1;
 
+        if (sellConfirmItemIcon != null)
+        {
+            sellConfirmItemIcon.enabled = false;
+        }
+
         if (sellConfirmPopup != null)
         {
             sellConfirmPopup.SetActive(false);
@@ -1358,24 +1457,24 @@ public class ShopSystem : MonoBehaviour
         {
             GameObject itemObj = Instantiate(shopItemPrefab, itemListContainer);
             ShopItemUI itemUI = itemObj.GetComponent<ShopItemUI>();
-            itemUI.SetupSellItem(_stagedItems[i].data, _stagedItems[i].slot, this);
+            itemUI.SetupSellItem(_stagedItems[i].data, _stagedItems[i].slot, this, _stagedItems[i].quantity);
         }
 
         int total = 0;
         for (int i = 0; i < _stagedItems.Count; i++)
         {
-            total = total + GetSellPrice(_stagedItems[i].data);
+            total = total + GetSellPrice(_stagedItems[i].data) * _stagedItems[i].quantity;
         }
 
         int balanceAfter = PlayerStats.Instance.gold + total;
 
         if (sellTotalText != null)
         {
-            sellTotalText.text = total + " 달란";
+            sellTotalText.text = total.ToString();
         }
         if (sellBalanceText != null)
         {
-            sellBalanceText.text = balanceAfter + " 달란";
+            sellBalanceText.text = balanceAfter.ToString();
         }
     }
 

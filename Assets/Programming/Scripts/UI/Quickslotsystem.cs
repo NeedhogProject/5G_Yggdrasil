@@ -55,6 +55,16 @@ public class QuickSlotSystem : MonoBehaviour
 
     private void Start()
     {
+        // 단축키를 1, 2 로 강제 (인스펙터에 D/F 등으로 설정돼 있어도 무시)
+        if (slots.Count > 0 && slots[0] != null)
+        {
+            slots[0].useKey = Key.Digit1;
+        }
+        if (slots.Count > 1 && slots[1] != null)
+        {
+            slots[1].useKey = Key.Digit2;
+        }
+
         // 씬이 바뀌어도 등록이 유지되도록, 이전에 보관해 둔 소모품을 복원한다 (없으면 빈 칸)
         for (int i = 0; i < slots.Count; i++)
         {

@@ -39,13 +39,17 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
     }
 
-    // 판매 슬롯 초기화 (우클릭 시 이 슬롯으로 판매 확인 팝업을 연다)
-    public void SetupSellItem(ItemData item, InventorySlot slot, ShopSystem shop)
+    // 판매창에 담긴 수량 (카드에 표시)
+    private int _sellQuantity = 1;
+
+    // 판매 카드 초기화 (판매창에 담긴 아이템 한 칸. quantity 는 담은 개수)
+    public void SetupSellItem(ItemData item, InventorySlot slot, ShopSystem shop, int quantity)
     {
         _shopSystem = shop;
         _sellItemData = item;
         _sellSlot = slot;
         _isBuyMode = false;
+        _sellQuantity = Mathf.Max(1, quantity);
 
         if (itemIcon != null)
         {
@@ -53,11 +57,21 @@ public class ShopItemUI : MonoBehaviour, IPointerClickHandler
         }
         if (itemNameText != null)
         {
-            itemNameText.text = item.itemName;
+            // 수량이 2개 이상이면 이름 옆에 개수를 붙인다
+            if (_sellQuantity > 1)
+            {
+                itemNameText.text = item.itemName + " x" + _sellQuantity;
+            }
+            else
+            {
+                itemNameText.text = item.itemName;
+            }
         }
         if (priceText != null)
         {
-            priceText.text = item.SellPrice + " G";
+            // 상점의 판매가 비율을 반영한 단가로 총액 계산 (판매창 합계와 일치)
+            int unitPrice = (_shopSystem != null) ? _shopSystem.GetSellPrice(item) : item.SellPrice;
+            priceText.text = (unitPrice * _sellQuantity) + " G";
         }
     }
 
