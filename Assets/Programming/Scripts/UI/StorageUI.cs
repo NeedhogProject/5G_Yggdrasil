@@ -2,6 +2,7 @@
 // 창고 UI — 격자 슬롯 생성, 열기/닫기, 창고 데이터 표시
 // 인벤토리 슬롯 프리팹을 재활용하며, 슬롯은 Storage 컨테이너로 표시한다
 // 위치 유지 + 멀티셀(여러 칸) 점유 방식: 인벤토리와 동일하게 동작한다
+// R키로 아이템을 90도 회전할 수 있다 (인벤토리와 동일)
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -38,6 +39,9 @@ public class StorageUI : MonoBehaviour
     private List<InventorySlot> _slots = new List<InventorySlot>();
     private bool _initialized = false;
     private bool _isOpen = false;
+
+    // 마우스로 가리키는 창고 칸 (R키 회전 대상)
+    private InventorySlot _hoveredSlot = null;
 
     // 창고를 처음 열 때 한 번만 HouseSystem 데이터를 슬롯에 펼쳤는지 여부
     // 이후로는 슬롯 위치가 진실이 되어 PopulateFromData 로 재배치하지 않는다.
@@ -83,6 +87,12 @@ public class StorageUI : MonoBehaviour
         if (_isOpen == true && Keyboard.current.escapeKey.wasPressedThisFrame == true)
         {
             CloseStorage();
+        }
+
+        // R: 마우스로 가리키는 창고 칸의 아이템을 90도 회전
+        if (_isOpen == true && Keyboard.current.rKey.wasPressedThisFrame == true)
+        {
+            RotateHoveredItem();
         }
     }
 
@@ -193,6 +203,23 @@ public class StorageUI : MonoBehaviour
         get { return _isOpen; }
     }
 
+    // ─────────────────────── 호버 기록 (R키 회전 대상) ───────────────────────
+
+    // 마우스가 올라간 창고 칸을 기록 (InventorySlot.OnPointerEnter 에서 호출)
+    public void SetHoveredSlot(InventorySlot _slot)
+    {
+        _hoveredSlot = _slot;
+    }
+
+    // 창고 칸에서 마우스가 벗어나면 기록 해제 (InventorySlot.OnPointerExit/OnDisable 에서 호출)
+    public void ClearHoveredSlot(InventorySlot _slot)
+    {
+        if (_hoveredSlot == _slot)
+        {
+            _hoveredSlot = null;
+        }
+    }
+
     // ─────────────────────── 좌표/슬롯 헬퍼 ───────────────────────
 
     // 그리드 좌표로 슬롯 찾기 (범위 밖이면 null)
@@ -235,7 +262,8 @@ public class StorageUI : MonoBehaviour
         }
 
         Vector2Int vGrid = _slot.gridPosition;
-        if (CanPlaceAt(vGrid.x, vGrid.y, _instance.Data.itemSize, null) == false)
+        // 회전 반영 크기로 배치 가능 여부 검사
+        if (CanPlaceAt(vGrid.x, vGrid.y, _instance.EffectiveSize, null) == false)
         {
             return false;
         }
@@ -287,7 +315,8 @@ public class StorageUI : MonoBehaviour
         ownerSlot.SetItem(instance);
         ownerSlot.ownerSlot = ownerSlot;
 
-        Vector2Int size = instance.Data.itemSize;
+        // 회전 반영 점유 크기
+        Vector2Int size = instance.EffectiveSize;
         int startX = ownerSlot.slotIndex % gridWidth;
         int startY = ownerSlot.slotIndex / gridWidth;
 
@@ -314,7 +343,7 @@ public class StorageUI : MonoBehaviour
         ResizeItemIcon(ownerSlot, size);
     }
 
-    // 주인 슬롯이 점유한 영역을 모두 해제 (보조 칸 + 주인 칸)
+    // 주인 슬롯이 점유한 영역을 모두 해제 (보조 칸 + 주인 칸) — 아이템/아이콘도 비움
     private void ReleaseArea(InventorySlot ownerSlot)
     {
         if (ownerSlot == null)
@@ -336,7 +365,134 @@ public class StorageUI : MonoBehaviour
         ownerSlot.ClearSlot();
     }
 
-    // 주인 슬롯 아이콘을 아이템 크기에 맞게 확장 (멀티셀이면 여러 칸에 걸쳐 표시)
+    // 점유 칸만 비운다 (아이템/아이콘은 유지 — 제자리 회전용)
+    private void FreeCells(InventorySlot ownerSlot)
+    {
+        if (ownerSlot == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < _slots.Count; i++)
+        {
+            if (_slots[i].ownerSlot == ownerSlot)
+            {
+                _slots[i].ownerSlot = null;
+                _slots[i].isOccupied = false;
+            }
+        }
+    }
+
+    // 주인 칸 기준으로 현재 인스턴스 크기(회전 반영)만큼 다시 점유 + 아이콘 갱신
+    // SetItem 은 호출하지 않는다 (아이템은 이미 주인 칸에 있음 — 회전용)
+    private void OccupyCellsOnly(InventorySlot ownerSlot, ItemInstance instance)
+    {
+        ownerSlot.ownerSlot = ownerSlot;
+        ownerSlot.isOccupied = true;
+
+        Vector2Int size = instance.EffectiveSize;
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        for (int y = 0; y < size.y; y++)
+        {
+            for (int x = 0; x < size.x; x++)
+            {
+                if (x == 0 && y == 0)
+                {
+                    continue;
+                }
+
+                InventorySlot slot = GetSlotAt(startX + x, startY + y);
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                slot.isOccupied = true;
+                slot.ownerSlot = ownerSlot;
+            }
+        }
+
+        ResizeItemIcon(ownerSlot, size);
+    }
+
+    // ─────────────────────── R키 회전 ───────────────────────
+
+    // 마우스로 가리키는 창고 칸의 아이템을 90도 회전한다 (R키)
+    public bool RotateHoveredItem()
+    {
+        if (_hoveredSlot == null)
+        {
+            return false;
+        }
+
+        // 보조 칸이면 주인 슬롯 기준
+        InventorySlot owner = _hoveredSlot;
+        if (owner.ownerSlot != null && owner.ownerSlot != owner)
+        {
+            owner = owner.ownerSlot;
+        }
+
+        return RotateItemAt(owner);
+    }
+
+    // 지정한 주인 칸의 아이템을 회전한다. 회전 후 공간이 부족하면 원래대로 되돌린다.
+    public bool RotateItemAt(InventorySlot ownerSlot)
+    {
+        if (ownerSlot == null)
+        {
+            return false;
+        }
+
+        ItemInstance instance = ownerSlot.CurrentInstance;
+        if (instance == null || instance.Data == null)
+        {
+            return false;
+        }
+
+        // 정사각형 아이템은 회전해도 똑같으므로 무시
+        if (instance.Data.itemSize.x == instance.Data.itemSize.y)
+        {
+            return false;
+        }
+
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        // 점유를 임시로 풀고(아이템은 유지) 회전
+        FreeCells(ownerSlot);
+        instance.ToggleRotation();
+
+        // 1) 제자리에 회전해서 들어가면 그대로
+        if (CanPlaceAt(startX, startY, instance.EffectiveSize, null) == true)
+        {
+            OccupyCellsOnly(ownerSlot, instance);
+            AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+            return true;
+        }
+
+        // 2) 제자리 안 되면, 회전한 상태로 들어갈 빈 자리를 찾아 그곳으로 이동
+        InventorySlot target = FindAreaForSize(instance.EffectiveSize);
+        if (target != null && target != ownerSlot)
+        {
+            // 기존 주인 칸 비우고(아이콘 복원) 새 자리에 회전 상태로 배치
+            RestoreIconSize(ownerSlot);
+            ownerSlot.ClearSlot();
+
+            OccupyArea(target, instance);
+            AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+            return true;
+        }
+
+        // 3) 어디에도 안 들어가면 회전 취소하고 원래대로 재점유
+        instance.ToggleRotation();
+        OccupyCellsOnly(ownerSlot, instance);
+        AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+        return false;
+    }
+
+    // 주인 슬롯 아이콘을 아이템 크기에 맞게 확장 (멀티셀이면 여러 칸에 걸쳐 표시, 회전 시 90도 회전)
     private void ResizeItemIcon(InventorySlot ownerSlot, Vector2Int size)
     {
         if (ownerSlot.itemIcon == null)
@@ -344,7 +500,8 @@ public class StorageUI : MonoBehaviour
             return;
         }
 
-        ownerSlot.itemIcon.preserveAspect = false;
+        // 아이콘 원본 비율 유지 (칸에 맞춰 늘어나 찌그러지지 않게)
+        ownerSlot.itemIcon.preserveAspect = true;
 
         GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
         if (grid == null)
@@ -357,14 +514,20 @@ public class StorageUI : MonoBehaviour
         float spaceX = grid.spacing.x;
         float spaceY = grid.spacing.y;
 
-        // 차지하는 전체 픽셀 크기 = 셀 크기 × 칸수 + 사이 간격
+        // 차지하는 전체 픽셀 크기 = 셀 크기 × 칸수 + 사이 간격 (size 는 회전 반영된 점유 크기)
         float width = cellW * size.x + spaceX * (size.x - 1);
         float height = cellH * size.y + spaceY * (size.y - 1);
+
+        // 이 아이템이 회전된 상태인지
+        bool rotated = ownerSlot.CurrentInstance != null && ownerSlot.CurrentInstance.IsRotated == true;
 
         RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
 
         if (iconOverlay != null)
         {
+            // 점유 영역 등급색 하이라이트 (아이콘 뒤에 깔아 차지하는 칸을 명확히 표시)
+            EnsureFootprintHighlight(ownerSlot, width, height);
+
             // 아이콘을 오버레이 레이어로 옮겨 모든 칸 위에 렌더 (격자선 위로 깨끗하게 표시)
             iconRect.SetParent(iconOverlay, false);
             iconRect.SetAsLastSibling();
@@ -372,28 +535,125 @@ public class StorageUI : MonoBehaviour
             // 아이콘이 슬롯 입력을 가리지 않도록 레이캐스트 차단
             ownerSlot.itemIcon.raycastTarget = false;
 
-            iconRect.anchorMin = new Vector2(0f, 1f);
-            iconRect.anchorMax = new Vector2(0f, 1f);
-            iconRect.pivot = new Vector2(0f, 1f);
-            iconRect.sizeDelta = new Vector2(width, height);
+            if (rotated == false)
+            {
+                // 회전 안 됨 — 점유 영역 정중앙 정렬 (비율 유지로 가운데에 들어감)
+                iconRect.localEulerAngles = Vector3.zero;
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
+                iconRect.sizeDelta = new Vector2(width, height);
+                iconRect.position = GetFootprintCenterWorld(ownerSlot, size);
+                return;
+            }
 
-            // 주인 칸의 월드 좌상단 모서리에 아이콘 좌상단을 맞춤
-            Vector3[] corners = new Vector3[4];
-            ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
-            iconRect.position = corners[1]; // 1 = 좌상단(TL)
+            // 회전됨 — 점유 영역 중심에 두고 90도 회전 (스프라이트는 원본 방향이라 가로·세로 뒤집어 돌림)
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(height, width);
+            iconRect.localEulerAngles = new Vector3(0f, 0f, 90f);
+            iconRect.position = GetFootprintCenterWorld(ownerSlot, size);
             return;
         }
 
         // 오버레이 미지정 시: 주인 칸 자식으로 확장 (멀티셀은 격자선 비칠 수 있음)
+        if (rotated == false)
+        {
+            iconRect.localEulerAngles = Vector3.zero;
+            iconRect.anchorMin = new Vector2(0f, 1f);
+            iconRect.anchorMax = new Vector2(0f, 1f);
+            iconRect.pivot = new Vector2(0f, 1f);
+            iconRect.sizeDelta = new Vector2(width, height);
+            return;
+        }
+
+        // 회전됨 (비오버레이) — 주인 칸 기준 중심 근사 배치 후 90도 회전
         iconRect.anchorMin = new Vector2(0f, 1f);
         iconRect.anchorMax = new Vector2(0f, 1f);
-        iconRect.pivot = new Vector2(0f, 1f);
-        iconRect.sizeDelta = new Vector2(width, height);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
+        iconRect.sizeDelta = new Vector2(height, width);
+        iconRect.localEulerAngles = new Vector3(0f, 0f, 90f);
+        iconRect.anchoredPosition = new Vector2(width * 0.5f, -height * 0.5f);
+    }
+
+    // 점유 영역(회전 반영)의 월드 중심 좌표 — 주인칸 좌상단과 우하단칸 우하단의 중점
+    private Vector3 GetFootprintCenterWorld(InventorySlot ownerSlot, Vector2Int size)
+    {
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        Vector3[] tl = new Vector3[4];
+        ownerSlot.GetComponent<RectTransform>().GetWorldCorners(tl);
+
+        InventorySlot brSlot = GetSlotAt(startX + size.x - 1, startY + size.y - 1);
+        if (brSlot == null)
+        {
+            return tl[1];
+        }
+
+        Vector3[] br = new Vector3[4];
+        brSlot.GetComponent<RectTransform>().GetWorldCorners(br);
+
+        // tl[1] = 주인칸 좌상단(TL), br[3] = 우하단칸 우하단(BR)
+        return (tl[1] + br[3]) * 0.5f;
+    }
+
+    // 점유 영역에 등급 색 하이라이트를 깐다 (멀티셀이 차지하는 칸을 명확히). 아이콘보다 뒤에 렌더
+    private void EnsureFootprintHighlight(InventorySlot ownerSlot, float width, float height)
+    {
+        if (iconOverlay == null)
+        {
+            return;
+        }
+
+        // 등급 색 (툴팁과 동일), 은은하게
+        ItemData data = ownerSlot.currentItem;
+        Color col = data != null ? UIItemTooltip.GetRarityColor(data.rarity) : Color.white;
+        col.a = 0.13f;
+
+        Image hl = ownerSlot.footprintHighlight;
+        if (hl == null)
+        {
+            GameObject hlObj = new GameObject("FootprintHighlight", typeof(RectTransform));
+            hl = hlObj.AddComponent<Image>();
+            hl.raycastTarget = false;
+            ownerSlot.footprintHighlight = hl;
+        }
+
+        RectTransform hr = hl.rectTransform;
+        hr.SetParent(iconOverlay, false);
+        hr.SetAsLastSibling();
+        hr.localEulerAngles = Vector3.zero;
+        hr.anchorMin = new Vector2(0f, 1f);
+        hr.anchorMax = new Vector2(0f, 1f);
+        hr.pivot = new Vector2(0f, 1f);
+        hr.sizeDelta = new Vector2(width, height);
+
+        Vector3[] corners = new Vector3[4];
+        ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
+        hr.position = corners[1]; // 좌상단(TL)
+
+        hl.color = col;
+        hl.enabled = true;
+    }
+
+    // 점유 하이라이트 제거 (아이템이 칸을 떠날 때)
+    private void RemoveFootprintHighlight(InventorySlot ownerSlot)
+    {
+        if (ownerSlot != null && ownerSlot.footprintHighlight != null)
+        {
+            Destroy(ownerSlot.footprintHighlight.gameObject);
+            ownerSlot.footprintHighlight = null;
+        }
     }
 
     // 아이콘을 원래 한 칸 크기/부모로 되돌림 (영역 해제 시)
     private void RestoreIconSize(InventorySlot ownerSlot)
     {
+        // 점유 하이라이트도 같이 제거
+        RemoveFootprintHighlight(ownerSlot);
+
         if (ownerSlot.itemIcon == null)
         {
             return;
@@ -407,7 +667,8 @@ public class StorageUI : MonoBehaviour
             iconRect.SetParent(ownerSlot.transform, false);
         }
 
-        // 한 칸 가득 채우도록 복귀
+        // 한 칸 가득 채우도록 복귀 (회전도 초기화)
+        iconRect.localEulerAngles = Vector3.zero;
         iconRect.anchorMin = Vector2.zero;
         iconRect.anchorMax = Vector2.one;
         iconRect.pivot = new Vector2(0.5f, 0.5f);
@@ -444,7 +705,7 @@ public class StorageUI : MonoBehaviour
                 continue;
             }
 
-            InventorySlot target = FindAreaForSize(instance.Data.itemSize);
+            InventorySlot target = FindAreaForSize(instance.EffectiveSize);
             if (target == null)
             {
                 // 더 둘 자리가 없으면 중단
@@ -483,8 +744,8 @@ public class StorageUI : MonoBehaviour
             return false;
         }
 
-        // 크기만큼 들어갈 빈 영역 확보
-        InventorySlot target = FindAreaForSize(instance.Data.itemSize);
+        // 크기만큼(회전 반영) 들어갈 빈 영역 확보
+        InventorySlot target = FindAreaForSize(instance.EffectiveSize);
         if (target == null)
         {
             Debug.Log("[StorageUI] 창고에 둘 공간이 없습니다.");
@@ -560,8 +821,8 @@ public class StorageUI : MonoBehaviour
         int toX = toOwner.slotIndex % gridWidth;
         int toY = toOwner.slotIndex / gridWidth;
 
-        // 목표 영역이 (자기 자신 제외) 비어 있는지 검사
-        bool canPlace = CanPlaceAt(toX, toY, fromInstance.Data.itemSize, fromOwner);
+        // 목표 영역이 (자기 자신 제외) 비어 있는지 검사 (회전 반영 크기)
+        bool canPlace = CanPlaceAt(toX, toY, fromInstance.EffectiveSize, fromOwner);
         if (canPlace == false)
         {
             // 들어갈 공간 없음 — 이동 취소 (원위치 유지)

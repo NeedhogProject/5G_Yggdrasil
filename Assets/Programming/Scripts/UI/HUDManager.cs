@@ -168,9 +168,10 @@ public class HUDManager : MonoBehaviour
         _boundStats.OnDefenseChanged += HandlePlayerDefenseChanged;
         _boundStats.OnMentalChanged += HandlePlayerMentalChanged;
 
-        UpdateHP(_boundStats.Health, PlayerStats.MAX_STAT);
+        // 분모는 고정 100 이 아니라 장비/세트 보너스가 반영된 실제 최대치를 사용
+        UpdateHP(_boundStats.Health, _boundStats.MaxHealth);
         UpdateDef(_boundStats.Defense, PlayerStats.MAX_STAT);
-        UpdateSanity(_boundStats.Mental, PlayerStats.MAX_STAT);
+        UpdateSanity(_boundStats.Mental, _boundStats.MaxMental);
 
         Debug.Log("[HUDManager] PlayerStats 연결 완료");
     }
@@ -179,7 +180,8 @@ public class HUDManager : MonoBehaviour
 
     private void HandlePlayerHealthChanged(float hp)
     {
-        UpdateHP(hp, PlayerStats.MAX_STAT);
+        float maxHp = _boundStats != null ? _boundStats.MaxHealth : PlayerStats.MAX_STAT;
+        UpdateHP(hp, maxHp);
     }
 
     private void HandlePlayerDefenseChanged(float def)
@@ -189,7 +191,8 @@ public class HUDManager : MonoBehaviour
 
     private void HandlePlayerMentalChanged(float men)
     {
-        UpdateSanity(men, PlayerStats.MAX_STAT);
+        float maxMen = _boundStats != null ? _boundStats.MaxMental : PlayerStats.MAX_STAT;
+        UpdateSanity(men, maxMen);
     }
 
     private void Update()

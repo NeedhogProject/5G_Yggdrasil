@@ -67,6 +67,24 @@ public class InteractionHint : MonoBehaviour
         }
     }
 
+    // 설정창이 열려 있으면 프롬프트를 숨긴다 (상호작용 힌트가 설정창 위로 보이지 않게)
+    // 범위 안에 있어도 설정창 동안은 끄고, 닫히면 다시 켠다
+    private void Update()
+    {
+        if (promptObject == null)
+        {
+            return;
+        }
+
+        bool settingsOpen = PauseMenuManager.Instance != null && PauseMenuManager.Instance.IsSettingOpen == true;
+        bool shouldShow = _currentTarget != null && settingsOpen == false;
+
+        if (promptObject.activeSelf != shouldShow)
+        {
+            promptObject.SetActive(shouldShow);
+        }
+    }
+
     // 상호작용 범위 진입 시 호출 (대상, 프롬프트 높이, 표시 문구)
     public void Register(Transform target, float heightOffset, string message)
     {

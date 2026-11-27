@@ -779,6 +779,9 @@ public class InscriptionMasterSystem : MonoBehaviour
                 _selectedCard.SetSelected(true);
             }
             UpdateResourceRows();
+
+            // 각인이 적용되었으니 즉시 저장
+            SaveSystem.Save();
         }
 
         UpdateInscribePreview();
@@ -835,6 +838,9 @@ public class InscriptionMasterSystem : MonoBehaviour
                 _selectedCard.Setup(_selectedArmor, this);
                 _selectedCard.SetSelected(true);
             }
+
+            // 초기화 주문서로 각인을 지웠으니 즉시 저장
+            SaveSystem.Save();
         }
 
         UpdateResetPreview();

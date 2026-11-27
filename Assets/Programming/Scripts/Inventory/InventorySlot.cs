@@ -14,6 +14,9 @@ public class InventorySlot : MonoBehaviour,
     public Image highlightImage;
     public TMP_Text stackCountText;
 
+    // 멀티셀 점유 영역을 등급 색으로 표시하는 하이라이트 (런타임 생성, 인스펙터 연결 불필요)
+    [System.NonSerialized] public Image footprintHighlight;
+
     [Header("Slot Data")]
     public ItemData currentItem;
     public bool isOccupied = false;
@@ -387,6 +390,12 @@ public class InventorySlot : MonoBehaviour,
             InventorySystem.Instance.SetHoveredSlot(this);
         }
 
+        // R키 회전 대상 기록 (창고의 아이템 있는 칸만)
+        if (container == SlotContainer.Storage && isOccupied == true && StorageUI.Instance != null)
+        {
+            StorageUI.Instance.SetHoveredSlot(this);
+        }
+
         if (isOccupied == false)
         {
             return;
@@ -422,6 +431,12 @@ public class InventorySlot : MonoBehaviour,
         {
             InventorySystem.Instance.ClearHoveredSlot(this);
         }
+
+        // R키 회전 대상에서 제외 (창고)
+        if (StorageUI.Instance != null)
+        {
+            StorageUI.Instance.ClearHoveredSlot(this);
+        }
     }
 
     // 인벤토리를 닫으면 OnPointerExit 가 오지 않으므로 G키 드롭 대상 기록을 직접 해제
@@ -430,6 +445,12 @@ public class InventorySlot : MonoBehaviour,
         if (InventorySystem.Instance != null)
         {
             InventorySystem.Instance.ClearHoveredSlot(this);
+        }
+
+        // 창고 R키 회전 대상 기록도 해제
+        if (StorageUI.Instance != null)
+        {
+            StorageUI.Instance.ClearHoveredSlot(this);
         }
     }
 

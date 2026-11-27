@@ -16,9 +16,29 @@ public class StorageInteractable : MonoBehaviour
     private Transform _player = null;
     private bool _playerInRange = false;
 
+    // 상호작용 범위 안에 창고가 하나라도 있는지 (인벤 드롭 키와 창고 키 충돌 방지용)
+    private static int _playersInRangeCount = 0;
+    public static bool IsPlayerNearStorage
+    {
+        get { return _playersInRangeCount > 0; }
+    }
+
+    // 이 창고가 전역 카운트에 범위 진입으로 반영돼 있는지
+    private bool _countedInRange = false;
+
     private void Start()
     {
         SetHintVisible(false);
+    }
+
+    private void OnDisable()
+    {
+        // 씬 전환/비활성화 시 전역 카운트가 어긋나지 않도록 정리
+        if (_countedInRange == true)
+        {
+            _playersInRangeCount--;
+            _countedInRange = false;
+        }
     }
 
     private void Update()
@@ -44,9 +64,24 @@ public class StorageInteractable : MonoBehaviour
             }
         }
 
-        // 힌트는 범위 안 + 창고 닫힘 상태에서만 표시
+        // 범위 진입/이탈 시 전역 카운트 갱신 (InventoryUI 드롭 차단 판단용)
+        if (_playerInRange != _countedInRange)
+        {
+            if (_playerInRange == true)
+            {
+                _playersInRangeCount++;
+            }
+            else
+            {
+                _playersInRangeCount--;
+            }
+            _countedInRange = _playerInRange;
+        }
+
+        // 힌트는 범위 안 + 창고 닫힘 + 설정창 닫힘 상태에서만 표시 (설정창 위로 힌트가 보이지 않게)
         bool storageClosed = StorageUI.Instance == null || StorageUI.Instance.IsOpen == false;
-        SetHintVisible(_playerInRange == true && storageClosed == true);
+        bool settingsClosed = PauseMenuManager.Instance == null || PauseMenuManager.Instance.IsSettingOpen == false;
+        SetHintVisible(_playerInRange == true && storageClosed == true && settingsClosed == true);
 
         if (_playerInRange == false)
         {
