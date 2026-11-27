@@ -17,7 +17,7 @@ MonoBehaviour:
     \uBAA9\uB3C4\uB9AC"
   _itemType: 6
   _rarity: 1
-  _icon: {fileID: 0}
+  _icon: {fileID: 21300000, guid: 583d75348c5a89c4599e3e03e89ed131, type: 3}
   _prefab3D: {fileID: 0}
   _inventoryWidth: 1
   _inventoryHeight: 1
