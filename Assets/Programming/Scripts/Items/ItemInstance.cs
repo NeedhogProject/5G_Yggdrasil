@@ -37,6 +37,36 @@ public class ItemInstance
     /// <summary>런타임 고유 ID — 인벤토리/저장 시 식별용</summary>
     public string InstanceId { get; private set; }
 
+    // ─────────────────────── 회전 상태 ───────────────────────
+
+    // 인벤토리에서 90도 회전된 상태인지 (가로·세로가 뒤바뀜)
+    public bool IsRotated { get; set; } = false;
+
+    // 회전을 반영한 실제 점유 크기 (회전 시 가로·세로 교체)
+    public Vector2Int EffectiveSize
+    {
+        get
+        {
+            if (Data == null)
+            {
+                return Vector2Int.one;
+            }
+
+            if (IsRotated == true)
+            {
+                return new Vector2Int(Data.itemSize.y, Data.itemSize.x);
+            }
+
+            return Data.itemSize;
+        }
+    }
+
+    // 회전 토글 (가로/세로 전환)
+    public void ToggleRotation()
+    {
+        IsRotated = IsRotated == false;
+    }
+
     // ─────────────────────── 생성자 ───────────────────────
 
     public ItemInstance(ItemData data)

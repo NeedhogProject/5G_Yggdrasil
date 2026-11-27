@@ -293,12 +293,34 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
+    // 회전을 반영한 아이템 점유 크기를 구한다 (인스턴스가 있으면 회전 상태, 없으면 원본 크기)
+    private Vector2Int GetEffectiveSize(InventorySlot ownerSlot)
+    {
+        if (ownerSlot == null)
+        {
+            return Vector2Int.one;
+        }
+
+        if (ownerSlot.CurrentInstance != null)
+        {
+            return ownerSlot.CurrentInstance.EffectiveSize;
+        }
+
+        if (ownerSlot.currentItem != null)
+        {
+            return ownerSlot.currentItem.itemSize;
+        }
+
+        return Vector2Int.one;
+    }
+
     // SetItem은 호출측에서 이미 한 경우, 영역 점유와 아이콘 크기만 처리
     private void OccupyAreaOnly(InventorySlot ownerSlot, ItemData item)
     {
         ownerSlot.ownerSlot = ownerSlot;
 
-        Vector2Int size = item.itemSize;
+        // 회전을 반영한 점유 크기 (인스턴스가 있으면 회전 상태 반영)
+        Vector2Int size = GetEffectiveSize(ownerSlot);
         int startX = ownerSlot.slotIndex % gridWidth;
         int startY = ownerSlot.slotIndex / gridWidth;
 
@@ -389,9 +411,12 @@ public class InventorySystem : MonoBehaviour
         float spaceX = grid.spacing.x;
         float spaceY = grid.spacing.y;
 
-        // 차지하는 전체 픽셀 크기 = 셀 크기 × 칸수 + 사이 간격
+        // 차지하는 전체 픽셀 크기 = 셀 크기 × 칸수 + 사이 간격 (size 는 회전 반영된 점유 크기)
         float width = cellW * size.x + spaceX * (size.x - 1);
         float height = cellH * size.y + spaceY * (size.y - 1);
+
+        // 이 아이템이 회전된 상태인지
+        bool rotated = ownerSlot.CurrentInstance != null && ownerSlot.CurrentInstance.IsRotated == true;
 
         RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
 
@@ -404,24 +429,73 @@ public class InventorySystem : MonoBehaviour
             // 아이콘이 슬롯의 호버/클릭/드래그를 가리지 않도록 레이캐스트 차단 (슬롯 배경이 입력을 받음)
             ownerSlot.itemIcon.raycastTarget = false;
 
-            iconRect.anchorMin = new Vector2(0f, 1f);
-            iconRect.anchorMax = new Vector2(0f, 1f);
-            iconRect.pivot = new Vector2(0f, 1f);
-            iconRect.sizeDelta = new Vector2(width, height);
+            if (rotated == false)
+            {
+                // 회전 안 됨 — 기존 방식 (주인 칸 좌상단에 아이콘 좌상단 정렬)
+                iconRect.localEulerAngles = Vector3.zero;
+                iconRect.anchorMin = new Vector2(0f, 1f);
+                iconRect.anchorMax = new Vector2(0f, 1f);
+                iconRect.pivot = new Vector2(0f, 1f);
+                iconRect.sizeDelta = new Vector2(width, height);
 
-            // 주인 칸의 월드 좌상단 모서리에 아이콘 좌상단을 맞춤 (레이아웃 패딩/정렬과 무관하게 정확)
-            Vector3[] corners = new Vector3[4];
-            ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
-            iconRect.position = corners[1]; // 1 = 좌상단(TL)
+                // 주인 칸의 월드 좌상단 모서리에 아이콘 좌상단을 맞춤 (레이아웃 패딩/정렬과 무관하게 정확)
+                Vector3[] corners = new Vector3[4];
+                ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
+                iconRect.position = corners[1]; // 1 = 좌상단(TL)
+                return;
+            }
+
+            // 회전됨 — 점유 영역 중심에 두고 90도 회전 (스프라이트는 원본 방향이라 가로·세로 뒤집어 돌림)
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.sizeDelta = new Vector2(height, width);
+            iconRect.localEulerAngles = new Vector3(0f, 0f, 90f);
+            iconRect.position = GetFootprintCenterWorld(ownerSlot, size);
             return;
         }
 
         // 오버레이 미지정 시: 기존 방식 (주인 칸 자식으로 확장 — 멀티셀은 격자선 비칠 수 있음)
+        if (rotated == false)
+        {
+            iconRect.localEulerAngles = Vector3.zero;
+            iconRect.anchorMin = new Vector2(0f, 1f);
+            iconRect.anchorMax = new Vector2(0f, 1f);
+            iconRect.pivot = new Vector2(0f, 1f);
+            iconRect.anchoredPosition = Vector2.zero;
+            iconRect.sizeDelta = new Vector2(width, height);
+            return;
+        }
+
+        // 회전됨 (비오버레이) — 주인 칸 기준 중심 근사 배치 후 90도 회전
         iconRect.anchorMin = new Vector2(0f, 1f);
         iconRect.anchorMax = new Vector2(0f, 1f);
-        iconRect.pivot = new Vector2(0f, 1f);
-        iconRect.anchoredPosition = Vector2.zero;
-        iconRect.sizeDelta = new Vector2(width, height);
+        iconRect.pivot = new Vector2(0.5f, 0.5f);
+        iconRect.sizeDelta = new Vector2(height, width);
+        iconRect.localEulerAngles = new Vector3(0f, 0f, 90f);
+        iconRect.anchoredPosition = new Vector2(width * 0.5f, -height * 0.5f);
+    }
+
+    // 점유 영역(회전 반영)의 월드 중심 좌표 — 주인칸 좌상단과 우하단칸 우하단의 중점
+    private Vector3 GetFootprintCenterWorld(InventorySlot ownerSlot, Vector2Int size)
+    {
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        Vector3[] tl = new Vector3[4];
+        ownerSlot.GetComponent<RectTransform>().GetWorldCorners(tl);
+
+        InventorySlot brSlot = GetSlotAt(new Vector2Int(startX + size.x - 1, startY + size.y - 1));
+        if (brSlot == null)
+        {
+            return tl[1];
+        }
+
+        Vector3[] br = new Vector3[4];
+        brSlot.GetComponent<RectTransform>().GetWorldCorners(br);
+
+        // tl[1] = 주인칸 좌상단(TL), br[3] = 우하단칸 우하단(BR)
+        return (tl[1] + br[3]) * 0.5f;
     }
 
     // 오버레이 아이콘 위치 재계산 (인벤토리 열기/탭 전환 등 그리드가 보이는 시점에 호출)
@@ -454,7 +528,7 @@ public class InventorySystem : MonoBehaviour
             {
                 continue;
             }
-            ResizeItemIcon(slot, slot.currentItem.itemSize);
+            ResizeItemIcon(slot, GetEffectiveSize(slot));
         }
     }
 
@@ -503,8 +577,8 @@ public class InventorySystem : MonoBehaviour
             return false;
         }
 
-        // 목표 위치가 자기 자신이 차지한 칸이면 무시
-        Vector2Int size = item.itemSize;
+        // 목표 위치가 자기 자신이 차지한 칸이면 무시 (회전 반영 크기 사용)
+        Vector2Int size = GetEffectiveSize(fromOwner);
         int toX = toSlot.slotIndex % gridWidth;
         int toY = toSlot.slotIndex / gridWidth;
 
@@ -568,7 +642,7 @@ public class InventorySystem : MonoBehaviour
         int startY = targetSlot.slotIndex / gridWidth;
 
         // 그 자리에 아이템 크기만큼 들어갈 공간이 있는지 검사
-        if (CanPlaceAt(startX, startY, instance.Data.itemSize) == false)
+        if (CanPlaceAt(startX, startY, instance.EffectiveSize) == false)
         {
             return false;
         }
@@ -621,7 +695,7 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        Vector2Int size = item.itemSize;
+        Vector2Int size = GetEffectiveSize(ownerSlot);
         int startX = ownerSlot.slotIndex % gridWidth;
         int startY = ownerSlot.slotIndex / gridWidth;
 
@@ -736,7 +810,7 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        Vector2Int size = item.itemSize;
+        Vector2Int size = GetEffectiveSize(ownerSlot);
         int startX = ownerSlot.slotIndex % gridWidth;
         int startY = ownerSlot.slotIndex / gridWidth;
 
@@ -782,7 +856,8 @@ public class InventorySystem : MonoBehaviour
         }
 
         RectTransform iconRect = ownerSlot.itemIcon.rectTransform;
-        // 슬롯을 꽉 채우는 기본 형태로 복원 (stretch)
+        // 슬롯을 꽉 채우는 기본 형태로 복원 (stretch) — 회전도 초기화
+        iconRect.localEulerAngles = Vector3.zero;
         iconRect.anchorMin = Vector2.zero;
         iconRect.anchorMax = Vector2.one;
         iconRect.pivot = new Vector2(0.5f, 0.5f);
@@ -1068,6 +1143,72 @@ public class InventorySystem : MonoBehaviour
         {
             _hoveredSlot = null;
         }
+    }
+
+    // 마우스로 가리키는 칸의 아이템을 90도 회전한다 (R키)
+    public bool RotateHoveredItem()
+    {
+        if (_hoveredSlot == null)
+        {
+            return false;
+        }
+
+        // 보조 칸이면 주인 슬롯 기준
+        InventorySlot owner = _hoveredSlot;
+        if (owner.ownerSlot != null && owner.ownerSlot != owner)
+        {
+            owner = owner.ownerSlot;
+        }
+
+        return RotateItemAt(owner);
+    }
+
+    // 지정한 주인 칸의 아이템을 회전한다. 회전 후 공간이 부족하면 원래대로 되돌린다.
+    public bool RotateItemAt(InventorySlot ownerSlot)
+    {
+        if (ownerSlot == null)
+        {
+            return false;
+        }
+
+        ItemInstance instance = ownerSlot.CurrentInstance;
+        if (instance == null || instance.Data == null)
+        {
+            return false;
+        }
+
+        // 판매창에 담긴 칸은 회전하지 않음
+        if (ownerSlot.IsSaleMarked == true)
+        {
+            return false;
+        }
+
+        // 정사각형 아이템은 회전해도 똑같으므로 무시
+        if (instance.Data.itemSize.x == instance.Data.itemSize.y)
+        {
+            return false;
+        }
+
+        int startX = ownerSlot.slotIndex % gridWidth;
+        int startY = ownerSlot.slotIndex / gridWidth;
+
+        // 현재 점유를 임시로 풀고, 회전된 크기로 같은 자리(좌상단 기준)에 들어가는지 검사
+        ReleaseAreaSilent(ownerSlot);
+        instance.ToggleRotation();
+
+        if (CanPlaceAt(startX, startY, instance.EffectiveSize) == false)
+        {
+            // 공간 부족 — 회전 취소하고 원래대로 재점유
+            instance.ToggleRotation();
+            OccupyAreaWithInstance(ownerSlot, ownerSlot.currentItem, instance);
+            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+            return false;
+        }
+
+        // 회전 확정 — 재점유 + 아이콘 갱신 (OccupyAreaOnly 내부에서 EffectiveSize 로 처리)
+        OccupyAreaWithInstance(ownerSlot, ownerSlot.currentItem, instance);
+        AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+        return true;
     }
 
     // 마우스로 가리키는 칸의 아이템을 바닥에 버린다 (G키). 줍을 수 있게 DroppedItem 으로 생성
