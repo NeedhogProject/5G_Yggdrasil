@@ -65,6 +65,20 @@ public class HUDManager : MonoBehaviour
     [SerializeField][Min(0f)] private float vignetteHoldTime = 0.12f;
     [SerializeField][Min(0f)] private float vignetteFadeOutTime = 0.45f;
     [SerializeField][Min(0f)] private float sanityPulseSpeed = 1.8f;
+    // 정신력이 0일 때 화면을 보라색으로 가득 채운 채 유지할 강도 (0~1)
+    [SerializeField][Range(0f, 1f)] private float sanityZeroAlpha = 0.78f;
+
+    // ── 정신력 0 전체 화면 보라 ───────────────────
+    [Header("정신력 0 전체 화면 보라")]
+    // 정신력 0일 때 화면 전체를 덮는 보라 오버레이 (화면 꽉 채운 Image 연결, 선택 사항)
+    [SerializeField] private Image sanityFullScreenTint;
+    [SerializeField][Range(0f, 1f)] private float sanityScreenTintAlpha = 0.35f;
+    // 깜빡일 때 가장 옅어지는 지점의 강도 (이 값과 위 Alpha 사이를 왕복)
+    [SerializeField][Range(0f, 1f)] private float sanityScreenTintMinAlpha = 0.05f;
+    // 깜빡이는 속도 (작을수록 천천히 깜빡임)
+    [SerializeField][Min(0f)] private float sanityScreenTintBlinkSpeed = 0.6f;
+    // 전체 화면 보라가 나타나고 사라지는 속도
+    [SerializeField][Min(0f)] private float sanityScreenTintSpeed = 2.5f;
 
     // ── 세트 효과 ─────────────────────────────────
     [Header("세트 효과")]
@@ -118,6 +132,15 @@ public class HUDManager : MonoBehaviour
             vignetteImage.raycastTarget = false;
         }
 
+        // 전체 화면 보라 오버레이는 처음엔 투명하게
+        if (sanityFullScreenTint != null)
+        {
+            Color tintColor = sanityFullScreenTint.color;
+            tintColor.a = 0f;
+            sanityFullScreenTint.color = tintColor;
+            sanityFullScreenTint.raycastTarget = false;
+        }
+
         if (defFill != null)
         {
             defFill.color = defColor;
@@ -168,9 +191,10 @@ public class HUDManager : MonoBehaviour
         _boundStats.OnDefenseChanged += HandlePlayerDefenseChanged;
         _boundStats.OnMentalChanged += HandlePlayerMentalChanged;
 
-        UpdateHP(_boundStats.Health, PlayerStats.MAX_STAT);
+        // 분모는 고정 100 이 아니라 장비/세트 보너스가 반영된 실제 최대치를 사용
+        UpdateHP(_boundStats.Health, _boundStats.MaxHealth);
         UpdateDef(_boundStats.Defense, PlayerStats.MAX_STAT);
-        UpdateSanity(_boundStats.Mental, PlayerStats.MAX_STAT);
+        UpdateSanity(_boundStats.Mental, _boundStats.MaxMental);
 
         Debug.Log("[HUDManager] PlayerStats 연결 완료");
     }
@@ -179,7 +203,8 @@ public class HUDManager : MonoBehaviour
 
     private void HandlePlayerHealthChanged(float hp)
     {
-        UpdateHP(hp, PlayerStats.MAX_STAT);
+        float maxHp = _boundStats != null ? _boundStats.MaxHealth : PlayerStats.MAX_STAT;
+        UpdateHP(hp, maxHp);
     }
 
     private void HandlePlayerDefenseChanged(float def)
@@ -189,7 +214,8 @@ public class HUDManager : MonoBehaviour
 
     private void HandlePlayerMentalChanged(float men)
     {
-        UpdateSanity(men, PlayerStats.MAX_STAT);
+        float maxMen = _boundStats != null ? _boundStats.MaxMental : PlayerStats.MAX_STAT;
+        UpdateSanity(men, maxMen);
     }
 
     private void Update()
@@ -202,6 +228,36 @@ public class HUDManager : MonoBehaviour
         }
 
         UpdateDelayBar();
+        UpdateSanityScreenTint();
+    }
+
+    // 정신력 0일 때 화면 전체를 보라색으로 덮고, 0보다 크면 서서히 걷어낸다
+    private void UpdateSanityScreenTint()
+    {
+        if (sanityFullScreenTint == null)
+        {
+            return;
+        }
+
+        Color tintColor = sanityFullScreenTint.color;
+        tintColor.r = vignetteColorSanity.r;
+        tintColor.g = vignetteColorSanity.g;
+        tintColor.b = vignetteColorSanity.b;
+
+        if (sanityRatio <= 0f)
+        {
+            // 정신력 0: 옅음과 진함 사이를 천천히 왕복시켜 깜빡이게 한다
+            float blink = Mathf.PingPong(Time.unscaledTime * sanityScreenTintBlinkSpeed, 1f);
+            float blinkAlpha = Mathf.Lerp(sanityScreenTintMinAlpha, sanityScreenTintAlpha, blink);
+            tintColor.a = Mathf.MoveTowards(tintColor.a, blinkAlpha, sanityScreenTintSpeed * Time.unscaledDeltaTime);
+        }
+        else
+        {
+            // 정신력이 0보다 크면 서서히 걷어낸다
+            tintColor.a = Mathf.MoveTowards(tintColor.a, 0f, sanityScreenTintSpeed * Time.unscaledDeltaTime);
+        }
+
+        sanityFullScreenTint.color = tintColor;
     }
 
     // ── 스탯 갱신 공개 API ────────────────────────
@@ -452,6 +508,19 @@ public class HUDManager : MonoBehaviour
             // 비네트 재생 중이면 양보
             if (vignetteCoroutine != null)
             {
+                yield return null;
+                continue;
+            }
+
+            // 정신력이 0이면 맥동하지 않고 화면을 보라색으로 가득 채운 채 유지한다
+            if (sanityRatio <= 0f)
+            {
+                Color fullColor = new Color(
+                    vignetteColorSanity.r,
+                    vignetteColorSanity.g,
+                    vignetteColorSanity.b,
+                    sanityZeroAlpha);
+                vignetteImage.color = fullColor;
                 yield return null;
                 continue;
             }

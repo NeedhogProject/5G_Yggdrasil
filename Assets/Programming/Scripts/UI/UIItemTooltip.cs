@@ -215,11 +215,11 @@ public class UIItemTooltip : MonoBehaviour
 
         if (e.attack > 0)
         {
-            result += "공격력: " + e.attack.ToString() + "\n";
+            result += "공격력 + " + e.attack.ToString() + "\n";
         }
         if (e.defense > 0)
         {
-            result += "방어력: " + e.defense.ToString() + "\n";
+            result += "방어력 + " + e.defense.ToString() + "\n";
         }
 
         result += "내구도: " + e.durability.ToString("F0") + "/" + e.maxDurability.ToString("F0");
@@ -241,7 +241,7 @@ public class UIItemTooltip : MonoBehaviour
         }
 
         // 강화가 반영된 최종 공격력 표시
-        result += "공격력: " + weapon.FinalDamage.ToString("F0") + "\n";
+        result += "공격력 + " + weapon.FinalDamage.ToString("F0") + "\n";
 
         // 다음 강화 성공률 표시 (5강이면 최대강 표시)
         if (weapon.EnhancementLevel >= 5)
@@ -272,7 +272,7 @@ public class UIItemTooltip : MonoBehaviour
 
         if (armor.ArmorData != null && armor.DefenseBonus > 0)
         {
-            result += "방어력: " + armor.DefenseBonus.ToString() + "\n";
+            result += "방어력 + " + armor.DefenseBonus.ToString() + "\n";
         }
 
         // 각인 (부위당 최대 1개)
@@ -389,7 +389,7 @@ public class UIItemTooltip : MonoBehaviour
         return "없음";
     }
 
-    private static Color GetRarityColor(ItemRarity rarity)
+    public static Color GetRarityColor(ItemRarity rarity)
     {
         if (rarity == ItemRarity.Common)
         {

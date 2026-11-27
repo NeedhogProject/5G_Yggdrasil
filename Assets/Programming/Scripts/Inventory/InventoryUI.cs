@@ -92,18 +92,59 @@ public class InventoryUI : MonoBehaviour
             CloseInventory();
         }
 
-        // G: 인벤토리가 단독으로 열린 상태에서만 마우스로 가리키는 칸의 아이템을 바닥에 버림
-        // 창고/상점과 같이 열렸을 때는 드랍을 막는다 (엉뚱한 칸이 버려져 아이템이 사라지는 문제 방지)
-        if (isOpen == true && _openedBeside == false && Keyboard.current.gKey.wasPressedThisFrame == true)
+        // DropItem 키: 인벤토리가 단독으로 열린 상태 + 창고 근처가 아닐 때만 마우스로 가리키는 칸의 아이템을 바닥에 버림
+        // 창고/상점과 같이 열렸거나, 창고 상호작용 범위 안이면 드랍을 막는다
+        // (창고 키와 같은 키를 눌러도 창고만 열리고 아이템이 버려지지 않도록, 엉뚱한 칸 증발 방지)
+        if (isOpen == true && _openedBeside == false && StorageInteractable.IsPlayerNearStorage == false && WasDropKeyPressed() == true)
         {
             InventorySystem.Instance?.DropHoveredItem();
         }
 
-        // R: 마우스로 가리키는 칸의 아이템을 90도 회전 (인벤 열려 있으면 창고와 같이 열렸어도 허용)
-        if (isOpen == true && Keyboard.current.rKey.wasPressedThisFrame == true)
+        // RotateItem 키: 마우스로 가리키는 칸의 아이템을 90도 회전 (인벤 열려 있으면 창고와 같이 열렸어도 허용)
+        if (isOpen == true && WasRotateKeyPressed() == true)
         {
             InventorySystem.Instance?.RotateHoveredItem();
         }
+    }
+
+    // 아이템 회전 키 입력 확인 (RotateItem 액션, 없으면 기본 R 폴백)
+    private bool WasRotateKeyPressed()
+    {
+        if (Keyboard.current == null)
+        {
+            return false;
+        }
+
+        if (KeyBindingManager.Instance != null)
+        {
+            InputAction rotateAction = KeyBindingManager.Instance.FindAction("RotateItem");
+            if (rotateAction != null)
+            {
+                return rotateAction.WasPressedThisFrame();
+            }
+        }
+
+        return Keyboard.current.rKey.wasPressedThisFrame;
+    }
+
+    // 아이템 버리기 키 입력 확인 (DropItem 액션, 없으면 기본 G 폴백)
+    private bool WasDropKeyPressed()
+    {
+        if (Keyboard.current == null)
+        {
+            return false;
+        }
+
+        if (KeyBindingManager.Instance != null)
+        {
+            InputAction dropAction = KeyBindingManager.Instance.FindAction("DropItem");
+            if (dropAction != null)
+            {
+                return dropAction.WasPressedThisFrame();
+            }
+        }
+
+        return Keyboard.current.gKey.wasPressedThisFrame;
     }
 
     // 상점이 같이 열려있는지 확인

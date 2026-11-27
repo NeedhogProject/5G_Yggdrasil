@@ -27,6 +27,9 @@ public class QuickSlotSystem : MonoBehaviour
 
         [Tooltip("보유 수량을 표시할 텍스트")]
         public TMP_Text countText;
+
+        // 등급 색 배경 (런타임 생성, 아이콘 뒤에 깔림)
+        [System.NonSerialized] public Image rarityBg;
     }
 
     [Header("단축키 슬롯 (보통 2개)")]
@@ -52,6 +55,16 @@ public class QuickSlotSystem : MonoBehaviour
 
     private void Start()
     {
+        // 단축키를 1, 2 로 강제 (인스펙터에 D/F 등으로 설정돼 있어도 무시)
+        if (slots.Count > 0 && slots[0] != null)
+        {
+            slots[0].useKey = Key.Digit1;
+        }
+        if (slots.Count > 1 && slots[1] != null)
+        {
+            slots[1].useKey = Key.Digit2;
+        }
+
         // 씬이 바뀌어도 등록이 유지되도록, 이전에 보관해 둔 소모품을 복원한다 (없으면 빈 칸)
         for (int i = 0; i < slots.Count; i++)
         {
@@ -216,11 +229,76 @@ public class QuickSlotSystem : MonoBehaviour
             slot.iconImage.enabled = hasIcon;
         }
 
+        // 등급 색 배경 갱신 (등록된 소모품 등급색, 빈 슬롯이면 숨김)
+        ApplyRarityBg(slot);
+
         // 빈 슬롯이면 수량 텍스트도 비운다
         if (slot.consumable == null && slot.countText != null)
         {
             slot.countText.text = "";
         }
+    }
+
+    // 등급 색 배경 표시/숨김 (아이콘 뒤)
+    private void ApplyRarityBg(QuickSlot slot)
+    {
+        if (slot == null || slot.iconImage == null)
+        {
+            return;
+        }
+
+        EnsureRarityBg(slot);
+        if (slot.rarityBg == null)
+        {
+            return;
+        }
+
+        bool show = slot.consumable != null && slot.consumable.itemIcon != null;
+        if (show == false)
+        {
+            slot.rarityBg.enabled = false;
+            return;
+        }
+
+        Color col = UIItemTooltip.GetRarityColor(slot.consumable.rarity);
+        col.a = 0.13f;
+        slot.rarityBg.color = col;
+        slot.rarityBg.enabled = true;
+    }
+
+    // 등급 배경 Image 를 런타임 생성 (아이콘과 같은 칸을 꽉 채우고 아이콘 뒤에 배치)
+    private void EnsureRarityBg(QuickSlot slot)
+    {
+        if (slot.rarityBg != null)
+        {
+            return;
+        }
+        if (slot.iconImage == null)
+        {
+            return;
+        }
+
+        Transform slotRoot = slot.iconImage.transform.parent;
+        if (slotRoot == null)
+        {
+            return;
+        }
+
+        GameObject bgObj = new GameObject("QuickSlotRarityBg", typeof(RectTransform));
+        bgObj.transform.SetParent(slotRoot, false);
+        bgObj.transform.SetAsFirstSibling();
+
+        RectTransform rect = bgObj.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        Image image = bgObj.AddComponent<Image>();
+        image.raycastTarget = false;
+        image.enabled = false;
+
+        slot.rarityBg = image;
     }
 
     // 모든 슬롯 수량/흐림 갱신
@@ -286,6 +364,10 @@ public class QuickSlotSystem : MonoBehaviour
         if (slot.countText != null)
         {
             slot.countText.text = "";
+        }
+        if (slot.rarityBg != null)
+        {
+            slot.rarityBg.enabled = false;
         }
 
         SaveAssignments();

@@ -17,6 +17,9 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public Image inscriptionIcon;
     public TMP_Text equipmentLevelText;
 
+    // 장착 아이템 등급 색 배경 (런타임 생성, 아이콘 뒤에 깔림)
+    [System.NonSerialized] private Image _rarityBg;
+
     [Header("빈 슬롯 표시")]
     [Tooltip("이 부위가 비었을 때 흐리게 표시할 실루엣 스프라이트 (부위별로 지정)")]
     public Sprite emptySlotIcon;
@@ -180,6 +183,9 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
             {
                 highlightImage.gameObject.SetActive(false);
             }
+
+            // 빈 슬롯: 등급 배경 숨김
+            ApplyRarityBg(false, ItemRarity.Common);
             return;
         }
 
@@ -187,6 +193,11 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         equipmentIcon.gameObject.SetActive(true);
         equipmentIcon.sprite = currentEquipment.itemIcon;
         equipmentIcon.color = Color.white;
+        // 인스펙터 설정과 무관하게 원본 비율 유지 (장비 아이콘이 늘어나지 않게)
+        equipmentIcon.preserveAspect = true;
+
+        // 장착 아이템 등급 색 배경 표시
+        ApplyRarityBg(true, currentEquipment.rarity);
 
         // 강화 단계: 무기(WeaponData)만 표시
         if (equipmentLevelText != null)
@@ -216,6 +227,53 @@ public class EquipmentSlotUI : MonoBehaviour, IPointerEnterHandler, IPointerExit
         {
             highlightImage.gameObject.SetActive(false);
         }
+    }
+
+    // 등급 색 배경 표시/숨김 (아이콘 뒤에 깔림)
+    private void ApplyRarityBg(bool show, ItemRarity rarity)
+    {
+        EnsureRarityBg();
+        if (_rarityBg == null)
+        {
+            return;
+        }
+
+        if (show == false)
+        {
+            _rarityBg.enabled = false;
+            return;
+        }
+
+        Color col = UIItemTooltip.GetRarityColor(rarity);
+        col.a = 0.13f;
+        _rarityBg.color = col;
+        _rarityBg.enabled = true;
+    }
+
+    // 등급 배경 Image 를 런타임 생성 (슬롯을 꽉 채우고 아이콘 뒤에 배치)
+    private void EnsureRarityBg()
+    {
+        if (_rarityBg != null)
+        {
+            return;
+        }
+
+        GameObject bgObj = new GameObject("RarityBg", typeof(RectTransform));
+        bgObj.transform.SetParent(transform, false);
+        // 맨 뒤(아이콘보다 뒤)에 렌더
+        bgObj.transform.SetAsFirstSibling();
+
+        RectTransform rect = bgObj.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+
+        Image image = bgObj.AddComponent<Image>();
+        image.raycastTarget = false;
+        image.enabled = false;
+
+        _rarityBg = image;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

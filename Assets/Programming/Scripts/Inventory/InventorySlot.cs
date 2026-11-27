@@ -14,6 +14,9 @@ public class InventorySlot : MonoBehaviour,
     public Image highlightImage;
     public TMP_Text stackCountText;
 
+    // 멀티셀 점유 영역을 등급 색으로 표시하는 하이라이트 (런타임 생성, 인스펙터 연결 불필요)
+    [System.NonSerialized] public Image footprintHighlight;
+
     [Header("Slot Data")]
     public ItemData currentItem;
     public bool isOccupied = false;
@@ -110,7 +113,8 @@ public class InventorySlot : MonoBehaviour,
 
         // 잡은 칸 보정: 아이템 좌상단(주인)이 들어갈 칸
         Vector2Int vTarget = gridPosition - _grabOffset;
-        List<InventorySlot> targetOwners = GetOwnersInArea(bToStorage, vTarget, draggedInstance.Data.itemSize);
+        // 회전 상태를 반영한 크기로 놓을 자리를 검사한다
+        List<InventorySlot> targetOwners = GetOwnersInArea(bToStorage, vTarget, draggedInstance.EffectiveSize);
 
         // 1. 놓은 자리가 비어 있으면 그 자리에 배치
         if (targetOwners != null && targetOwners.Count == 0 && PlaceInContainer(bToStorage, GetSlot(bToStorage, vTarget), draggedInstance) == true)
@@ -148,7 +152,8 @@ public class InventorySlot : MonoBehaviour,
 
         // B 가 A 를 뺀 원래 자리에 들어가야 교환 가능 (A 쪽은 놓은 자리에 B 하나뿐이라 이미 확인됨)
         Vector2Int vSource = _fromSlot.gridPosition;
-        if (IsAreaFreeExcept(_bToStorage == false, vSource, targetInstance.Data.itemSize, _fromSlot) == false)
+        // 회전 상태를 반영한 크기로 B 가 들어갈 자리를 검사한다
+        if (IsAreaFreeExcept(_bToStorage == false, vSource, targetInstance.EffectiveSize, _fromSlot) == false)
         {
             return false;
         }
@@ -387,6 +392,12 @@ public class InventorySlot : MonoBehaviour,
             InventorySystem.Instance.SetHoveredSlot(this);
         }
 
+        // R키 회전 대상 기록 (창고의 아이템 있는 칸만)
+        if (container == SlotContainer.Storage && isOccupied == true && StorageUI.Instance != null)
+        {
+            StorageUI.Instance.SetHoveredSlot(this);
+        }
+
         if (isOccupied == false)
         {
             return;
@@ -422,6 +433,12 @@ public class InventorySlot : MonoBehaviour,
         {
             InventorySystem.Instance.ClearHoveredSlot(this);
         }
+
+        // R키 회전 대상에서 제외 (창고)
+        if (StorageUI.Instance != null)
+        {
+            StorageUI.Instance.ClearHoveredSlot(this);
+        }
     }
 
     // 인벤토리를 닫으면 OnPointerExit 가 오지 않으므로 G키 드롭 대상 기록을 직접 해제
@@ -430,6 +447,12 @@ public class InventorySlot : MonoBehaviour,
         if (InventorySystem.Instance != null)
         {
             InventorySystem.Instance.ClearHoveredSlot(this);
+        }
+
+        // 창고 R키 회전 대상 기록도 해제
+        if (StorageUI.Instance != null)
+        {
+            StorageUI.Instance.ClearHoveredSlot(this);
         }
     }
 
@@ -461,17 +484,20 @@ public class InventorySlot : MonoBehaviour,
             source = ownerSlot;
         }
 
-        // 상점이 판매 모드면 우클릭: 안 담긴 건 판매창에 담고, 이미 담긴 건 다시 빼기 (확인 팝업은 판매창 카드 우클릭에서 연다)
+        // 상점이 판매 모드면 우클릭: 1개씩 판매창에 담고, Shift+우클릭이면 수량 선택창을 연다
+        // (판매창에서 빼기는 담긴 카드를 좌클릭)
         if (container == SlotContainer.Inventory && ShopSystem.Instance != null && ShopSystem.Instance.IsOpen == true && ShopSystem.Instance.IsSellMode == true)
         {
             if (source.currentItem != null)
             {
-                if (source.IsSaleMarked == true)
+                if (IsShiftHeld() == true)
                 {
-                    ShopSystem.Instance.UnstageSlot(source);
+                    // Shift + 우클릭: 담을 수량을 직접 고른다
+                    ShopSystem.Instance.OpenSellConfirm(source);
                 }
                 else
                 {
+                    // 우클릭: 판매창에 1개 담기 (이미 담겨 있으면 1개 추가)
                     ShopSystem.Instance.StageForSale(source);
                 }
             }
@@ -500,6 +526,16 @@ public class InventorySlot : MonoBehaviour,
             return false;
         }
         return Keyboard.current.leftCtrlKey.isPressed == true || Keyboard.current.rightCtrlKey.isPressed == true;
+    }
+
+    // Shift 키가 눌려 있는지
+    private bool IsShiftHeld()
+    {
+        if (Keyboard.current == null)
+        {
+            return false;
+        }
+        return Keyboard.current.leftShiftKey.isPressed == true || Keyboard.current.rightShiftKey.isPressed == true;
     }
 
     // 이 칸의 소모품을 퀵슬롯에 등록 (인벤토리 칸의 소모품만 가능)

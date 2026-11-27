@@ -407,8 +407,8 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        // 아이콘이 칸 전체를 채우도록 비율 유지 해제 (여백/격자처럼 보이는 현상 제거)
-        ownerSlot.itemIcon.preserveAspect = false;
+        // 아이콘 원본 비율 유지 (칸에 맞춰 늘어나 찌그러지지 않게 — 디아블로식 표시)
+        ownerSlot.itemIcon.preserveAspect = true;
 
         GridLayoutGroup grid = slotContainer.GetComponent<GridLayoutGroup>();
         if (grid == null)
@@ -432,6 +432,9 @@ public class InventorySystem : MonoBehaviour
 
         if (iconOverlay != null)
         {
+            // 점유 영역 등급색 하이라이트 (아이콘 뒤에 깔아 차지하는 칸을 명확히 표시)
+            EnsureFootprintHighlight(ownerSlot, width, height);
+
             // 방식 A: 아이콘을 오버레이 레이어로 옮겨 모든 칸 위에 렌더 (격자선이 아이콘 위로 비치는 문제 해결)
             iconRect.SetParent(iconOverlay, false);
             iconRect.SetAsLastSibling();
@@ -441,17 +444,13 @@ public class InventorySystem : MonoBehaviour
 
             if (rotated == false)
             {
-                // 회전 안 됨 — 기존 방식 (주인 칸 좌상단에 아이콘 좌상단 정렬)
+                // 회전 안 됨 — 점유 영역 정중앙 정렬 (비율 유지로 가운데에 들어감)
                 iconRect.localEulerAngles = Vector3.zero;
-                iconRect.anchorMin = new Vector2(0f, 1f);
-                iconRect.anchorMax = new Vector2(0f, 1f);
-                iconRect.pivot = new Vector2(0f, 1f);
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
                 iconRect.sizeDelta = new Vector2(width, height);
-
-                // 주인 칸의 월드 좌상단 모서리에 아이콘 좌상단을 맞춤 (레이아웃 패딩/정렬과 무관하게 정확)
-                Vector3[] corners = new Vector3[4];
-                ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
-                iconRect.position = corners[1]; // 1 = 좌상단(TL)
+                iconRect.position = GetFootprintCenterWorld(ownerSlot, size);
                 return;
             }
 
@@ -506,6 +505,56 @@ public class InventorySystem : MonoBehaviour
 
         // tl[1] = 주인칸 좌상단(TL), br[3] = 우하단칸 우하단(BR)
         return (tl[1] + br[3]) * 0.5f;
+    }
+
+    // 점유 영역에 등급 색 하이라이트를 깐다 (멀티셀이 차지하는 칸을 명확히). 아이콘보다 뒤에 렌더
+    private void EnsureFootprintHighlight(InventorySlot ownerSlot, float width, float height)
+    {
+        if (iconOverlay == null)
+        {
+            return;
+        }
+
+        // 등급 색 (툴팁과 동일), 은은하게
+        ItemData data = ownerSlot.currentItem;
+        Color col = data != null ? UIItemTooltip.GetRarityColor(data.rarity) : Color.white;
+        col.a = 0.13f;
+
+        Image hl = ownerSlot.footprintHighlight;
+        if (hl == null)
+        {
+            GameObject hlObj = new GameObject("FootprintHighlight", typeof(RectTransform));
+            hl = hlObj.AddComponent<Image>();
+            hl.raycastTarget = false;
+            ownerSlot.footprintHighlight = hl;
+        }
+
+        RectTransform hr = hl.rectTransform;
+        hr.SetParent(iconOverlay, false);
+        // 아이콘 바로 뒤에 깔리도록 먼저 올림 (이후 아이콘이 SetAsLastSibling 로 위에 옴)
+        hr.SetAsLastSibling();
+        hr.localEulerAngles = Vector3.zero;
+        hr.anchorMin = new Vector2(0f, 1f);
+        hr.anchorMax = new Vector2(0f, 1f);
+        hr.pivot = new Vector2(0f, 1f);
+        hr.sizeDelta = new Vector2(width, height);
+
+        Vector3[] corners = new Vector3[4];
+        ownerSlot.GetComponent<RectTransform>().GetWorldCorners(corners);
+        hr.position = corners[1]; // 좌상단(TL)
+
+        hl.color = col;
+        hl.enabled = true;
+    }
+
+    // 점유 하이라이트 제거 (아이템이 칸을 떠날 때)
+    private void RemoveFootprintHighlight(InventorySlot ownerSlot)
+    {
+        if (ownerSlot != null && ownerSlot.footprintHighlight != null)
+        {
+            Destroy(ownerSlot.footprintHighlight.gameObject);
+            ownerSlot.footprintHighlight = null;
+        }
     }
 
     // 오버레이 아이콘 위치 재계산 (인벤토리 열기/탭 전환 등 그리드가 보이는 시점에 호출)
@@ -848,6 +897,9 @@ public class InventorySystem : MonoBehaviour
     // 아이콘을 1칸 크기로 복원
     private void RestoreItemIcon(InventorySlot ownerSlot)
     {
+        // 점유 하이라이트도 같이 제거
+        RemoveFootprintHighlight(ownerSlot);
+
         if (ownerSlot.itemIcon == null)
         {
             return;
@@ -1202,23 +1254,39 @@ public class InventorySystem : MonoBehaviour
         int startX = ownerSlot.slotIndex % gridWidth;
         int startY = ownerSlot.slotIndex / gridWidth;
 
-        // 현재 점유를 임시로 풀고, 회전된 크기로 같은 자리(좌상단 기준)에 들어가는지 검사
+        ItemData item = ownerSlot.currentItem;
+
+        // 현재 점유를 임시로 풀고 회전
         ReleaseAreaSilent(ownerSlot);
         instance.ToggleRotation();
 
-        if (CanPlaceAt(startX, startY, instance.EffectiveSize) == false)
+        // 1) 제자리(좌상단 기준)에 회전해서 들어가면 그대로
+        if (CanPlaceAt(startX, startY, instance.EffectiveSize) == true)
         {
-            // 공간 부족 — 회전 취소하고 원래대로 재점유
-            instance.ToggleRotation();
-            OccupyAreaWithInstance(ownerSlot, ownerSlot.currentItem, instance);
-            AudioManager.Instance?.PlaySFX(SFXClip.UIError);
-            return false;
+            OccupyAreaWithInstance(ownerSlot, item, instance);
+            AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+            return true;
         }
 
-        // 회전 확정 — 재점유 + 아이콘 갱신 (OccupyAreaOnly 내부에서 EffectiveSize 로 처리)
-        OccupyAreaWithInstance(ownerSlot, ownerSlot.currentItem, instance);
-        AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
-        return true;
+        // 2) 제자리 안 되면, 회전한 상태로 들어갈 빈 자리를 찾아 그곳으로 이동
+        InventorySlot target = FindSlotForSize(instance.EffectiveSize);
+        if (target != null && target != ownerSlot)
+        {
+            // 기존 주인 칸 비우고(아이콘 복원) 새 자리에 회전 상태로 배치
+            ownerSlot.ClearSlot();
+            RestoreItemIcon(ownerSlot);
+
+            target.SetItem(instance);
+            OccupyAreaOnly(target, item);
+            AudioManager.Instance?.PlaySFX(SFXClip.UIOpen);
+            return true;
+        }
+
+        // 3) 어디에도 안 들어가면 회전 취소하고 원래대로 재점유
+        instance.ToggleRotation();
+        OccupyAreaWithInstance(ownerSlot, item, instance);
+        AudioManager.Instance?.PlaySFX(SFXClip.UIError);
+        return false;
     }
 
     // 마우스로 가리키는 칸의 아이템을 바닥에 버린다 (G키). 줍을 수 있게 DroppedItem 으로 생성
@@ -1341,6 +1409,19 @@ public class InventorySystem : MonoBehaviour
             }
         }
 
+        return null;
+    }
+
+    // 주어진 크기(회전 반영)가 들어갈 빈 영역의 주인 슬롯을 찾는다 (없으면 null)
+    private InventorySlot FindSlotForSize(Vector2Int size)
+    {
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (CheckAreaAvailable(i, size) == true)
+            {
+                return slots[i];
+            }
+        }
         return null;
     }
 
