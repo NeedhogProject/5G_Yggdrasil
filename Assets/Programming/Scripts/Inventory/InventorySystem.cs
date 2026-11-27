@@ -142,11 +142,17 @@ public class InventorySystem : MonoBehaviour
             return true;
         }
 
-        // 인벤토리에 새로 들어오는 아이템은 회전 상태를 초기화한다.
-        // (빈자리 탐색은 원래 크기, 점유는 EffectiveSize 라 회전 상태로 들어오면 어긋나 겹침 발생)
-        instance.IsRotated = false;
-
-        InventorySlot emptySlot = FindEmptySlot(instance.Data);
+        // 회전 상태를 반영한 크기로 자리 찾기, 없으면 방향을 바꿔 한 번 더 시도
+        InventorySlot emptySlot = FindEmptySlot(instance.Data, instance.EffectiveSize);
+        if (emptySlot == null && instance.Data.itemSize.x != instance.Data.itemSize.y)
+        {
+            instance.ToggleRotation();
+            emptySlot = FindEmptySlot(instance.Data, instance.EffectiveSize);
+            if (emptySlot == null)
+            {
+                instance.ToggleRotation();
+            }
+        }
 
         if (emptySlot == null)
         {
@@ -371,7 +377,7 @@ public class InventorySystem : MonoBehaviour
         }
 
         // 인스턴스 생성 실패 시에만 기존 데이터 전용 방식으로 추가 (안전장치)
-        InventorySlot emptySlot = FindEmptySlot(item);
+        InventorySlot emptySlot = FindEmptySlot(item, item.itemSize);
 
         if (emptySlot == null)
         {
@@ -1387,7 +1393,8 @@ public class InventorySystem : MonoBehaviour
 
     // ─────────────────────── 유틸 ───────────────────────
 
-    private InventorySlot FindEmptySlot(ItemData item)
+    // _vSize: 실제 점유 크기 (회전된 인스턴스는 가로·세로가 바뀜)
+    private InventorySlot FindEmptySlot(ItemData item, Vector2Int _vSize)
     {
         for (int i = 0; i < slots.Count; i++)
         {
@@ -1396,7 +1403,7 @@ public class InventorySystem : MonoBehaviour
                 continue;
             }
 
-            if (CheckAreaAvailable(i, item.itemSize) == true)
+            if (CheckAreaAvailable(i, _vSize) == true)
             {
                 return slots[i];
             }

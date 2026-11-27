@@ -110,7 +110,7 @@ public class ResourceNode : MonoBehaviour
 
         GameObject dropped = Instantiate(droppedItemPrefab, spawnPos, Quaternion.identity);
 
-        // DroppedItem 컴포넌트에 자원 데이터 주입 (DroppedItem 완성 후 연동)
+        // DroppedItem 컴포넌트에 자원 데이터 주입
         DroppedItem droppedItem = dropped.GetComponent<DroppedItem>();
         if (droppedItem != null)
             droppedItem.Initialize(new ResourceInstance(resourceData, 1));
