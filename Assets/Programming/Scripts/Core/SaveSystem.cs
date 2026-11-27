@@ -26,6 +26,7 @@ public static class SaveSystem
         public int enhancementLevel;   // 무기
         public int rune;               // 방어구 각인 (RuneElement)
         public bool identified;        // 유물 감정 여부
+        public bool rotated;           // 인벤토리에서 90도 회전된 상태
     }
 
     // 저장 데이터 전체
@@ -302,6 +303,7 @@ public static class SaveSystem
         saved.stackCount = _item.StackCount;
         saved.slotX = _item.SlotPosition.x;
         saved.slotY = _item.SlotPosition.y;
+        saved.rotated = _item.IsRotated;
 
         if (_item is WeaponInstance weapon)
         {
@@ -350,6 +352,7 @@ public static class SaveSystem
             relic.Identify();
         }
 
+        item.IsRotated = _saved.rotated;
         item.AddStack(_saved.stackCount - 1);
         return item;
     }
