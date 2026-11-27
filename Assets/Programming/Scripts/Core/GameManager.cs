@@ -15,7 +15,7 @@ using UnityEngine.SceneManagement;
 ///
 /// [저장]
 /// - 슬롯 없이 SaveSystem 파일 1개. 타이틀 이어하기로 불러오기
-/// - 마을 도착, 층 이동 때 자동 저장 (새 게임은 설정창 저장 버튼을 처음 누른 뒤부터)
+/// - 마을 도착, 층 이동 때 자동 저장 (새 캐릭터도 처음부터 자동 저장)
 /// - 게임 나가기(타이틀)와 종료 때도 저장하며, 이때는 위치까지 저장해 이어하기가 그 위치에서 시작
 /// - CurrentSlot 프로퍼티는 다른 파일 호환을 위해 남겨둠
 ///
@@ -119,8 +119,8 @@ public class GameManager : MonoBehaviour
     public int CurrentSlot { get; private set; } = -1;
 
     /// <summary>
-    /// 새 게임 시작 — 마을부터 시작
-    /// 타이틀의 "게임 시작" 버튼에서 호출
+    /// 새 캐릭터로 시작 — 마을 집 안부터 시작
+    /// 저장이 없을 때 타이틀의 싱글/멀티 접속 후 호출
     /// </summary>
     public void StartNewGame()
     {
@@ -132,8 +132,8 @@ public class GameManager : MonoBehaviour
         DestroyPersistentPlayerObjects();
         HouseSystem.ClearStorage();
 
-        // 기존 저장은 플레이어가 저장 버튼을 누를 때까지 그대로 둠 (실수로 새 게임을 눌러도 이어하기 가능)
-        SaveSystem.IsAutoSaveEnabled = false;
+        // 새 캐릭터는 처음부터 자동 저장 (저장이 없을 때만 호출되므로 기존 저장을 덮지 않음)
+        SaveSystem.IsAutoSaveEnabled = true;
 
         LoadScene(townSceneName, GameState.Town);
     }
@@ -159,6 +159,31 @@ public class GameManager : MonoBehaviour
         SaveSystem.IsAutoSaveEnabled = true;
 
         GoToFloor(data.floor);
+    }
+
+    /// <summary>멀티 참가 — 저장이 있으면 불러오되 위치는 무시하고 마을 집 안에서 시작</summary>
+    public void StartAsJoiner()
+    {
+        SaveSystem.SaveData data = SaveSystem.Load();
+        if (data == null)
+        {
+            StartNewGame();
+            return;
+        }
+
+        IsNewGame = false;
+        DestroyPersistentPlayerObjects();
+
+        HouseSystem.ClearStorage();
+        SaveSystem.ApplyStorage(data);
+        // 참가자 시작 위치는 집 안 고정
+        data.hasPosition = false;
+        _pendingLoad = data;
+        SaveSystem.IsAutoSaveEnabled = true;
+
+        _townEntry = TownEntry.NewGame;
+        CurrentFloor = 0;
+        LoadScene(townSceneName, GameState.Town);
     }
 
     /// <summary>마을 → 던전 1층</summary>
