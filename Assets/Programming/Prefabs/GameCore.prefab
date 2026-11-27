@@ -346,6 +346,10 @@ MonoBehaviour:
   setEffectTableJson: {fileID: 4900000, guid: 0cfbf80d2639cd946a242c644c0903a7, type: 3}
   consumableTableJson: {fileID: 4900000, guid: 096da21ac4722394792ae84e31acb9ef, type: 3}
   relicTableJson: {fileID: 4900000, guid: 6be936c277dd2a844b43af649138f998, type: 3}
+  resourceTableJson: {fileID: 4900000, guid: fea6d35a31e10cb4b95f57fa517673cd, type: 3}
+  floorKeyTableJson: {fileID: 4900000, guid: 2265e0a9e115516418140b1cb3817a70, type: 3}
+  enhanceMaterialTableJson: {fileID: 4900000, guid: 98e3cc244ef0b254bb4cb40ac5fc673d, type: 3}
+  sellableTableJson: {fileID: 4900000, guid: a499abec028cc6f489d5c05fe1db916c, type: 3}
   items:
   - id: 00b57ccc80c09d042b3cf287bf15a1b4
     data: {fileID: 11400000, guid: 00b57ccc80c09d042b3cf287bf15a1b4, type: 2}
